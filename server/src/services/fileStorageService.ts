@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { AppError, ValidationError } from '../utils/errors';
-import { prisma } from '../config/database';
+import prisma from '../config/database';
 
 export interface FileInfo {
   filename: string;
@@ -97,7 +97,8 @@ export const saveMeterPhoto = async (upload: MeterPhotoUpload): Promise<FileInfo
   );
 
   const filePath = path.join(meterPhotosDir, filename);
-    const fileUrl = `/uploads/meter-photos/${filename}`;
+    const baseUrl = process.env['SERVER_BASE_URL'] || 'http://localhost:5000';
+    const fileUrl = `${baseUrl}/uploads/meter-photos/${filename}`;
 
     // Move file to final location
     try {
@@ -159,13 +160,15 @@ export const getFileInfo = (filename: string): FileInfo | null => {
   const filePath = path.join(meterPhotosDir, filename);
   const stats = fs.statSync(filePath);
 
+  const baseUrl = process.env['SERVER_BASE_URL'] || 'http://localhost:5000';
+  
   return {
     filename,
     originalName: filename,
     size: stats.size,
     mimetype: getMimetypeFromExtension(path.extname(filename)),
     path: filePath,
-    url: `/uploads/meter-photos/${filename}`
+    url: `${baseUrl}/uploads/meter-photos/${filename}`
   };
 };
 

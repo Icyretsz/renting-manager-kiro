@@ -88,8 +88,17 @@ export const MeterReadingsPage: React.FC = () => {
   };
 
   const handlePhotoUpload = async (file: File, type: 'water' | 'electricity') => {
+    if (!selectedRoomId) {
+      console.error('No room selected');
+      return false;
+    }
+
     try {
-      const uploadedUrl = await uploadMutation.mutateAsync(file);
+      const uploadedUrl = await uploadMutation.mutateAsync({
+        file,
+        roomId: selectedRoomId,
+        meterType: type
+      });
       if (type === 'water') {
         setWaterPhotoUrl(uploadedUrl);
       } else {
@@ -103,9 +112,15 @@ export const MeterReadingsPage: React.FC = () => {
   };
 
   const handleSubmit = async (values: ReadingFormData) => {
+    if (!selectedRoomId) {
+      console.error('No room selected');
+      return;
+    }
+
     try {
       const submissionData = {
         ...values,
+        roomId: selectedRoomId,
         waterPhotoUrl,
         electricityPhotoUrl,
         totalAmount: calculatedBill,
@@ -225,12 +240,13 @@ export const MeterReadingsPage: React.FC = () => {
                     accept="image/*"
                     showUploadList={false}
                     beforeUpload={(file) => handlePhotoUpload(file, 'water')}
-                    disabled={uploadMutation.isPending}
+                    disabled={uploadMutation.isPending || !selectedRoomId}
                   >
                     <Button 
                       icon={<CameraOutlined />} 
                       loading={uploadMutation.isPending}
                       className="w-full"
+                      disabled={!selectedRoomId}
                     >
                       Take Water Meter Photo
                     </Button>
@@ -281,12 +297,13 @@ export const MeterReadingsPage: React.FC = () => {
                     accept="image/*"
                     showUploadList={false}
                     beforeUpload={(file) => handlePhotoUpload(file, 'electricity')}
-                    disabled={uploadMutation.isPending}
+                    disabled={uploadMutation.isPending || !selectedRoomId}
                   >
                     <Button 
                       icon={<CameraOutlined />} 
                       loading={uploadMutation.isPending}
                       className="w-full"
+                      disabled={!selectedRoomId}
                     >
                       Take Electricity Meter Photo
                     </Button>

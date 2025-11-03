@@ -4,7 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { ValidationError, AppError } from '../utils/errors';
 import { authenticateToken } from '../middleware/auth';
 import * as fileStorageService from '../services/fileStorageService';
-import { prisma } from '../config/database';
+import prisma from '../config/database';
 
 const router = express.Router();
 
@@ -32,6 +32,7 @@ router.post('/meter-photos', uploadMeterPhotos, asyncHandler(async (req: Authent
   }
 
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  console.log('files', files)
   const { roomId } = req.body;
   
   if (!files || Object.keys(files).length === 0) {
@@ -132,6 +133,11 @@ router.post('/photo', uploadSinglePhoto, asyncHandler(async (req: AuthenticatedR
     meterType: meterType as 'water' | 'electricity',
     file: req.file,
     uploadedBy: req.user.id
+  });
+
+  console.log('File uploaded successfully:', {
+    filename: fileInfo.filename,
+    url: fileInfo.url
   });
 
   res.status(200).json({

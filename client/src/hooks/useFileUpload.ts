@@ -5,12 +5,15 @@ import { ApiResponse } from '@/types';
 // Upload meter photo mutation
 export const useUploadMeterPhotoMutation = () => {
   return useMutation({
-    mutationFn: async (file: File): Promise<string> => {
+    mutationFn: async ({ file, roomId, meterType }: { file: File; roomId: number; meterType: 'water' | 'electricity' }): Promise<string> => {
       const formData = new FormData();
       formData.append('photo', file);
+      formData.append('roomId', roomId.toString());
+      formData.append('meterType', meterType);
+      console.log('Uploading:', { roomId, meterType, fileName: file.name });
 
-      const response = await api.post<ApiResponse<{ filename: string; url: string }>>(
-        '/upload/meter-photo',
+      const response = await api.post<ApiResponse<{ photoUrl: string; filename: string }>>(
+        '/upload/photo',
         formData,
         {
           headers: {
@@ -19,11 +22,11 @@ export const useUploadMeterPhotoMutation = () => {
         }
       );
 
-      if (!response.data.data?.url) {
+      if (!response.data.data?.photoUrl) {
         throw new Error('Upload failed');
       }
 
-      return response.data.data.url;
+      return response.data.data.photoUrl;
     },
   });
 };

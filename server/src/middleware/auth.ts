@@ -39,7 +39,6 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
     
     // Fetch user info from Auth0 API
     const auth0UserInfo: Auth0UserInfo = await fetchUserInfo(token);
-    console.log('auth0UserInfo', auth0UserInfo);
 
     // Extract user information from Auth0 API response
     const userInfo = {
@@ -48,7 +47,6 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
       name: auth0UserInfo.name || auth0UserInfo.nickname || auth0UserInfo.email,
       role: auth0UserInfo.roleType[0]!,
     };
-    console.log('userInfo', userInfo);
 
     // Find or create user in database
     let user = await prisma.user.findUnique({
