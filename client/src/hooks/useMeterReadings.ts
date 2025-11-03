@@ -18,7 +18,7 @@ export const useMeterReadingsQuery = (roomId: number) => {
   return useQuery({
     queryKey: meterReadingKeys.byRoom(roomId),
     queryFn: async (): Promise<MeterReading[]> => {
-      const response = await api.get<ApiResponse<MeterReading[]>>(`/readings/room/${roomId}`);
+      const response = await api.get<ApiResponse<MeterReading[]>>(`/readings/room/${roomId}/history`);
       return response.data.data || [];
     },
     enabled: !!roomId,
@@ -41,7 +41,15 @@ export const useSubmitMeterReadingMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Omit<MeterReading, 'id' | 'submittedAt' | 'modifications'>) => {
+    mutationFn: async (data: {
+      roomId: number;
+      month: number;
+      year: number;
+      waterReading: number;
+      electricityReading: number;
+      waterPhotoUrl?: string;
+      electricityPhotoUrl?: string;
+    }) => {
       const response = await api.post<ApiResponse<MeterReading>>('/readings', data);
       return response.data.data;
     },

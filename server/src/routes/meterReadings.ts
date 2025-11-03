@@ -16,7 +16,7 @@ router.use(authenticateToken);
  */
 router.post(
   '/',
-  validateRequired(['roomId', 'month', 'year', 'waterReading', 'electricityReading', 'baseRent']),
+  validateRequired(['roomId', 'month', 'year', 'waterReading', 'electricityReading']),
   validateMeterReading,
   meterReadingController.createReading
 );

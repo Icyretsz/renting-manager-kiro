@@ -14,7 +14,7 @@ export interface Room {
   id: number;
   roomNumber: number;
   floor: 1 | 2;
-  baseRent: number;
+  baseRent: string | number; // Prisma Decimal comes as string
   maxTenants: number;
   currentTenants: Tenant[];
   occupancyCount: number;
@@ -43,13 +43,13 @@ export interface MeterReading {
   room?: Room;
   month: number;
   year: number;
-  waterReading: number;
-  electricityReading: number;
+  waterReading: string | number; // Prisma Decimal comes as string
+  electricityReading: string | number; // Prisma Decimal comes as string
   waterPhotoUrl?: string;
   electricityPhotoUrl?: string;
-  baseRent: number;
-  trashFee: number;
-  totalAmount?: number;
+  baseRent: string | number; // Prisma Decimal comes as string
+  trashFee: string | number; // Prisma Decimal comes as string
+  totalAmount?: string | number; // Prisma Decimal comes as string
   status: 'pending' | 'approved' | 'rejected';
   submittedBy: string;
   submittedAt: Date;
@@ -77,13 +77,13 @@ export interface BillingRecord {
   roomId: number;
   month: number;
   year: number;
-  waterUsage: number;
-  electricityUsage: number;
-  waterCost: number;
-  electricityCost: number;
-  baseRent: number;
-  trashFee: number;
-  totalAmount: number;
+  waterUsage: string | number; // Prisma Decimal comes as string
+  electricityUsage: string | number; // Prisma Decimal comes as string
+  waterCost: string | number; // Prisma Decimal comes as string
+  electricityCost: string | number; // Prisma Decimal comes as string
+  baseRent: string | number; // Prisma Decimal comes as string
+  trashFee: string | number; // Prisma Decimal comes as string
+  totalAmount: string | number; // Prisma Decimal comes as string
   paymentStatus: 'unpaid' | 'paid' | 'overdue';
   paymentDate?: Date;
   createdAt: Date;

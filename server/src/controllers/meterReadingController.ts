@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as meterReadingService from '../services/meterReadingService';
 import { AppError } from '../utils/errors';
+import prisma from '../config/database';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -22,7 +23,7 @@ export const createReading = async (req: AuthenticatedRequest, res: Response, ne
         throw new AppError('User not authenticated', 401);
       }
 
-      const { roomId, month, year, waterReading, electricityReading, waterPhotoUrl, electricityPhotoUrl, baseRent } = req.body;
+      const { roomId, month, year, waterReading, electricityReading, waterPhotoUrl, electricityPhotoUrl } = req.body;
 
       const reading = await meterReadingService.createMeterReading({
         roomId: parseInt(roomId),
@@ -32,7 +33,6 @@ export const createReading = async (req: AuthenticatedRequest, res: Response, ne
         electricityReading: parseFloat(electricityReading),
         waterPhotoUrl,
         electricityPhotoUrl,
-        baseRent: parseFloat(baseRent),
         submittedBy: req.user.id
       });
 
@@ -387,7 +387,19 @@ export const calculateBillAmount = async (req: AuthenticatedRequest, res: Respon
       throw new AppError('User not authenticated', 401);
     }
 
-    const { roomId, month, year, waterReading, electricityReading, baseRent } = req.body;
+    const { roomId, month, year, waterReading, electricityReading } = req.body;
+
+    // Fetch room data to get baseRent
+    const room = await prisma.room.findUnique({
+      where: { id: parseInt(roomId) },
+      select: { baseRent: true }
+    });
+    
+    if (!room) {
+      throw new AppError('Room not found', 404);
+    }
+    
+    const baseRent = parseFloat(room.baseRent.toString());
 
     // Use the service's calculation method directly
     const totalAmount = await meterReadingService.calculateTotalAmount(
@@ -396,7 +408,7 @@ export const calculateBillAmount = async (req: AuthenticatedRequest, res: Respon
       parseInt(year),
       parseFloat(waterReading),
       parseFloat(electricityReading),
-      parseFloat(baseRent)
+      baseRent
     );
 
     // Get previous reading for usage calculation
@@ -423,7 +435,7 @@ export const calculateBillAmount = async (req: AuthenticatedRequest, res: Respon
           electricityUsage,
           waterCost: waterUsage * 22000,
           electricityCost: electricityUsage * 3500,
-          baseRent: parseFloat(baseRent),
+          baseRent: baseRent,
           trashFee: 52000
         },
         previousReading: previousReading ? {

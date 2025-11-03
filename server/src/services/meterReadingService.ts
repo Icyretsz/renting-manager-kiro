@@ -38,7 +38,6 @@ export interface CreateMeterReadingData {
   electricityReading: number;
   waterPhotoUrl?: string;
   electricityPhotoUrl?: string;
-  baseRent: number;
   submittedBy: string;
 }
 
@@ -71,12 +70,25 @@ export const createMeterReading = async (data: CreateMeterReadingData): Promise<
   // Validate reading progression (no decrease from previous month)
   await validateReadingProgression(data.roomId, data.month, data.year, data.waterReading, data.electricityReading);
   
+  // Fetch room data to get baseRent
+  const room = await prisma.room.findUnique({
+    where: { id: data.roomId },
+    select: { baseRent: true }
+  });
+  
+  if (!room) {
+    throw new ValidationError('Room not found');
+  }
+  
+  const baseRent = parseFloat(room.baseRent.toString());
+  
   // Calculate total amount
-  const totalAmount = await calculateTotalAmount(data.roomId, data.month, data.year, data.waterReading, data.electricityReading, data.baseRent);
+  const totalAmount = await calculateTotalAmount(data.roomId, data.month, data.year, data.waterReading, data.electricityReading, baseRent);
 
     const reading = await prisma.meterReading.create({
       data: {
         ...data,
+        baseRent,
         totalAmount,
         trashFee: 52000 // Fixed trash fee as per requirements
       },
@@ -972,10 +984,7 @@ const validateMeterReadingData = async (data: CreateMeterReadingData): Promise<v
       throw new ValidationError('Electricity reading must have at most 1 decimal place');
     }
 
-    // Validate base rent is positive
-    if (data.baseRent < 0) {
-      throw new ValidationError('Base rent must be positive');
-    }
+    // Note: baseRent validation is now handled when fetching from room table
   }
 
 /**

@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery } from '@/hooks/useRooms';
-import { useMeterReadingsQuery } from '@/hooks/useMeterReadings';
+import { useMeterReadingsQuery, useSubmitMeterReadingMutation } from '@/hooks/useMeterReadings';
 import { useUploadMeterPhotoMutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
@@ -38,6 +38,11 @@ interface ReadingFormData {
   electricityPhoto?: File;
 }
 
+// Utility function to safely convert Prisma Decimal strings to numbers
+const toNumber = (value: string | number): number => {
+  return typeof value === 'string' ? parseFloat(value) : value;
+};
+
 export const MeterReadingsPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const { data: rooms } = useRoomsQuery();
@@ -51,6 +56,8 @@ export const MeterReadingsPage: React.FC = () => {
   
   // Get the most recent reading as previous reading
   const previousReading = readings && readings.length > 0 ? readings[0] : null;
+
+  console.log(previousReading)
   
   const uploadMutation = useUploadMeterPhotoMutation();
 
@@ -75,15 +82,22 @@ export const MeterReadingsPage: React.FC = () => {
   const calculateBill = (waterReading: number, electricityReading: number) => {
     if (!previousReading) return;
 
-    const waterUsage = Math.max(0, waterReading - previousReading.waterReading);
-    const electricityUsage = Math.max(0, electricityReading - previousReading.electricityReading);
+    // Convert string values to numbers for calculations
+    const prevWaterReading = toNumber(previousReading.waterReading);
+    const prevElectricityReading = toNumber(previousReading.electricityReading);
+    const baseRent = toNumber(previousReading.baseRent);
+
+    const waterUsage = Math.max(0, waterReading - prevWaterReading);
+    const electricityUsage = Math.max(0, electricityReading - prevElectricityReading);
     
     const waterCost = waterUsage * 22000; // ₱22,000 per unit
     const electricityCost = electricityUsage * 3500; // ₱3,500 per unit
-    const baseRent = previousReading.baseRent || 0;
     const trashFee = 52000; // Fixed ₱52,000
+
+    console.log('Calculation:', { waterCost, electricityCost, baseRent, trashFee });
     
     const total = waterCost + electricityCost + baseRent + trashFee;
+    console.log('Total:', total);
     setCalculatedBill(total);
   };
 
@@ -111,6 +125,8 @@ export const MeterReadingsPage: React.FC = () => {
     }
   };
 
+  const submitMutation = useSubmitMeterReadingMutation();
+
   const handleSubmit = async (values: ReadingFormData) => {
     if (!selectedRoomId) {
       console.error('No room selected');
@@ -118,16 +134,19 @@ export const MeterReadingsPage: React.FC = () => {
     }
 
     try {
+      const currentDate = new Date();
       const submissionData = {
-        ...values,
         roomId: selectedRoomId,
+        month: currentDate.getMonth() + 1, // JavaScript months are 0-indexed
+        year: currentDate.getFullYear(),
+        waterReading: values.waterReading,
+        electricityReading: values.electricityReading,
         waterPhotoUrl,
         electricityPhotoUrl,
-        totalAmount: calculatedBill,
       };
       
       console.log('Submitting reading:', submissionData);
-      // Here you would call the API to submit the reading
+      await submitMutation.mutateAsync(submissionData);
       
       // Reset form after successful submission
       form.resetFields();
@@ -181,7 +200,7 @@ export const MeterReadingsPage: React.FC = () => {
                   <Col span={12}>
                     <Statistic
                       title="Water"
-                      value={previousReading.waterReading}
+                      value={toNumber(previousReading.waterReading)}
                       precision={1}
                       suffix="units"
                     />
@@ -189,7 +208,7 @@ export const MeterReadingsPage: React.FC = () => {
                   <Col span={12}>
                     <Statistic
                       title="Electricity"
-                      value={previousReading.electricityReading}
+                      value={toNumber(previousReading.electricityReading)}
                       precision={1}
                       suffix="units"
                     />
@@ -217,7 +236,7 @@ export const MeterReadingsPage: React.FC = () => {
                     { required: true, message: 'Please enter water reading' },
                     { 
                       validator: (_, value) => {
-                        if (previousReading && value < previousReading.waterReading) {
+                        if (previousReading && value < toNumber(previousReading.waterReading)) {
                           return Promise.reject('Reading cannot be less than previous month');
                         }
                         return Promise.resolve();
@@ -274,7 +293,7 @@ export const MeterReadingsPage: React.FC = () => {
                     { required: true, message: 'Please enter electricity reading' },
                     { 
                       validator: (_, value) => {
-                        if (previousReading && value < previousReading.electricityReading) {
+                        if (previousReading && value < toNumber(previousReading.electricityReading)) {
                           return Promise.reject('Reading cannot be less than previous month');
                         }
                         return Promise.resolve();
@@ -348,7 +367,8 @@ export const MeterReadingsPage: React.FC = () => {
                     icon={<SaveOutlined />}
                     className="w-full"
                     size="large"
-                    disabled={!waterPhotoUrl || !electricityPhotoUrl}
+                    loading={submitMutation.isPending}
+                    disabled={!waterPhotoUrl || !electricityPhotoUrl || submitMutation.isPending}
                   >
                     Submit Reading
                   </Button>
