@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { meterReadingController } from '../controllers/meterReadingController';
+import * as meterReadingController from '../controllers/meterReadingController';
 import { authenticateToken } from '../middleware/auth';
 import { validateMeterReading, validateRoomId, validateReadingId, validateRequired } from '../middleware/validation';
 import * as readingAccess from '../middleware/readingAccess';
@@ -18,7 +18,7 @@ router.post(
   '/',
   validateRequired(['roomId', 'month', 'year', 'waterReading', 'electricityReading', 'baseRent']),
   validateMeterReading,
-  meterReadingController.createMeterReading.bind(meterReadingController)
+  meterReadingController.createReading
 );
 
 /**
@@ -31,7 +31,7 @@ router.put(
   validateReadingId,
   readingAccess.canEditReading,
   validateMeterReading,
-  meterReadingController.updateMeterReading.bind(meterReadingController)
+  meterReadingController.updateReading
 );
 
 /**
@@ -43,7 +43,7 @@ router.get(
   '/:id',
   validateReadingId,
   readingAccess.canViewReading,
-  meterReadingController.getMeterReadingById.bind(meterReadingController)
+  meterReadingController.getReadingById
 );
 
 /**
@@ -53,7 +53,7 @@ router.get(
  */
 router.get(
   '/',
-  meterReadingController.getMeterReadings.bind(meterReadingController)
+  meterReadingController.getReadings
 );
 
 /**
@@ -64,7 +64,7 @@ router.get(
 router.get(
   '/pending/all',
   readingAccess.requireAdmin,
-  meterReadingController.getPendingReadings.bind(meterReadingController)
+  meterReadingController.getPendingApprovals
 );
 
 /**
@@ -76,7 +76,7 @@ router.post(
   '/:id/approve',
   validateReadingId,
   readingAccess.canApproveReading,
-  meterReadingController.approveReading.bind(meterReadingController)
+  meterReadingController.approveReading
 );
 
 /**
@@ -88,7 +88,7 @@ router.post(
   '/:id/reject',
   validateReadingId,
   readingAccess.canRejectReading,
-  meterReadingController.rejectReading.bind(meterReadingController)
+  meterReadingController.rejectReading
 );
 
 /**
@@ -100,7 +100,7 @@ router.get(
   '/room/:roomId/history',
   validateRoomId,
   readingAccess.canAccessRoom,
-  meterReadingController.getRoomReadingHistory.bind(meterReadingController)
+  meterReadingController.getRoomReadingHistory
 );
 
 /**
@@ -112,7 +112,7 @@ router.get(
   '/room/:roomId/history/thumbnails',
   validateRoomId,
   readingAccess.canAccessRoom,
-  meterReadingController.getRoomReadingHistoryWithThumbnails.bind(meterReadingController)
+  meterReadingController.getRoomReadingHistory
 );
 
 /**
@@ -124,7 +124,7 @@ router.post(
   '/calculate',
   validateRequired(['roomId', 'month', 'year', 'waterReading', 'electricityReading', 'baseRent']),
   validateMeterReading,
-  meterReadingController.calculateBillAmount.bind(meterReadingController)
+  meterReadingController.calculateBillAmount
 );
 
 /**
@@ -134,7 +134,7 @@ router.post(
  */
 router.get(
   '/status',
-  meterReadingController.getReadingSubmissionStatus.bind(meterReadingController)
+  meterReadingController.getReadingSubmissionStatus
 );
 
 /**
@@ -146,7 +146,7 @@ router.get(
   '/:id/modifications',
   validateReadingId,
   readingAccess.canViewReading,
-  meterReadingController.getReadingModificationHistory.bind(meterReadingController)
+  meterReadingController.getReadingModificationHistory
 );
 
 /**
@@ -158,7 +158,7 @@ router.get(
   '/:id/access',
   validateReadingId,
   readingAccess.canViewReading,
-  meterReadingController.getReadingAccess.bind(meterReadingController)
+  meterReadingController.getReadingAccess
 );
 
 export default router;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { tenantController } from '../controllers/tenantController';
+import * as tenantController from '../controllers/tenantController';
 import { authenticateToken } from '../middleware/auth';
 import { validateRequest } from '../middleware/validation';
 import { body, param, query } from 'express-validator';
@@ -129,60 +129,60 @@ router.use(authenticateToken);
 router.get('/search', 
   searchValidation,
   validateRequest,
-  tenantController.searchTenants.bind(tenantController)
+  tenantController.searchTenants
 );
 
-router.get('/stats', tenantController.getTenantStats.bind(tenantController));
+router.get('/stats', tenantController.getTenantStats);
 
 router.get('/room/:roomId', 
   roomIdValidation,
   validateRequest,
-  tenantController.getTenantsByRoom.bind(tenantController)
+  tenantController.getTenantsByRoom
 );
 
 router.get('/', 
   queryFiltersValidation,
   validateRequest,
-  tenantController.getAllTenants.bind(tenantController)
+  tenantController.getAllTenants
 );
 
 router.get('/:id', 
   tenantIdValidation,
   validateRequest,
-  tenantController.getTenantById.bind(tenantController)
+  tenantController.getTenantById
 );
 
 router.post('/', 
   createTenantValidation,
   validateRequest,
-  tenantController.createTenant.bind(tenantController)
+  tenantController.createTenant
 );
 
 router.put('/:id', 
   tenantIdValidation,
   updateTenantValidation,
   validateRequest,
-  tenantController.updateTenant.bind(tenantController)
+  tenantController.updateTenant
 );
 
 router.post('/:id/move-out', 
   tenantIdValidation,
   moveOutValidation,
   validateRequest,
-  tenantController.moveTenantOut.bind(tenantController)
+  tenantController.moveTenantOut
 );
 
 router.post('/:id/move-in', 
   tenantIdValidation,
   moveInValidation,
   validateRequest,
-  tenantController.moveTenantIn.bind(tenantController)
+  tenantController.moveTenantIn
 );
 
 router.delete('/:id', 
   tenantIdValidation,
   validateRequest,
-  tenantController.deleteTenant.bind(tenantController)
+  tenantController.deleteTenant
 );
 
 export default router;

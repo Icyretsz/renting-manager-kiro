@@ -1,12 +1,11 @@
 import { Request, Response } from 'express';
-import { NotificationService } from '../services/notificationService';
+import * as notificationService from '../services/notificationService';
 import { AppError } from '../utils/errors';
 
-export class NotificationController {
-  /**
-   * Get user notifications with pagination
-   */
-  static async getUserNotifications(req: Request, res: Response): Promise<void> {
+/**
+ * Get user notifications with pagination
+ */
+export const getUserNotifications = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -16,7 +15,7 @@ export class NotificationController {
       const page = parseInt(req.query['page'] as string) || 1;
       const limit = parseInt(req.query['limit'] as string) || 20;
 
-      const result = await NotificationService.getUserNotifications(userId, page, limit);
+      const result = await notificationService.getUserNotifications(userId, page, limit);
 
       res.json({
         success: true,
@@ -41,14 +40,14 @@ export class NotificationController {
           success: false,
           error: 'Internal server error',
         });
-      }
     }
   }
+};
 
-  /**
-   * Mark specific notifications as read
-   */
-  static async markNotificationsAsRead(req: Request, res: Response): Promise<void> {
+/**
+ * Mark specific notifications as read
+ */
+export const markNotificationsAsRead = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -60,7 +59,7 @@ export class NotificationController {
         throw new AppError('notificationIds must be an array', 400);
       }
 
-      await NotificationService.markAsRead(userId, notificationIds);
+      await notificationService.markAsRead(userId, notificationIds);
 
       res.json({
         success: true,
@@ -78,21 +77,21 @@ export class NotificationController {
           success: false,
           error: 'Internal server error',
         });
-      }
     }
   }
+};
 
-  /**
-   * Mark all notifications as read for the user
-   */
-  static async markAllNotificationsAsRead(req: Request, res: Response): Promise<void> {
+/**
+ * Mark all notifications as read for the user
+ */
+export const markAllNotificationsAsRead = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
       if (!userId) {
         throw new AppError('User not authenticated', 401);
       }
 
-      await NotificationService.markAllAsRead(userId);
+      await notificationService.markAllAsRead(userId);
 
       res.json({
         success: true,
@@ -110,14 +109,14 @@ export class NotificationController {
           success: false,
           error: 'Internal server error',
         });
-      }
     }
   }
+};
 
-  /**
-   * Update user's FCM token for push notifications
-   */
-  static async updateFCMToken(req: Request, res: Response): Promise<void> {
+/**
+ * Update user's FCM token for push notifications
+ */
+export const updateFCMToken = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -129,7 +128,7 @@ export class NotificationController {
         throw new AppError('Valid FCM token is required', 400);
       }
 
-      await NotificationService.updateFCMToken(userId, fcmToken);
+      await notificationService.updateFCMToken(userId, fcmToken);
 
       res.json({
         success: true,
@@ -148,20 +147,20 @@ export class NotificationController {
           error: 'Internal server error',
         });
       }
-    }
   }
+};
 
-  /**
-   * Get unread notification count
-   */
-  static async getUnreadCount(req: Request, res: Response): Promise<void> {
+/**
+ * Get unread notification count
+ */
+export const getUnreadCount = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
       if (!userId) {
         throw new AppError('User not authenticated', 401);
       }
 
-      const result = await NotificationService.getUserNotifications(userId, 1, 1);
+      const result = await notificationService.getUserNotifications(userId, 1, 1);
 
       res.json({
         success: true,
@@ -179,7 +178,6 @@ export class NotificationController {
           success: false,
           error: 'Internal server error',
         });
-      }
     }
   }
-}
+};

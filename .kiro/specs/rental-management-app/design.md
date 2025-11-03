@@ -59,6 +59,7 @@ graph TB
 - Multer for file upload handling
 - PostgreSQL with Prisma ORM
 - Firebase Admin SDK for push notifications
+- Functional-style programming
 
 **Database**
 - PostgreSQL for relational data

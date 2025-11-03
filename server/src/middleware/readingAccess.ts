@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AccessControlService } from '../services/accessControlService';
+import * as accessControlService from '../services/accessControlService';
 import { AppError } from '../utils/errors';
 
 export interface AuthenticatedRequest extends Request {
@@ -31,7 +31,7 @@ export const canViewReading = async (
       throw new AppError('Reading ID is required', 400);
     }
 
-    const access = await AccessControlService.checkReadingAccess(
+    const access = await accessControlService.checkReadingAccess(
       readingId,
       req.user.id,
       req.user.role
@@ -67,7 +67,7 @@ export const canEditReading = async (
       throw new AppError('Reading ID is required', 400);
     }
 
-    await AccessControlService.validateReadingModification(
+    await accessControlService.validateReadingModification(
       readingId,
       req.user.id,
       req.user.role
@@ -97,7 +97,7 @@ export const canApproveReading = async (
       throw new AppError('Reading ID is required', 400);
     }
 
-    await AccessControlService.validateReadingApproval(
+    await accessControlService.validateReadingApproval(
       readingId,
       req.user.id,
       req.user.role
@@ -127,7 +127,7 @@ export const canRejectReading = async (
       throw new AppError('Reading ID is required', 400);
     }
 
-    await AccessControlService.validateReadingRejection(
+    await accessControlService.validateReadingRejection(
       readingId,
       req.user.id,
       req.user.role
@@ -168,7 +168,7 @@ export const canAccessRoom = async (
       throw new AppError('Invalid Room ID', 400);
     }
 
-    const hasAccess = await AccessControlService.checkUserRoomAccess(
+    const hasAccess = await accessControlService.checkUserRoomAccess(
       req.user.id,
       roomId
     );

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { meterReadingService } from '../services/meterReadingService';
+import * as meterReadingService from '../services/meterReadingService';
 import { AppError } from '../utils/errors';
 
 export interface AuthenticatedRequest extends Request {
@@ -13,11 +13,10 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export class MeterReadingController {
-  /**
-   * Create a new meter reading
-   */
-  async createMeterReading(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Create a new meter reading
+ */
+export const createReading = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -42,15 +41,15 @@ export class MeterReadingController {
         data: reading,
         message: 'Meter reading created successfully'
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Update an existing meter reading
-   */
-  async updateMeterReading(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Update an existing meter reading
+ */
+export const updateReading = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -76,15 +75,15 @@ export class MeterReadingController {
         data: reading,
         message: 'Meter reading updated successfully'
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Get meter reading by ID
-   */
-  async getMeterReadingById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Get meter reading by ID
+ */
+export const getReadingById = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -105,15 +104,15 @@ export class MeterReadingController {
         success: true,
         data: reading
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Get meter readings with filters and pagination
-   */
-  async getMeterReadings(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Get meter readings with filters and pagination
+ */
+export const getReadings = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -146,15 +145,15 @@ export class MeterReadingController {
           totalPages: result.totalPages
         }
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Get pending readings for admin approval
-   */
-  async getPendingReadings(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Get pending readings for admin approval
+ */
+export const getPendingApprovals = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -170,15 +169,15 @@ export class MeterReadingController {
         success: true,
         data: readings
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Approve a meter reading
-   */
-  async approveReading(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Approve a meter reading
+ */
+export const approveReading = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -199,15 +198,15 @@ export class MeterReadingController {
         data: reading,
         message: 'Meter reading approved successfully'
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Reject a meter reading
-   */
-  async rejectReading(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Reject a meter reading
+ */
+export const rejectReading = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -230,15 +229,15 @@ export class MeterReadingController {
         data: reading,
         message: 'Meter reading rejected successfully'
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Get reading history for a specific room
-   */
-  async getRoomReadingHistory(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Get reading history for a specific room
+ */
+export const getRoomReadingHistory = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -258,15 +257,15 @@ export class MeterReadingController {
         success: true,
         data: readings
       });
-    } catch (error) {
-      next(error);
-    }
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Get reading history with photo thumbnails for a specific room
-   */
-  async getRoomReadingHistoryWithThumbnails(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+/**
+ * Get reading history with photo thumbnails for a specific room
+ */
+export const getRoomReadingHistoryWithThumbnails = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
         throw new AppError('User not authenticated', 401);
@@ -290,155 +289,152 @@ export class MeterReadingController {
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  /**
-   * Get reading submission status for a specific room and month/year
-   */
-  async getReadingSubmissionStatus(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      if (!req.user) {
-        throw new AppError('User not authenticated', 401);
-      }
-
-      const { roomId, month, year } = req.query;
-
-      if (!roomId || !month || !year) {
-        throw new AppError('Room ID, month, and year are required', 400);
-      }
-
-      const status = await meterReadingService.getReadingSubmissionStatus(
-        parseInt(roomId as string),
-        parseInt(month as string),
-        parseInt(year as string),
-        req.user.role,
-        req.user.id
-      );
-
-      res.json({
-        success: true,
-        data: status
-      });
-    } catch (error) {
-      next(error);
+/**
+ * Get reading submission status for a specific room and month/year
+ */
+export const getReadingSubmissionStatus = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError('User not authenticated', 401);
     }
-  }
 
-  /**
-   * Get modification history for a specific reading
-   */
-  async getReadingModificationHistory(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      if (!req.user) {
-        throw new AppError('User not authenticated', 401);
-      }
+    const { roomId, month, year } = req.query;
 
-      const { id } = req.params;
-      if (!id) {
-        throw new AppError('Reading ID is required', 400);
-      }
-
-      const modifications = await meterReadingService.getReadingModificationHistory(
-        id,
-        req.user.role,
-        req.user.id
-      );
-
-      res.json({
-        success: true,
-        data: modifications
-      });
-    } catch (error) {
-      next(error);
+    if (!roomId || !month || !year) {
+      throw new AppError('Room ID, month, and year are required', 400);
     }
+
+    const status = await meterReadingService.getReadingSubmissionStatus(
+      parseInt(roomId as string),
+      parseInt(month as string),
+      parseInt(year as string),
+      req.user.role,
+      req.user.id
+    );
+
+    res.json({
+      success: true,
+      data: status
+    });
+  } catch (error) {
+    next(error);
   }
+};
 
-  /**
-   * Get reading access information for frontend
-   */
-  async getReadingAccess(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      if (!req.user) {
-        throw new AppError('User not authenticated', 401);
-      }
-
-      const { id } = req.params;
-      if (!id) {
-        throw new AppError('Reading ID is required', 400);
-      }
-
-      // Use the access info attached by middleware
-      const accessInfo = (req as any).readingAccess;
-
-      res.json({
-        success: true,
-        data: accessInfo
-      });
-    } catch (error) {
-      next(error);
+/**
+ * Get modification history for a specific reading
+ */
+export const getReadingModificationHistory = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError('User not authenticated', 401);
     }
-  }
 
-  /**
-   * Calculate bill amount for a reading (preview)
-   */
-  async calculateBillAmount(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      if (!req.user) {
-        throw new AppError('User not authenticated', 401);
-      }
-
-      const { roomId, month, year, waterReading, electricityReading, baseRent } = req.body;
-
-      // Use the service's calculation method directly
-      const totalAmount = await meterReadingService.calculateTotalAmount(
-        parseInt(roomId),
-        parseInt(month),
-        parseInt(year),
-        parseFloat(waterReading),
-        parseFloat(electricityReading),
-        parseFloat(baseRent)
-      );
-
-      // Get previous reading for usage calculation
-      const previousReading = await meterReadingService.getPreviousMonthReading(
-        parseInt(roomId),
-        parseInt(month),
-        parseInt(year)
-      );
-
-      let waterUsage = parseFloat(waterReading);
-      let electricityUsage = parseFloat(electricityReading);
-
-      if (previousReading) {
-        waterUsage = Math.max(0, parseFloat(waterReading) - parseFloat(previousReading.waterReading.toString()));
-        electricityUsage = Math.max(0, parseFloat(electricityReading) - parseFloat(previousReading.electricityReading.toString()));
-      }
-
-      res.json({
-        success: true,
-        data: {
-          totalAmount,
-          breakdown: {
-            waterUsage,
-            electricityUsage,
-            waterCost: waterUsage * 22000,
-            electricityCost: electricityUsage * 3500,
-            baseRent: parseFloat(baseRent),
-            trashFee: 52000
-          },
-          previousReading: previousReading ? {
-            waterReading: parseFloat(previousReading.waterReading.toString()),
-            electricityReading: parseFloat(previousReading.electricityReading.toString()),
-            month: previousReading.month,
-            year: previousReading.year
-          } : null
-        }
-      });
-    } catch (error) {
-      next(error);
+    const { id } = req.params;
+    if (!id) {
+      throw new AppError('Reading ID is required', 400);
     }
-  }
-}
 
-export const meterReadingController = new MeterReadingController();
+    const modifications = await meterReadingService.getReadingModificationHistory(
+      id,
+      req.user.role,
+      req.user.id
+    );
+
+    res.json({
+      success: true,
+      data: modifications
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get reading access information for frontend
+ */
+export const getReadingAccess = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    const { id } = req.params;
+    if (!id) {
+      throw new AppError('Reading ID is required', 400);
+    }
+
+    // Use the access info attached by middleware
+    const accessInfo = (req as any).readingAccess;
+
+    res.json({
+      success: true,
+      data: accessInfo
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Calculate bill amount for a reading (preview)
+ */
+export const calculateBillAmount = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    const { roomId, month, year, waterReading, electricityReading, baseRent } = req.body;
+
+    // Use the service's calculation method directly
+    const totalAmount = await meterReadingService.calculateTotalAmount(
+      parseInt(roomId),
+      parseInt(month),
+      parseInt(year),
+      parseFloat(waterReading),
+      parseFloat(electricityReading),
+      parseFloat(baseRent)
+    );
+
+    // Get previous reading for usage calculation
+    const previousReading = await meterReadingService.getPreviousMonthReading(
+      parseInt(roomId),
+      parseInt(month),
+      parseInt(year)
+    );
+
+    let waterUsage = parseFloat(waterReading);
+    let electricityUsage = parseFloat(electricityReading);
+
+    if (previousReading) {
+      waterUsage = Math.max(0, parseFloat(waterReading) - parseFloat(previousReading.waterReading.toString()));
+      electricityUsage = Math.max(0, parseFloat(electricityReading) - parseFloat(previousReading.electricityReading.toString()));
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalAmount,
+        breakdown: {
+          waterUsage,
+          electricityUsage,
+          waterCost: waterUsage * 22000,
+          electricityCost: electricityUsage * 3500,
+          baseRent: parseFloat(baseRent),
+          trashFee: 52000
+        },
+        previousReading: previousReading ? {
+          waterReading: parseFloat(previousReading.waterReading.toString()),
+          electricityReading: parseFloat(previousReading.electricityReading.toString()),
+          month: previousReading.month,
+          year: previousReading.year
+        } : null
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

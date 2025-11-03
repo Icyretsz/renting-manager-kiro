@@ -35,7 +35,9 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
 
     // Verify token with Auth0
     const decodedToken = await verifyToken(token);
+    console.log('decodedToken', decodedToken)
     const userInfo = extractUserFromToken(decodedToken);
+    console.log('userInfo', userInfo)
 
     // Find or create user in database
     let user = await prisma.user.findUnique({

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { NotificationController } from '../controllers/notificationController';
+import * as notificationController from '../controllers/notificationController';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -8,18 +8,18 @@ const router = Router();
 router.use(authenticateToken);
 
 // Get user notifications with pagination
-router.get('/', NotificationController.getUserNotifications);
+router.get('/', notificationController.getUserNotifications);
 
 // Get unread notification count
-router.get('/unread-count', NotificationController.getUnreadCount);
+router.get('/unread-count', notificationController.getUnreadCount);
 
 // Mark specific notifications as read
-router.patch('/mark-read', NotificationController.markNotificationsAsRead);
+router.patch('/mark-read', notificationController.markNotificationsAsRead);
 
 // Mark all notifications as read
-router.patch('/mark-all-read', NotificationController.markAllNotificationsAsRead);
+router.patch('/mark-all-read', notificationController.markAllNotificationsAsRead);
 
 // Update FCM token for push notifications
-router.patch('/fcm-token', NotificationController.updateFCMToken);
+router.patch('/fcm-token', notificationController.updateFCMToken);
 
 export default router;

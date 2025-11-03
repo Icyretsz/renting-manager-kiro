@@ -13,15 +13,14 @@ export interface ReadingAccessInfo {
   reason?: string;
 }
 
-export class AccessControlService {
-  /**
-   * Check comprehensive access permissions for a meter reading
-   */
-  static async checkReadingAccess(
-    readingId: string,
-    userId: string,
-    userRole: 'ADMIN' | 'USER'
-  ): Promise<ReadingAccessInfo> {
+/**
+ * Check comprehensive access permissions for a meter reading
+ */
+export const checkReadingAccess = async (
+  readingId: string,
+  userId: string,
+  userRole: 'ADMIN' | 'USER'
+): Promise<ReadingAccessInfo> => {
     const reading = await prisma.meterReading.findUnique({
       where: { id: readingId },
       include: {
@@ -37,11 +36,11 @@ export class AccessControlService {
     const isOwner = reading.submittedBy === userId;
     const isPending = reading.status === ReadingStatus.PENDING;
 
-    // Check if user has access to this room (for regular users)
-    let hasRoomAccess = true;
-    if (!isAdmin) {
-      hasRoomAccess = await this.checkUserRoomAccess(userId, reading.roomId);
-    }
+  // Check if user has access to this room (for regular users)
+  let hasRoomAccess = true;
+  if (!isAdmin) {
+    hasRoomAccess = await checkUserRoomAccess(userId, reading.roomId);
+  }
 
     if (!hasRoomAccess) {
       return {
@@ -74,21 +73,21 @@ export class AccessControlService {
       canReject = false;
     }
 
-    return {
-      canView,
-      canEdit,
-      canApprove,
-      canReject,
-      isOwner,
-      isAdmin,
-      status: reading.status,
-    };
-  }
+  return {
+    canView,
+    canEdit,
+    canApprove,
+    canReject,
+    isOwner,
+    isAdmin,
+    status: reading.status,
+  };
+};
 
-  /**
-   * Check if user has access to a specific room
-   */
-  static async checkUserRoomAccess(userId: string, roomId: number): Promise<boolean> {
+/**
+ * Check if user has access to a specific room
+ */
+export const checkUserRoomAccess = async (userId: string, roomId: number): Promise<boolean> => {
     const assignment = await prisma.userRoomAssignment.findUnique({
       where: {
         userId_roomId: {
@@ -98,18 +97,18 @@ export class AccessControlService {
       },
     });
 
-    return !!assignment;
-  }
+  return !!assignment;
+};
 
-  /**
-   * Validate reading modification permissions
-   */
-  static async validateReadingModification(
-    readingId: string,
-    userId: string,
-    userRole: 'ADMIN' | 'USER'
-  ): Promise<void> {
-    const access = await this.checkReadingAccess(readingId, userId, userRole);
+/**
+ * Validate reading modification permissions
+ */
+export const validateReadingModification = async (
+  readingId: string,
+  userId: string,
+  userRole: 'ADMIN' | 'USER'
+): Promise<void> => {
+  const access = await checkReadingAccess(readingId, userId, userRole);
 
     if (!access.canEdit) {
       if (!access.canView) {
@@ -124,19 +123,19 @@ export class AccessControlService {
         throw new AppError('Can only modify your own readings', 403);
       }
 
-      throw new AppError('Insufficient permissions to modify this reading', 403);
-    }
+    throw new AppError('Insufficient permissions to modify this reading', 403);
   }
+};
 
-  /**
-   * Validate reading approval permissions
-   */
-  static async validateReadingApproval(
-    readingId: string,
-    userId: string,
-    userRole: 'ADMIN' | 'USER'
-  ): Promise<void> {
-    const access = await this.checkReadingAccess(readingId, userId, userRole);
+/**
+ * Validate reading approval permissions
+ */
+export const validateReadingApproval = async (
+  readingId: string,
+  userId: string,
+  userRole: 'ADMIN' | 'USER'
+): Promise<void> => {
+  const access = await checkReadingAccess(readingId, userId, userRole);
 
     if (!access.canApprove) {
       if (!access.canView) {
@@ -152,18 +151,18 @@ export class AccessControlService {
       }
 
       throw new AppError('Insufficient permissions to approve this reading', 403);
-    }
   }
+};
 
-  /**
-   * Validate reading rejection permissions
-   */
-  static async validateReadingRejection(
-    readingId: string,
-    userId: string,
-    userRole: 'ADMIN' | 'USER'
-  ): Promise<void> {
-    const access = await this.checkReadingAccess(readingId, userId, userRole);
+/**
+ * Validate reading rejection permissions
+ */
+export const validateReadingRejection = async (
+  readingId: string,
+  userId: string,
+  userRole: 'ADMIN' | 'USER'
+): Promise<void> => {
+  const access = await checkReadingAccess(readingId, userId, userRole);
 
     if (!access.canReject) {
       if (!access.canView) {
@@ -179,19 +178,19 @@ export class AccessControlService {
       }
 
       throw new AppError('Insufficient permissions to reject this reading', 403);
-    }
   }
+};
 
-  /**
-   * Get reading status validation info
-   */
-  static async getReadingStatusInfo(readingId: string): Promise<{
+/**
+ * Get reading status validation info
+ */
+export const getReadingStatusInfo = async (readingId: string): Promise<{
     status: ReadingStatus;
     canBeModified: boolean;
     canBeApproved: boolean;
     canBeRejected: boolean;
-    statusDescription: string;
-  }> {
+  statusDescription: string;
+}> => {
     const reading = await prisma.meterReading.findUnique({
       where: { id: readingId },
       select: { status: true },
@@ -223,13 +222,13 @@ export class AccessControlService {
       canBeApproved: isPending,
       canBeRejected: isPending,
       statusDescription,
-    };
-  }
+  };
+};
 
-  /**
-   * Check if user can submit new reading for a room/month/year
-   */
-  static async canSubmitReading(
+/**
+ * Check if user can submit new reading for a room/month/year
+ */
+export const canSubmitReading = async (
     userId: string,
     userRole: 'ADMIN' | 'USER',
     roomId: number,
@@ -241,11 +240,11 @@ export class AccessControlService {
     existingReading?: {
       id: string;
       status: ReadingStatus;
-    };
-  }> {
-    // Check room access for regular users
-    if (userRole === 'USER') {
-      const hasAccess = await this.checkUserRoomAccess(userId, roomId);
+  };
+}> => {
+  // Check room access for regular users
+  if (userRole === 'USER') {
+    const hasAccess = await checkUserRoomAccess(userId, roomId);
       if (!hasAccess) {
         return {
           canSubmit: false,
@@ -279,13 +278,13 @@ export class AccessControlService {
 
     return {
       canSubmit: true,
-    };
-  }
+  };
+};
 
-  /**
-   * Get user's accessible rooms
-   */
-  static async getUserAccessibleRooms(userId: string, userRole: 'ADMIN' | 'USER'): Promise<number[]> {
+/**
+ * Get user's accessible rooms
+ */
+export const getUserAccessibleRooms = async (userId: string, userRole: 'ADMIN' | 'USER'): Promise<number[]> => {
     if (userRole === 'ADMIN') {
       // Admin has access to all rooms
       const rooms = await prisma.room.findMany({
@@ -300,16 +299,16 @@ export class AccessControlService {
       select: { roomId: true },
     });
 
-    return assignments.map(assignment => assignment.roomId);
-  }
+  return assignments.map(assignment => assignment.roomId);
+};
 
-  /**
-   * Validate reading status transition
-   */
-  static validateStatusTransition(
-    currentStatus: ReadingStatus,
-    newStatus: ReadingStatus
-  ): { isValid: boolean; reason?: string } {
+/**
+ * Validate reading status transition
+ */
+export const validateStatusTransition = (
+  currentStatus: ReadingStatus,
+  newStatus: ReadingStatus
+): { isValid: boolean; reason?: string } => {
     // Define valid status transitions
     const validTransitions: Record<ReadingStatus, ReadingStatus[]> = {
       [ReadingStatus.PENDING]: [ReadingStatus.APPROVED, ReadingStatus.REJECTED],
@@ -327,6 +326,5 @@ export class AccessControlService {
       };
     }
 
-    return { isValid: true };
-  }
-}
+  return { isValid: true };
+};

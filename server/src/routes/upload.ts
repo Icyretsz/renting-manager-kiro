@@ -3,7 +3,7 @@ import { uploadMeterPhotos, uploadSinglePhoto } from '../config/multer';
 import { asyncHandler } from '../middleware/errorHandler';
 import { ValidationError, AppError } from '../utils/errors';
 import { authenticateToken } from '../middleware/auth';
-import { fileStorageService } from '../services/fileStorageService';
+import * as fileStorageService from '../services/fileStorageService';
 import { prisma } from '../config/database';
 
 const router = express.Router();

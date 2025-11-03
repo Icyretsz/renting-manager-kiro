@@ -14,9 +14,8 @@ export interface NotificationRecipient {
   fcmToken?: string;
 }
 
-export class NotificationService {
-  // Notification templates for different events
-  private static templates = {
+// Notification templates for different events
+const templates = {
     READING_SUBMITTED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'New Meter Reading Submitted',
       body: `Room ${roomNumber} has submitted meter readings for ${month}/${year}`,
@@ -75,14 +74,14 @@ export class NotificationService {
     }),
   };
 
-  /**
-   * Send notification to specific users
-   */
-  static async sendToUsers(
-    recipients: NotificationRecipient[],
-    template: NotificationTemplate,
-    saveToHistory: boolean = true
-  ): Promise<void> {
+/**
+ * Send notification to specific users
+ */
+export const sendToUsers = async (
+  recipients: NotificationRecipient[],
+  template: NotificationTemplate,
+  saveToHistory: boolean = true
+): Promise<void> => {
     try {
       // Filter recipients with FCM tokens
       const validRecipients = recipients.filter(r => r.fcmToken);
@@ -109,7 +108,7 @@ export class NotificationService {
 
       // Save to notification history if requested
       if (saveToHistory) {
-        await this.saveNotificationHistory(recipients, template);
+        await saveNotificationHistory(recipients, template);
       }
 
       // Handle failed tokens (optional: remove invalid tokens from database)
@@ -120,16 +119,16 @@ export class NotificationService {
           }
         });
       }
-    } catch (error) {
-      console.error('Error sending notification:', error);
-      throw error;
-    }
+  } catch (error) {
+    console.error('Error sending notification:', error);
+    throw error;
   }
+};
 
-  /**
-   * Send notification to admin users
-   */
-  static async sendToAdmins(template: NotificationTemplate): Promise<void> {
+/**
+ * Send notification to admin users
+ */
+export const sendToAdmins = async (template: NotificationTemplate): Promise<void> => {
     try {
       // Get all admin users with FCM tokens
       const adminUsers = await prisma.user.findMany({
@@ -150,17 +149,17 @@ export class NotificationService {
           fcmToken: user.fcmToken!,
         }));
 
-      await this.sendToUsers(recipients, template);
-    } catch (error) {
-      console.error('Error sending notification to admins:', error);
-      throw error;
-    }
+    await sendToUsers(recipients, template);
+  } catch (error) {
+    console.error('Error sending notification to admins:', error);
+    throw error;
   }
+};
 
-  /**
-   * Send notification to users assigned to specific room
-   */
-  static async sendToRoomUsers(roomId: number, template: NotificationTemplate): Promise<void> {
+/**
+ * Send notification to users assigned to specific room
+ */
+export const sendToRoomUsers = async (roomId: number, template: NotificationTemplate): Promise<void> => {
     try {
       // Get users assigned to the room
       const roomUsers = await prisma.userRoomAssignment.findMany({
@@ -182,72 +181,72 @@ export class NotificationService {
           fcmToken: assignment.user.fcmToken!,
         }));
 
-      await this.sendToUsers(recipients, template);
-    } catch (error) {
-      console.error('Error sending notification to room users:', error);
-      throw error;
-    }
+    await sendToUsers(recipients, template);
+  } catch (error) {
+    console.error('Error sending notification to room users:', error);
+    throw error;
   }
+};
 
-  /**
-   * Notify admins about new meter reading submission
-   */
-  static async notifyReadingSubmitted(roomNumber: number, month: number, year: number): Promise<void> {
-    const template = this.templates.READING_SUBMITTED(roomNumber, month, year);
-    await this.sendToAdmins(template);
-  }
+/**
+ * Notify admins about new meter reading submission
+ */
+export const notifyReadingSubmitted = async (roomNumber: number, month: number, year: number): Promise<void> => {
+  const template = templates.READING_SUBMITTED(roomNumber, month, year);
+  await sendToAdmins(template);
+};
 
-  /**
-   * Notify room users about reading approval
-   */
-  static async notifyReadingApproved(roomId: number, roomNumber: number, month: number, year: number): Promise<void> {
-    const template = this.templates.READING_APPROVED(roomNumber, month, year);
-    await this.sendToRoomUsers(roomId, template);
-  }
+/**
+ * Notify room users about reading approval
+ */
+export const notifyReadingApproved = async (roomId: number, roomNumber: number, month: number, year: number): Promise<void> => {
+  const template = templates.READING_APPROVED(roomNumber, month, year);
+  await sendToRoomUsers(roomId, template);
+};
 
-  /**
-   * Notify room users about reading rejection
-   */
-  static async notifyReadingRejected(
-    roomId: number, 
-    roomNumber: number, 
-    month: number, 
-    year: number, 
-    reason?: string
-  ): Promise<void> {
-    const template = this.templates.READING_REJECTED(roomNumber, month, year, reason);
-    await this.sendToRoomUsers(roomId, template);
-  }
+/**
+ * Notify room users about reading rejection
+ */
+export const notifyReadingRejected = async (
+  roomId: number, 
+  roomNumber: number, 
+  month: number, 
+  year: number, 
+  reason?: string
+): Promise<void> => {
+  const template = templates.READING_REJECTED(roomNumber, month, year, reason);
+  await sendToRoomUsers(roomId, template);
+};
 
-  /**
-   * Notify room users about reading modification by admin
-   */
-  static async notifyReadingModified(roomId: number, roomNumber: number, month: number, year: number): Promise<void> {
-    const template = this.templates.READING_MODIFIED(roomNumber, month, year);
-    await this.sendToRoomUsers(roomId, template);
-  }
+/**
+ * Notify room users about reading modification by admin
+ */
+export const notifyReadingModified = async (roomId: number, roomNumber: number, month: number, year: number): Promise<void> => {
+  const template = templates.READING_MODIFIED(roomNumber, month, year);
+  await sendToRoomUsers(roomId, template);
+};
 
-  /**
-   * Notify room users about bill generation
-   */
-  static async notifyBillGenerated(
-    roomId: number, 
-    roomNumber: number, 
-    month: number, 
-    year: number, 
-    amount: number
-  ): Promise<void> {
-    const template = this.templates.BILL_GENERATED(roomNumber, month, year, amount);
-    await this.sendToRoomUsers(roomId, template);
-  }
+/**
+ * Notify room users about bill generation
+ */
+export const notifyBillGenerated = async (
+  roomId: number, 
+  roomNumber: number, 
+  month: number, 
+  year: number, 
+  amount: number
+): Promise<void> => {
+  const template = templates.BILL_GENERATED(roomNumber, month, year, amount);
+  await sendToRoomUsers(roomId, template);
+};
 
-  /**
-   * Save notification to history for tracking
-   */
-  private static async saveNotificationHistory(
-    recipients: NotificationRecipient[],
-    template: NotificationTemplate
-  ): Promise<void> {
+/**
+ * Save notification to history for tracking
+ */
+const saveNotificationHistory = async (
+  recipients: NotificationRecipient[],
+  template: NotificationTemplate
+): Promise<void> => {
     try {
       const notifications = recipients.map(recipient => ({
         userId: recipient.userId,
@@ -262,22 +261,22 @@ export class NotificationService {
       });
     } catch (error) {
       console.error('Error saving notification history:', error);
-      // Don't throw here as notification sending was successful
-    }
+    // Don't throw here as notification sending was successful
   }
+};
 
-  /**
-   * Get notification history for a user
-   */
-  static async getUserNotifications(
-    userId: string,
-    page: number = 1,
-    limit: number = 20
-  ): Promise<{
-    notifications: any[];
-    total: number;
-    unreadCount: number;
-  }> {
+/**
+ * Get notification history for a user
+ */
+export const getUserNotifications = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<{
+  notifications: any[];
+  total: number;
+  unreadCount: number;
+}> => {
     try {
       const skip = (page - 1) * limit;
 
@@ -306,14 +305,14 @@ export class NotificationService {
       };
     } catch (error) {
       console.error('Error fetching user notifications:', error);
-      throw error;
-    }
+    throw error;
   }
+};
 
-  /**
-   * Mark notifications as read
-   */
-  static async markAsRead(userId: string, notificationIds: string[]): Promise<void> {
+/**
+ * Mark notifications as read
+ */
+export const markAsRead = async (userId: string, notificationIds: string[]): Promise<void> => {
     try {
       await prisma.notification.updateMany({
         where: {
@@ -326,14 +325,14 @@ export class NotificationService {
       });
     } catch (error) {
       console.error('Error marking notifications as read:', error);
-      throw error;
-    }
+    throw error;
   }
+};
 
-  /**
-   * Mark all notifications as read for a user
-   */
-  static async markAllAsRead(userId: string): Promise<void> {
+/**
+ * Mark all notifications as read for a user
+ */
+export const markAllAsRead = async (userId: string): Promise<void> => {
     try {
       await prisma.notification.updateMany({
         where: {
@@ -346,14 +345,14 @@ export class NotificationService {
       });
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
-      throw error;
-    }
+    throw error;
   }
+};
 
-  /**
-   * Update user's FCM token
-   */
-  static async updateFCMToken(userId: string, fcmToken: string): Promise<void> {
+/**
+ * Update user's FCM token
+ */
+export const updateFCMToken = async (userId: string, fcmToken: string): Promise<void> => {
     try {
       await prisma.user.update({
         where: { id: userId },
@@ -361,7 +360,6 @@ export class NotificationService {
       });
     } catch (error) {
       console.error('Error updating FCM token:', error);
-      throw error;
-    }
+    throw error;
   }
-}
+};

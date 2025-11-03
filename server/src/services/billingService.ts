@@ -87,16 +87,15 @@ export interface BillingFilters {
   floor?: number;
 }
 
-export class BillingService {
-  // Fixed rates as per requirements
-  private static readonly ELECTRICITY_RATE = 3500;
-  private static readonly WATER_RATE = 22000;
-  private static readonly TRASH_FEE = 52000;
+// Fixed rates as per requirements
+const ELECTRICITY_RATE = 3500;
+const WATER_RATE = 22000;
+const TRASH_FEE = 52000;
 
-  /**
-   * Generate billing record from approved meter reading
-   */
-  async generateBillingRecord(readingId: string): Promise<BillingRecordWithDetails> {
+/**
+ * Generate billing record from approved meter reading
+ */
+export const generateBillingRecord = async (readingId: string): Promise<BillingRecordWithDetails> => {
     const reading = await prisma.meterReading.findUnique({
       where: { id: readingId },
       include: {
@@ -128,8 +127,8 @@ export class BillingService {
       throw new ValidationError('Billing record already exists for this reading');
     }
 
-    // Calculate usage and costs
-    const calculation = await this.calculateBilling(
+  // Calculate usage and costs
+  const calculation = await calculateBilling(
       reading.roomId,
       reading.month,
       reading.year,
@@ -178,22 +177,22 @@ export class BillingService {
       }
     });
 
-    return billingRecord;
-  }
+  return billingRecord;
+};
 
-  /**
-   * Calculate billing amounts based on meter readings
-   */
-  async calculateBilling(
-    roomId: number,
-    month: number,
-    year: number,
-    waterReading: number,
-    electricityReading: number,
-    baseRent: number
-  ): Promise<BillingCalculation> {
-    // Get previous month's reading for usage calculation
-    const previousReading = await this.getPreviousMonthReading(roomId, month, year);
+/**
+ * Calculate billing amounts based on meter readings
+ */
+export const calculateBilling = async (
+  roomId: number,
+  month: number,
+  year: number,
+  waterReading: number,
+  electricityReading: number,
+  baseRent: number
+): Promise<BillingCalculation> => {
+  // Get previous month's reading for usage calculation
+  const previousReading = await getPreviousMonthReading(roomId, month, year);
     
     let waterUsage = 0;
     let electricityUsage = 0;
@@ -207,10 +206,10 @@ export class BillingService {
       electricityUsage = electricityReading;
     }
 
-    // Calculate costs using the formula: (3500 × electricity) + (22000 × water) + base_rent + 52000
-    const electricityCost = electricityUsage * BillingService.ELECTRICITY_RATE;
-    const waterCost = waterUsage * BillingService.WATER_RATE;
-    const trashFee = BillingService.TRASH_FEE;
+  // Calculate costs using the formula: (3500 × electricity) + (22000 × water) + base_rent + 52000
+  const electricityCost = electricityUsage * ELECTRICITY_RATE;
+  const waterCost = waterUsage * WATER_RATE;
+  const trashFee = TRASH_FEE;
     const totalAmount = electricityCost + waterCost + baseRent + trashFee;
 
     return {
@@ -224,24 +223,24 @@ export class BillingService {
     };
   }
 
-  /**
-   * Calculate real-time bill amount for user interface
-   */
-  async calculateRealtimeBill(
+/**
+ * Calculate real-time bill amount for user interface
+ */
+export const calculateRealtimeBill = async (
     roomId: number,
     month: number,
     year: number,
     waterReading: number,
     electricityReading: number,
-    baseRent: number
-  ): Promise<BillingCalculation> {
-    return await this.calculateBilling(roomId, month, year, waterReading, electricityReading, baseRent);
-  }
+  baseRent: number
+): Promise<BillingCalculation> => {
+  return await calculateBilling(roomId, month, year, waterReading, electricityReading, baseRent);
+};
 
-  /**
-   * Get billing record by ID
-   */
-  async getBillingRecordById(id: string, userRole: string, userId?: string): Promise<BillingRecordWithDetails | null> {
+/**
+ * Get billing record by ID
+ */
+export const getBillingRecordById = async (id: string, userRole: string, userId?: string): Promise<BillingRecordWithDetails | null> => {
     const billingRecord = await prisma.billingRecord.findUnique({
       where: { id },
       include: {
@@ -272,32 +271,32 @@ export class BillingService {
       return null;
     }
 
-    // Check access permissions for regular users
-    if (userRole === 'USER' && userId) {
-      const hasAccess = await this.checkUserBillingAccess(userId, billingRecord.roomId);
-      if (!hasAccess) {
-        throw new AppError('Access denied to this billing record', 403);
-      }
+  // Check access permissions for regular users
+  if (userRole === 'USER' && userId) {
+    const hasAccess = await checkUserBillingAccess(userId, billingRecord.roomId);
+    if (!hasAccess) {
+      throw new AppError('Access denied to this billing record', 403);
     }
-
-    return billingRecord;
   }
 
-  /**
-   * Get billing records with filters and pagination
-   */
-  async getBillingRecords(
+  return billingRecord;
+};
+
+/**
+ * Get billing records with filters and pagination
+ */
+export const getBillingRecords = async (
     filters: BillingFilters,
     userRole: string,
     userId?: string,
     page: number = 1,
     limit: number = 10
   ): Promise<{
-    billingRecords: BillingRecordWithDetails[];
-    total: number;
-    page: number;
-    totalPages: number;
-  }> {
+  billingRecords: BillingRecordWithDetails[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> => {
     const whereClause: any = { ...filters };
 
     // Filter by user access for regular users
@@ -361,13 +360,13 @@ export class BillingService {
     };
   }
 
-  /**
-   * Get billing history for a specific room
-   */
-  async getRoomBillingHistory(roomId: number, userRole: string, userId?: string): Promise<BillingRecordWithDetails[]> {
+/**
+ * Get billing history for a specific room
+ */
+export const getRoomBillingHistory = async (roomId: number, userRole: string, userId?: string): Promise<BillingRecordWithDetails[]> => {
     // Check access permissions for regular users
     if (userRole === 'USER' && userId) {
-      const hasAccess = await this.checkUserBillingAccess(userId, roomId);
+      const hasAccess = await checkUserBillingAccess(userId, roomId);
       if (!hasAccess) {
         throw new AppError('Access denied to this room', 403);
       }
@@ -404,14 +403,14 @@ export class BillingService {
     });
   }
 
-  /**
-   * Update payment status of a billing record
-   */
-  async updatePaymentStatus(
-    id: string,
-    paymentStatus: PaymentStatus,
-    paymentDate?: Date
-  ): Promise<BillingRecordWithDetails> {
+/**
+ * Update payment status of a billing record
+ */
+export const updatePaymentStatus = async (
+  id: string,
+  paymentStatus: PaymentStatus,
+  paymentDate?: Date
+): Promise<BillingRecordWithDetails> => {
     const billingRecord = await prisma.billingRecord.findUnique({
       where: { id }
     });
@@ -455,13 +454,13 @@ export class BillingService {
       }
     });
 
-    return updatedRecord;
-  }
+  return updatedRecord;
+};
 
-  /**
-   * Mark overdue payments
-   */
-  async markOverduePayments(dueDays: number = 30): Promise<number> {
+/**
+ * Mark overdue payments
+ */
+export const markOverduePayments = async (dueDays: number = 30): Promise<number> => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - dueDays);
 
@@ -477,18 +476,18 @@ export class BillingService {
       }
     });
 
-    return result.count;
-  }
+  return result.count;
+};
 
-  /**
-   * Get financial summary
-   */
-  async getFinancialSummary(
+/**
+ * Get financial summary
+ */
+export const getFinancialSummary = async (
     month?: number,
     year?: number,
     userRole?: string,
     userId?: string
-  ): Promise<FinancialSummary> {
+): Promise<FinancialSummary> => {
     const whereClause: any = {};
 
     if (month && year) {
@@ -546,19 +545,19 @@ export class BillingService {
       totalOverdue,
       roomCount: totalRooms,
       occupiedRooms,
-      averageRoomIncome
-    };
-  }
+    averageRoomIncome
+  };
+};
 
-  /**
-   * Get monthly financial report
-   */
-  async getMonthlyFinancialReport(
+/**
+ * Get monthly financial report
+ */
+export const getMonthlyFinancialReport = async (
     month: number,
     year: number,
     userRole?: string,
     userId?: string
-  ): Promise<MonthlyFinancialReport> {
+): Promise<MonthlyFinancialReport> => {
     const whereClause: any = { month, year };
 
     // Filter by user access for regular users
@@ -620,18 +619,18 @@ export class BillingService {
       totalPaid,
       totalUnpaid,
       totalOverdue,
-      roomBreakdown
-    };
-  }
+    roomBreakdown
+  };
+};
 
-  /**
-   * Get yearly financial report
-   */
-  async getYearlyFinancialReport(
-    year: number,
-    userRole?: string,
-    userId?: string
-  ): Promise<YearlyFinancialReport> {
+/**
+ * Get yearly financial report
+ */
+export const getYearlyFinancialReport = async (
+  year: number,
+  userRole?: string,
+  userId?: string
+): Promise<YearlyFinancialReport> => {
     const whereClause: any = { year };
 
     // Filter by user access for regular users
@@ -702,19 +701,19 @@ export class BillingService {
       totalPaid,
       totalUnpaid,
       totalOverdue,
-      monthlyBreakdown
-    };
-  }
+    monthlyBreakdown
+  };
+};
 
-  /**
-   * Export financial data to CSV format
-   */
-  async exportFinancialData(
+/**
+ * Export financial data to CSV format
+ */
+export const exportFinancialData = async (
     filters: BillingFilters,
     userRole?: string,
     userId?: string
-  ): Promise<string> {
-    const { billingRecords } = await this.getBillingRecords(filters, userRole || 'ADMIN', userId, 1, 10000);
+): Promise<string> => {
+  const { billingRecords } = await getBillingRecords(filters, userRole || 'ADMIN', userId, 1, 10000);
 
     const headers = [
       'Room Number',
@@ -755,13 +754,13 @@ export class BillingService {
       csvRows.push(row.join(','));
     });
 
-    return csvRows.join('\n');
-  }
+  return csvRows.join('\n');
+};
 
-  /**
-   * Get previous month's reading for a room
-   */
-  private async getPreviousMonthReading(roomId: number, month: number, year: number): Promise<MeterReading | null> {
+/**
+ * Get previous month's reading for a room
+ */
+const getPreviousMonthReading = async (roomId: number, month: number, year: number): Promise<MeterReading | null> => {
     let prevMonth = month - 1;
     let prevYear = year;
 
@@ -777,14 +776,14 @@ export class BillingService {
           month: prevMonth,
           year: prevYear
         }
-      }
-    });
-  }
+    }
+  });
+};
 
-  /**
-   * Check if user has access to billing records for a specific room
-   */
-  private async checkUserBillingAccess(userId: string, roomId: number): Promise<boolean> {
+/**
+ * Check if user has access to billing records for a specific room
+ */
+const checkUserBillingAccess = async (userId: string, roomId: number): Promise<boolean> => {
     const assignment = await prisma.userRoomAssignment.findUnique({
       where: {
         userId_roomId: {
@@ -794,8 +793,5 @@ export class BillingService {
       }
     });
 
-    return !!assignment;
-  }
-}
-
-export const billingService = new BillingService();
+  return !!assignment;
+};

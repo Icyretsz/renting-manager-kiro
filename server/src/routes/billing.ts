@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { billingController } from '../controllers/billingController';
+import * as billingController from '../controllers/billingController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 
 const router = Router();

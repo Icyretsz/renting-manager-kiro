@@ -19,43 +19,40 @@ export interface MeterPhotoUpload {
   uploadedBy: string;
 }
 
-export class FileStorageService {
-  private uploadDir: string;
-  private meterPhotosDir: string;
+// Configuration
+const uploadDir = process.env['UPLOAD_DIR'] || 'uploads';
+const meterPhotosDir = path.join(uploadDir, 'meter-photos');
 
-  constructor() {
-    this.uploadDir = process.env['UPLOAD_DIR'] || 'uploads';
-    this.meterPhotosDir = path.join(this.uploadDir, 'meter-photos');
-    this.ensureDirectoriesExist();
+/**
+ * Ensure upload directories exist
+ */
+const ensureDirectoriesExist = (): void => {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
   }
 
-  /**
-   * Ensure upload directories exist
-   */
-  private ensureDirectoriesExist(): void {
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
-    }
-
-    if (!fs.existsSync(this.meterPhotosDir)) {
-      fs.mkdirSync(this.meterPhotosDir, { recursive: true });
-    }
+  if (!fs.existsSync(meterPhotosDir)) {
+    fs.mkdirSync(meterPhotosDir, { recursive: true });
   }
+};
 
-  /**
-   * Generate secure filename for meter photos
-   */
-  generateMeterPhotoFilename(roomId: number, meterType: 'water' | 'electricity', originalName: string): string {
+// Initialize directories
+ensureDirectoriesExist();
+
+/**
+ * Generate secure filename for meter photos
+ */
+export const generateMeterPhotoFilename = (roomId: number, meterType: 'water' | 'electricity', originalName: string): string => {
     const timestamp = Date.now();
     const ext = path.extname(originalName).toLowerCase();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
     return `room${roomId}_${meterType}_${timestamp}_${randomSuffix}${ext}`;
-  }
+};
 
-  /**
-   * Validate image file
-   */
-  validateImageFile(file: Express.Multer.File): void {
+/**
+ * Validate image file
+ */
+export const validateImageFile = (file: Express.Multer.File): void => {
     // Check file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.mimetype)) {
@@ -74,14 +71,14 @@ export class FileStorageService {
     if (!allowedExtensions.includes(ext)) {
       throw new ValidationError('Invalid file extension');
     }
-  }
+};
 
-  /**
-   * Save meter photo with proper naming and validation
-   */
-  async saveMeterPhoto(upload: MeterPhotoUpload): Promise<FileInfo> {
-    // Validate the file
-    this.validateImageFile(upload.file);
+/**
+ * Save meter photo with proper naming and validation
+ */
+export const saveMeterPhoto = async (upload: MeterPhotoUpload): Promise<FileInfo> => {
+  // Validate the file
+  validateImageFile(upload.file);
 
     // Verify room exists
     const room = await prisma.room.findUnique({
@@ -92,14 +89,14 @@ export class FileStorageService {
       throw new ValidationError('Room not found');
     }
 
-    // Generate secure filename
-    const filename = this.generateMeterPhotoFilename(
-      upload.roomId,
-      upload.meterType,
-      upload.file.originalname
-    );
+  // Generate secure filename
+  const filename = generateMeterPhotoFilename(
+    upload.roomId,
+    upload.meterType,
+    upload.file.originalname
+  );
 
-    const filePath = path.join(this.meterPhotosDir, filename);
+  const filePath = path.join(meterPhotosDir, filename);
     const fileUrl = `/uploads/meter-photos/${filename}`;
 
     // Move file to final location
@@ -117,18 +114,18 @@ export class FileStorageService {
       path: filePath,
       url: fileUrl
     };
+};
+
+/**
+ * Delete a file from storage
+ */
+export const deleteFile = async (filename: string): Promise<void> => {
+  // Security check - prevent directory traversal
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    throw new ValidationError('Invalid filename');
   }
 
-  /**
-   * Delete a file from storage
-   */
-  async deleteFile(filename: string): Promise<void> {
-    // Security check - prevent directory traversal
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      throw new ValidationError('Invalid filename');
-    }
-
-    const filePath = path.join(this.meterPhotosDir, filename);
+  const filePath = path.join(meterPhotosDir, filename);
 
     try {
       if (fs.existsSync(filePath)) {
@@ -137,45 +134,45 @@ export class FileStorageService {
     } catch (error) {
       throw new AppError('Failed to delete file', 500);
     }
+};
+
+/**
+ * Check if file exists
+ */
+export const fileExists = (filename: string): boolean => {
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return false;
   }
 
-  /**
-   * Check if file exists
-   */
-  fileExists(filename: string): boolean {
-    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return false;
-    }
-
-    const filePath = path.join(this.meterPhotosDir, filename);
+  const filePath = path.join(meterPhotosDir, filename);
     return fs.existsSync(filePath);
   }
 
-  /**
-   * Get file info
-   */
-  getFileInfo(filename: string): FileInfo | null {
-    if (!this.fileExists(filename)) {
-      return null;
-    }
-
-    const filePath = path.join(this.meterPhotosDir, filename);
-    const stats = fs.statSync(filePath);
-
-    return {
-      filename,
-      originalName: filename,
-      size: stats.size,
-      mimetype: this.getMimetypeFromExtension(path.extname(filename)),
-      path: filePath,
-      url: `/uploads/meter-photos/${filename}`
-    };
+/**
+ * Get file info
+ */
+export const getFileInfo = (filename: string): FileInfo | null => {
+  if (!fileExists(filename)) {
+    return null;
   }
 
-  /**
-   * Get mimetype from file extension
-   */
-  private getMimetypeFromExtension(ext: string): string {
+  const filePath = path.join(meterPhotosDir, filename);
+  const stats = fs.statSync(filePath);
+
+  return {
+    filename,
+    originalName: filename,
+    size: stats.size,
+    mimetype: getMimetypeFromExtension(path.extname(filename)),
+    path: filePath,
+    url: `/uploads/meter-photos/${filename}`
+  };
+};
+
+/**
+ * Get mimetype from file extension
+ */
+const getMimetypeFromExtension = (ext: string): string => {
     const mimetypes: { [key: string]: string } = {
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
@@ -184,28 +181,28 @@ export class FileStorageService {
       '.webp': 'image/webp'
     };
 
-    return mimetypes[ext.toLowerCase()] || 'application/octet-stream';
-  }
+  return mimetypes[ext.toLowerCase()] || 'application/octet-stream';
+};
 
-  /**
-   * Clean up old files (for maintenance)
-   */
-  async cleanupOldFiles(daysOld: number = 30): Promise<number> {
+/**
+ * Clean up old files (for maintenance)
+ */
+export const cleanupOldFiles = async (daysOld: number = 30): Promise<number> => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
     let deletedCount = 0;
 
     try {
-      const files = fs.readdirSync(this.meterPhotosDir);
+    const files = fs.readdirSync(meterPhotosDir);
 
-      for (const filename of files) {
-        const filePath = path.join(this.meterPhotosDir, filename);
-        const stats = fs.statSync(filePath);
+    for (const filename of files) {
+      const filePath = path.join(meterPhotosDir, filename);
+      const stats = fs.statSync(filePath);
 
-        if (stats.mtime < cutoffDate) {
-          // Check if file is still referenced in database
-          const isReferenced = await this.isFileReferenced(filename);
+      if (stats.mtime < cutoffDate) {
+        // Check if file is still referenced in database
+        const isReferenced = await isFileReferenced(filename);
           
           if (!isReferenced) {
             fs.unlinkSync(filePath);
@@ -217,13 +214,13 @@ export class FileStorageService {
       console.error('Error during file cleanup:', error);
     }
 
-    return deletedCount;
-  }
+  return deletedCount;
+};
 
-  /**
-   * Check if file is still referenced in database
-   */
-  private async isFileReferenced(filename: string): Promise<boolean> {
+/**
+ * Check if file is still referenced in database
+ */
+const isFileReferenced = async (filename: string): Promise<boolean> => {
     const fileUrl = `/uploads/meter-photos/${filename}`;
 
     const reading = await prisma.meterReading.findFirst({
@@ -235,27 +232,27 @@ export class FileStorageService {
       }
     });
 
-    return !!reading;
-  }
+  return !!reading;
+};
 
-  /**
-   * Get storage statistics
-   */
-  async getStorageStats(): Promise<{
-    totalFiles: number;
-    totalSize: number;
-    averageFileSize: number;
-    oldestFile: Date | null;
-    newestFile: Date | null;
-  }> {
+/**
+ * Get storage statistics
+ */
+export const getStorageStats = async (): Promise<{
+  totalFiles: number;
+  totalSize: number;
+  averageFileSize: number;
+  oldestFile: Date | null;
+  newestFile: Date | null;
+}> => {
     try {
-      const files = fs.readdirSync(this.meterPhotosDir);
-      let totalSize = 0;
-      let oldestFile: Date | null = null;
-      let newestFile: Date | null = null;
+    const files = fs.readdirSync(meterPhotosDir);
+    let totalSize = 0;
+    let oldestFile: Date | null = null;
+    let newestFile: Date | null = null;
 
-      for (const filename of files) {
-        const filePath = path.join(this.meterPhotosDir, filename);
+    for (const filename of files) {
+      const filePath = path.join(meterPhotosDir, filename);
         const stats = fs.statSync(filePath);
         
         totalSize += stats.size;
@@ -283,9 +280,6 @@ export class FileStorageService {
         averageFileSize: 0,
         oldestFile: null,
         newestFile: null
-      };
-    }
+    };
   }
-}
-
-export const fileStorageService = new FileStorageService();
+};

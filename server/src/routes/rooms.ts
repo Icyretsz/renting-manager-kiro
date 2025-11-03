@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { roomController } from '../controllers/roomController';
+import * as roomController from '../controllers/roomController';
 import { authenticateToken } from '../middleware/auth';
 import { validateRequest } from '../middleware/validation';
 import { body, param } from 'express-validator';
@@ -51,47 +51,47 @@ const floorValidation = [
 router.use(authenticateToken);
 
 // Routes
-router.get('/', roomController.getAllRooms.bind(roomController));
+router.get('/', roomController.getAllRooms);
 
-router.get('/stats/occupancy', roomController.getOccupancyStats.bind(roomController));
+router.get('/stats/occupancy', roomController.getOccupancyStats);
 
 router.get('/floor/:floor', 
   floorValidation,
   validateRequest,
-  roomController.getRoomsByFloor.bind(roomController)
+  roomController.getRoomsByFloor
 );
 
 router.get('/:id', 
   roomIdValidation,
   validateRequest,
-  roomController.getRoomById.bind(roomController)
+  roomController.getRoomById
 );
 
 router.get('/:id/tenants', 
   roomIdValidation,
   validateRequest,
-  roomController.getRoomTenants.bind(roomController)
+  roomController.getRoomTenants
 );
 
 router.post('/', 
   createRoomValidation,
   validateRequest,
-  roomController.createRoom.bind(roomController)
+  roomController.createRoom
 );
 
-router.post('/initialize', roomController.initializeRooms.bind(roomController));
+router.post('/initialize', roomController.initializeRooms);
 
 router.put('/:id', 
   roomIdValidation,
   updateRoomValidation,
   validateRequest,
-  roomController.updateRoom.bind(roomController)
+  roomController.updateRoom
 );
 
 router.delete('/:id', 
   roomIdValidation,
   validateRequest,
-  roomController.deleteRoom.bind(roomController)
+  roomController.deleteRoom
 );
 
 export default router;

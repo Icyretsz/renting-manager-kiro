@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { userController } from '../controllers/userController';
+import * as userController from '../controllers/userController';
 import { authenticateToken } from '../middleware/auth';
 import { validateRequest } from '../middleware/validation';
 import { body, param } from 'express-validator';
@@ -57,68 +57,68 @@ const assignRoomsValidation = [
 router.use(authenticateToken);
 
 // Routes
-router.get('/profile', userController.getCurrentUser.bind(userController));
+router.get('/profile', userController.getCurrentUser);
 
 router.put('/profile', 
   updateProfileValidation,
   validateRequest,
-  userController.updateProfile.bind(userController)
+  userController.updateProfile
 );
 
-router.get('/stats', userController.getUserStats.bind(userController));
+router.get('/stats', userController.getUserStats);
 
 router.get('/role/:role', 
   roleValidation,
   validateRequest,
-  userController.getUsersByRole.bind(userController)
+  userController.getUsersByRole
 );
 
 router.get('/access/room/:roomId', 
   roomIdValidation,
   validateRequest,
-  userController.checkRoomAccess.bind(userController)
+  userController.checkRoomAccess
 );
 
-router.get('/', userController.getAllUsers.bind(userController));
+router.get('/', userController.getAllUsers);
 
 router.get('/:id', 
   userIdValidation,
   validateRequest,
-  userController.getUserById.bind(userController)
+  userController.getUserById
 );
 
 router.put('/:id/role', 
   userIdValidation,
   updateRoleValidation,
   validateRequest,
-  userController.updateUserRole.bind(userController)
+  userController.updateUserRole
 );
 
 router.get('/:id/rooms', 
   userIdValidation,
   validateRequest,
-  userController.getUserRoomAssignments.bind(userController)
+  userController.getUserRoomAssignments
 );
 
 router.post('/:id/rooms', 
   userIdValidation,
   assignRoomsValidation,
   validateRequest,
-  userController.assignUserToRooms.bind(userController)
+  userController.assignUserToRooms
 );
 
 router.post('/:id/rooms/:roomId', 
   userIdValidation,
   roomIdValidation,
   validateRequest,
-  userController.addRoomAssignment.bind(userController)
+  userController.addRoomAssignment
 );
 
 router.delete('/:id/rooms/:roomId', 
   userIdValidation,
   roomIdValidation,
   validateRequest,
-  userController.removeRoomAssignment.bind(userController)
+  userController.removeRoomAssignment
 );
 
 export default router;

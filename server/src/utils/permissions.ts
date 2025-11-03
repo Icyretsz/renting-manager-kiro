@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserService } from '../services/userService';
+import * as userService from '../services/userService';
 import { AppError } from './errors';
 
 export interface AuthenticatedRequest extends Request {
@@ -69,7 +69,7 @@ export class PermissionValidator {
           return next(new AppError('Invalid room ID', 400));
         }
 
-        const hasAccess = await UserService.hasRoomAccess(userId, roomIdNum);
+        const hasAccess = await userService.hasRoomAccess(userId, roomIdNum);
         if (!hasAccess) {
           return next(new AppError('Access denied to this room', 403));
         }
@@ -167,7 +167,7 @@ export class PermissionValidator {
             return next(new AppError('Invalid room ID in array', 400));
           }
 
-          const hasAccess = await UserService.hasRoomAccess(userId, roomIdNum);
+          const hasAccess = await userService.hasRoomAccess(userId, roomIdNum);
           if (!hasAccess) {
             return next(new AppError(`Access denied to room ${roomIdNum}`, 403));
           }
@@ -235,8 +235,8 @@ export class PermissionHelper {
     }
 
     // Regular users can only access assigned rooms
-    const assignments = await UserService.getUserRoomAssignments(userId);
-    return assignments.map(assignment => assignment.roomId);
+    const assignments = await userService.getUserRoomAssignments(userId);
+    return assignments.map((assignment: any) => assignment.roomId);
   }
 }
 
