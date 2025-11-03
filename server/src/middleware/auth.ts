@@ -46,7 +46,7 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
       auth0Id: auth0UserInfo.sub,
       email: auth0UserInfo.email,
       name: auth0UserInfo.name || auth0UserInfo.nickname || auth0UserInfo.email,
-      roles: auth0UserInfo['https://rental-app.com/roles'] || [],
+      role: auth0UserInfo.roleType[0]!,
     };
     console.log('userInfo', userInfo);
 
@@ -67,7 +67,7 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
           auth0Id: userInfo.auth0Id,
           email: userInfo.email,
           name: userInfo.name,
-          role: userInfo.roles.includes('admin') ? 'ADMIN' : 'USER',
+          role: userInfo.role.includes('admin') ? 'ADMIN' : 'USER',
         },
         include: {
           roomAssignments: {
@@ -79,9 +79,7 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
       // Update user info if it has changed
       const needsUpdate = 
         user.email !== userInfo.email || 
-        user.name !== userInfo.name ||
-        (userInfo.roles.includes('admin') && user.role !== 'ADMIN') ||
-        (!userInfo.roles.includes('admin') && user.role !== 'USER');
+        user.name !== userInfo.name
 
       if (needsUpdate) {
         user = await prisma.user.update({
@@ -89,7 +87,6 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
           data: {
             email: userInfo.email,
             name: userInfo.name,
-            role: userInfo.roles.includes('admin') ? 'ADMIN' : 'USER',
           },
           include: {
             roomAssignments: {

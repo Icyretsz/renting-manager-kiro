@@ -3,8 +3,10 @@ export interface Auth0UserInfo {
   email: string;
   name?: string;
   nickname?: string;
-  'https://rental-app.com/roles'?: string[];
-  [key: string]: any;
+  pictur: string;
+  updated_at: string;
+  email_verified: boolean;
+  roleType: string[];
 }
 
 export async function fetchUserInfo(accessToken: string): Promise<Auth0UserInfo> {

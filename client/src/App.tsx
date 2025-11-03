@@ -40,7 +40,7 @@ const AppContent = () => {
   }
 
   // Get user role
-  const userRole = (user?.['https://rental-app.com/role'] as 'admin' | 'user') || 'user';
+  const userRole = user?.roleType[0];
 
   return (
     <BrowserRouter>
@@ -57,7 +57,7 @@ const AppContent = () => {
         <Route
           path="/admin"
           element={
-            userRole === 'admin' ? (
+            userRole === 'ADMIN' ? (
               <MainLayout>
                 <AdminDashboardPage />
               </MainLayout>
@@ -85,7 +85,7 @@ const AppContent = () => {
         <Route
           path="/tenants"
           element={
-            userRole === 'admin' ? (
+            userRole === 'ADMIN' ? (
               <MainLayout>
                 <TenantsPage />
               </MainLayout>

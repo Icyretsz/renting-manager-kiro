@@ -4,7 +4,7 @@ export interface User {
   auth0Id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: 'ADMIN' | 'USER';
   createdAt: Date;
   updatedAt: Date;
 }

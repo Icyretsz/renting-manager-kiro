@@ -28,17 +28,17 @@ export const useAuth = () => {
     auth0Id: auth0User.sub || '',
     email: auth0User.email || '',
     name: auth0User.name || auth0User.nickname || '',
-    role: (auth0User['https://rental-app.com/role'] as 'admin' | 'user') || 'user',
+    role: auth0User.roleType[0],
     createdAt: new Date(),
     updatedAt: new Date(),
   } : null;
 
   const isAdmin = () => {
-    return user?.role === 'admin';
+    return user?.role === 'ADMIN';
   };
 
   const isUser = () => {
-    return user?.role === 'user';
+    return user?.role === 'USER';
   };
 
   return {
