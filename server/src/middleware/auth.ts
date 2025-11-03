@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken, extractUserFromToken } from '../config/auth0';
+import { verifyToken } from '../config/auth0';
+import { fetchUserInfo, Auth0UserInfo } from '../utils/auth0APIUltils';
 import { AuthenticationError, AuthorizationError } from '../utils/errors';
 import prisma from '../config/database';
 
@@ -34,10 +35,20 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify token with Auth0
-    const decodedToken = await verifyToken(token);
-    console.log('decodedToken', decodedToken)
-    const userInfo = extractUserFromToken(decodedToken);
-    console.log('userInfo', userInfo)
+    await verifyToken(token);
+    
+    // Fetch user info from Auth0 API
+    const auth0UserInfo: Auth0UserInfo = await fetchUserInfo(token);
+    console.log('auth0UserInfo', auth0UserInfo);
+
+    // Extract user information from Auth0 API response
+    const userInfo = {
+      auth0Id: auth0UserInfo.sub,
+      email: auth0UserInfo.email,
+      name: auth0UserInfo.name || auth0UserInfo.nickname || auth0UserInfo.email,
+      roles: auth0UserInfo['https://rental-app.com/roles'] || [],
+    };
+    console.log('userInfo', userInfo);
 
     // Find or create user in database
     let user = await prisma.user.findUnique({
