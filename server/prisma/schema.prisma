@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users table (synced with Auth0)
+model User {
+  id       String @id @default(cuid())
+  auth0Id  String @unique @map("auth0_id")
+  email    String @unique
+  name     String
+  role     Role   @default(USER)
+  fcmToken String? @map("fcm_token")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  roomAssignments     UserRoomAssignment[]
+  submittedReadings   MeterReading[]       @relation("SubmittedBy")
+  approvedReadings    MeterReading[]       @relation("ApprovedBy")
+  readingModifications ReadingModification[]
+  notifications       Notification[]
+
+  @@map("users")
+}
+
+// Rooms table (18 predefined rooms)
+model Room {
+  id          Int     @id @default(autoincrement())
+  roomNumber  Int     @unique @map("room_number")
+  floor       Int
+  baseRent    Decimal @default(0) @map("base_rent") @db.Decimal(10, 2)
+  maxTenants  Int     @default(4) @map("max_tenants")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tenants         Tenant[]
+  userAssignments UserRoomAssignment[]
+  meterReadings   MeterReading[]
+  billingRecords  BillingRecord[]
+
+  @@map("rooms")
+}
+
+// Tenants table
+model Tenant {
+  id          String    @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  roomId      Int       @map("room_id")
+  moveInDate  DateTime? @map("move_in_date")
+  moveOutDate DateTime? @map("move_out_date")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  room Room @relation(fields: [roomId], references: [id])
+
+  @@map("tenants")
+}
+
+// User room assignments (for regular users)
+model UserRoomAssignment {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  roomId     Int      @map("room_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  room Room @relation(fields: [roomId], references: [id])
+
+  @@unique([userId, roomId])
+  @@map("user_room_assignments")
+}
+
+// Meter readings table
+model MeterReading {
+  id                   String    @id @default(cuid())
+  roomId               Int       @map("room_id")
+  month                Int
+  year                 Int
+  waterReading         Decimal   @map("water_reading") @db.Decimal(10, 1)
+  electricityReading   Decimal   @map("electricity_reading") @db.Decimal(10, 1)
+  waterPhotoUrl        String?   @map("water_photo_url")
+  electricityPhotoUrl  String?   @map("electricity_photo_url")
+  baseRent             Decimal   @map("base_rent") @db.Decimal(10, 2)
+  trashFee             Decimal   @default(52000) @map("trash_fee") @db.Decimal(10, 2)
+  totalAmount          Decimal?  @map("total_amount") @db.Decimal(10, 2)
+  status               ReadingStatus @default(PENDING)
+  submittedBy          String    @map("submitted_by")
+  submittedAt          DateTime  @default(now()) @map("submitted_at")
+  approvedBy           String?   @map("approved_by")
+  approvedAt           DateTime? @map("approved_at")
+
+  // Relations
+  room         Room                  @relation(fields: [roomId], references: [id])
+  submitter    User                  @relation("SubmittedBy", fields: [submittedBy], references: [id])
+  approver     User?                 @relation("ApprovedBy", fields: [approvedBy], references: [id])
+  modifications ReadingModification[]
+  billingRecord BillingRecord?
+
+  @@unique([roomId, month, year])
+  @@map("meter_readings")
+}
+
+// Reading modification log
+model ReadingModification {
+  id               String           @id @default(cuid())
+  readingId        String           @map("reading_id")
+  modifiedBy       String           @map("modified_by")
+  modifiedAt       DateTime         @default(now()) @map("modified_at")
+  fieldName        String           @map("field_name")
+  oldValue         String?          @map("old_value")
+  newValue         String?          @map("new_value")
+  modificationType ModificationType @map("modification_type")
+
+  // Relations
+  reading  MeterReading @relation(fields: [readingId], references: [id])
+  modifier User         @relation(fields: [modifiedBy], references: [id])
+
+  @@map("reading_modifications")
+}
+
+// Billing history
+model BillingRecord {
+  id              String        @id @default(cuid())
+  readingId       String        @unique @map("reading_id")
+  roomId          Int           @map("room_id")
+  month           Int
+  year            Int
+  waterUsage      Decimal       @map("water_usage") @db.Decimal(10, 1)
+  electricityUsage Decimal      @map("electricity_usage") @db.Decimal(10, 1)
+  waterCost       Decimal       @map("water_cost") @db.Decimal(10, 2)
+  electricityCost Decimal       @map("electricity_cost") @db.Decimal(10, 2)
+  baseRent        Decimal       @map("base_rent") @db.Decimal(10, 2)
+  trashFee        Decimal       @map("trash_fee") @db.Decimal(10, 2)
+  totalAmount     Decimal       @map("total_amount") @db.Decimal(10, 2)
+  paymentStatus   PaymentStatus @default(UNPAID) @map("payment_status")
+  paymentDate     DateTime?     @map("payment_date")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  reading MeterReading @relation(fields: [readingId], references: [id])
+  room    Room         @relation(fields: [roomId], references: [id])
+
+  @@map("billing_records")
+}
+
+// Notification log
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  title      String
+  message    String
+  type       String
+  readStatus Boolean  @default(false) @map("read_status")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  USER
+}
+
+enum ReadingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ModificationType {
+  CREATE
+  UPDATE
+  APPROVE
+  REJECT
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  OVERDUE
+}
