@@ -3,7 +3,7 @@ export interface Auth0UserInfo {
   email: string;
   name?: string;
   nickname?: string;
-  pictur: string;
+  picture?: string;
   updated_at: string;
   email_verified: boolean;
   roleType: string[];

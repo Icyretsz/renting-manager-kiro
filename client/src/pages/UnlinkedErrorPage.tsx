@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { AlertTriangle, Home, LogOut } from 'lucide-react';
+import { AlertTriangle, LogOut } from 'lucide-react';
 
 const UnlinkedErrorPage: React.FC = () => {
   const { logout } = useAuth0();
@@ -11,10 +11,6 @@ const UnlinkedErrorPage: React.FC = () => {
         returnTo: window.location.origin 
       } 
     });
-  };
-
-  const handleGoHome = () => {
-    window.location.href = '/';
   };
 
   return (
@@ -46,13 +42,6 @@ const UnlinkedErrorPage: React.FC = () => {
               </div>
             </div>
             <div className="mt-8 space-y-3">
-              <button
-                onClick={handleGoHome}
-                className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Home className="w-4 h-4 mr-2" />
-                Go to Home Page
-              </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm bg-red-600 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"

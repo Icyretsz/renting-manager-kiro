@@ -19,17 +19,19 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
         try {
           console.log('Auth0Integration: Syncing authenticated user to store', user);
           const token = await getAccessTokenSilently();
+          console.log('Auth0Integration: Got access token:', token ? 'Token received' : 'No token');
           
           const appUser: User = {
             id: user.sub || '',
             auth0Id: user.sub || '',
             email: user.email || '',
             name: user.name || user.nickname || '',
-            role: user.roleType[0],
+            role: (user.roleType?.[0] === 'ADMIN' ? 'ADMIN' : 'USER') as 'ADMIN' | 'USER',
             createdAt: new Date(),
             updatedAt: new Date(),
           };
 
+          console.log('Auth0Integration: Created app user:', appUser);
           login(token, appUser);
         } catch (error) {
           console.error('Error getting access token:', error);

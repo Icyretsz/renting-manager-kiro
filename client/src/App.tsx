@@ -23,14 +23,16 @@ import { useAuthStore } from './stores';
 
 // Main app content that requires authentication
 const AppContent = () => {
-  const { isLoading, isAuthenticated, user } = useAuth0();
-  const { token } = useAuthStore()
+  const { isLoading, isAuthenticated } = useAuth0();
+  const { token, user: appUser } = useAuthStore()
 
-  console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasUser: !!user });
+  console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
 
   useEffect(() => {
-    console.log(token)
-  }, [token])
+    console.log('Token:', token)
+    console.log('App User:', appUser)
+  }, [token, appUser])
+  
   // Show loading while Auth0 is initializing
   if (isLoading) {
     return <LoadingSpinner fullScreen message="Loading application..." />;
@@ -41,8 +43,13 @@ const AppContent = () => {
     return <LoginPage />;
   }
 
-  // Get user role
-  const userRole = user?.roleType[0];
+  // Show loading while app user is being set up
+  if (!appUser) {
+    return <LoadingSpinner fullScreen message="Setting up user..." />;
+  }
+
+  // Get user role from app user
+  const userRole = appUser.role;
 
   return (
     <BrowserRouter>

@@ -65,7 +65,7 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
           auth0Id: userInfo.auth0Id,
           email: userInfo.email,
           name: userInfo.name,
-          role: userInfo.roles.includes('admin') ? 'ADMIN' : 'USER',
+          role: userInfo.roles.includes('ADMIN') ? 'ADMIN' : 'USER',
         },
         include: {
           tenant: {
