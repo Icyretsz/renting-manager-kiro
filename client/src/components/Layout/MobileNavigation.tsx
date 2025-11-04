@@ -64,13 +64,13 @@ export const MobileNavigation: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white z-50">
       <div className="flex items-center justify-around py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           
           return (
-            <button
+            <div
               key={item.key}
               onClick={() => handleNavigation(item.path)}
               className={`flex flex-col items-center justify-center py-2 px-3 min-w-0 flex-1 transition-colors ${
@@ -97,7 +97,7 @@ export const MobileNavigation: React.FC = () => {
               }`}>
                 {item.label}
               </span>
-            </button>
+            </div>
           );
         })}
       </div>

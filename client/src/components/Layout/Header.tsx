@@ -43,12 +43,12 @@ export const MobileHeader: React.FC = () => {
     <AntHeader className="bg-white shadow-sm border-b border-gray-200 px-4 flex items-center justify-between h-14 sticky top-0 z-40">
       {/* Left side - Menu button and title */}
       <div className="flex items-center space-x-3">
-        <Button
+        {/* <Button
           type="text"
           icon={<MenuOutlined />}
           onClick={() => openModal('mobile-menu')}
           className="flex items-center justify-center p-1"
-        />
+        /> */}
         <Text className="text-lg font-semibold text-gray-800">
           Rental Manager
         </Text>
