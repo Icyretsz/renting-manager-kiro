@@ -193,27 +193,29 @@
     - Add export functionality for financial reports
     - _Requirements: 8.2, 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 11. **NEW**: Implement Admin Tenant-User Account Linking System
-  - [ ] 11.1 Create tenant linking backend services
+  - [ ] 10.3 Build comprehensive user and tenant management interface
+    - Create admin users management page with CRUD operations
+    - Implement tenant management interface with room assignment
+    - Build user profile management with role assignment
+    - Add search and filtering capabilities for users and tenants
+    - Create bulk operations for user/tenant management
+    - _Requirements: 3.1, 3.2, 3.3, 4.1, 4.2, 4.3_
+
+- [ ] 11. **UPDATED**: Implement Admin Tenant-User Account Linking System
+  - [ ] 11.1 Enhance backend services for user-tenant linking
     - Build service to link existing user accounts to tenant records
-    - Implement service to create new tenants with optional user linking
-    - Add service to unlink user accounts from tenants
-    - Create suggestion system based on email matching
+    - Implement service to unlink user accounts from tenants
+    - Create suggestion system based on email matching between users and tenants
+    - Add validation to prevent duplicate user-tenant links
     - _Requirements: Admin-controlled user-tenant relationship management_
 
-  - [ ] 11.2 Build admin tenant linking interface
-    - Create admin interface to view unlinked users and tenants
-    - Implement linking/unlinking functionality with confirmation dialogs
-    - Add tenant creation form with optional user account linking
+  - [ ] 11.2 Build integrated linking interface within user/tenant management
+    - Integrate linking functionality into the user and tenant management pages
+    - Implement linking/unlinking actions with confirmation dialogs
+    - Add visual indicators for linked vs unlinked users and tenants
     - Build suggestion display for automatic email-based matching
-    - _Requirements: Admin-only tenant management interface_
-
-  - [ ] 11.3 Simplify user experience
-    - Users simply log in with provided credentials
-    - App automatically shows their room data if linked to tenant
-    - No user-facing linking or registration complexity
-    - Admin handles all account management behind the scenes
-    - _Requirements: Simple user experience with admin-controlled access_
+    - Create bulk linking operations for efficiency
+    - _Requirements: Seamless integration with existing management interfaces_
 
 - [ ]* 12. Testing and quality assurance
   - [ ]* 12.1 Write backend unit and integration tests

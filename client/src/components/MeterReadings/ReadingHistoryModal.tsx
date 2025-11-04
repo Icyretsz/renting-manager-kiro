@@ -80,30 +80,11 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
     let waterUsage = 0;
     let electricityUsage = 0;
     let isFirstReading = false;
-    let isMeterReset = false;
 
     if (previousReading) {
-      const waterDiff = toNumber(reading.waterReading) - toNumber(previousReading.waterReading);
-      const electricityDiff = toNumber(reading.electricityReading) - toNumber(previousReading.electricityReading);
-      
-      // Check for meter reset: if current reading is significantly lower than previous
-      // This indicates meter replacement or reset
-      const waterResetThreshold = toNumber(previousReading.waterReading) * 0.5; // 50% drop indicates reset
-      const electricityResetThreshold = toNumber(previousReading.electricityReading) * 0.5;
-      
-      const isWaterReset = waterDiff < 0 && Math.abs(waterDiff) > waterResetThreshold;
-      const isElectricityReset = electricityDiff < 0 && Math.abs(electricityDiff) > electricityResetThreshold;
-      
-      if (isWaterReset || isElectricityReset) {
-        // Meter reset detected - treat current reading as usage from 0
-        waterUsage = toNumber(reading.waterReading);
-        electricityUsage = toNumber(reading.electricityReading);
-        isMeterReset = true;
-      } else {
-        // Normal case: calculate difference from previous reading
-        waterUsage = Math.max(0, waterDiff);
-        electricityUsage = Math.max(0, electricityDiff);
-      }
+      // Normal case: calculate difference from previous reading
+      waterUsage = Math.max(0, toNumber(reading.waterReading) - toNumber(previousReading.waterReading));
+      electricityUsage = Math.max(0, toNumber(reading.electricityReading) - toNumber(previousReading.electricityReading));
     } else {
       // First reading case: the reading itself represents the usage from 0
       waterUsage = toNumber(reading.waterReading);
@@ -116,7 +97,6 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
       waterUsage,
       electricityUsage,
       isFirstReading,
-      isMeterReset,
     };
   });
 
@@ -125,7 +105,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
   const endIndex = startIndex + pageSize;
   const paginatedReadings = readingsWithUsage.slice(startIndex, endIndex);
 
-  const ReadingCard: React.FC<{ reading: MeterReading & { waterUsage: number; electricityUsage: number; isFirstReading: boolean; isMeterReset: boolean } }> = ({ reading }) => (
+  const ReadingCard: React.FC<{ reading: MeterReading & { waterUsage: number; electricityUsage: number; isFirstReading: boolean } }> = ({ reading }) => (
     <Card 
       className="mb-4 shadow-sm hover:shadow-md transition-shadow"
       size="small"
@@ -176,7 +156,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
           </div>
         </Col>
         <Col xs={12} sm={6}>
-          <div className="text-center p-2 bg-gray-50 rounded">
+          <div className="text-center p-2 bg-red-50 flex flex-col gap-2 rounded">
             <Space size="small" className="flex justify-center">
               {reading.waterPhotoUrl && (
                 <Tooltip title="Water meter photo">
@@ -229,13 +209,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                 <Row gutter={[16, 8]}>
                   <Col xs={12} sm={6}>
                     <Statistic
-                      title={
-                        reading.isFirstReading 
-                          ? "Water Reading" 
-                          : reading.isMeterReset 
-                            ? "Water Usage (Reset)" 
-                            : "Water Usage"
-                      }
+                      title={"Water Usage"}
                       value={reading.waterUsage}
                       precision={1}
                       suffix="m³"
@@ -243,24 +217,13 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     />
                     {reading.isFirstReading && (
                       <Text type="secondary" className="text-xs">
-                        (First reading)
-                      </Text>
-                    )}
-                    {reading.isMeterReset && (
-                      <Text type="warning" className="text-xs">
-                        (Meter replaced/reset)
+                        (First entry)
                       </Text>
                     )}
                   </Col>
                   <Col xs={12} sm={6}>
                     <Statistic
-                      title={
-                        reading.isFirstReading 
-                          ? "Electricity Reading" 
-                          : reading.isMeterReset 
-                            ? "Electricity Usage (Reset)" 
-                            : "Electricity Usage"
-                      }
+                      title={"Electricity Usage"}
                       value={reading.electricityUsage}
                       precision={1}
                       suffix="kWh"
@@ -268,32 +231,9 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     />
                     {reading.isFirstReading && (
                       <Text type="secondary" className="text-xs">
-                        (First reading)
+                        (First entry)
                       </Text>
                     )}
-                    {reading.isMeterReset && (
-                      <Text type="warning" className="text-xs">
-                        (Meter replaced/reset)
-                      </Text>
-                    )}
-                  </Col>
-                  <Col xs={12} sm={6}>
-                    <Statistic
-                      title="Base Rent"
-                      value={toNumber(reading.baseRent)}
-                      precision={0}
-                      suffix="VNĐ"
-                      valueStyle={{ fontSize: '14px' }}
-                    />
-                  </Col>
-                  <Col xs={12} sm={6}>
-                    <Statistic
-                      title="Trash Fee"
-                      value={toNumber(reading.trashFee)}
-                      precision={0}
-                      suffix="VNĐ"
-                      valueStyle={{ fontSize: '14px' }}
-                    />
                   </Col>
                 </Row>
                 {reading.approvedAt && (

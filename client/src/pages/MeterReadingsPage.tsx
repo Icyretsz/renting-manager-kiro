@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Form, 
-  InputNumber, 
-  Button, 
-  Typography, 
-  Row, 
-  Col, 
-  Upload, 
-  Image, 
+import {
+  Card,
+  Form,
+  InputNumber,
+  Button,
+  Typography,
+  Row,
+  Col,
+  Upload,
+  Image,
   Statistic,
   Divider,
   Alert,
   Select
 } from 'antd';
-import { 
-  CameraOutlined, 
+import {
+  CameraOutlined,
   CalculatorOutlined,
   HistoryOutlined,
   SaveOutlined
@@ -58,12 +58,12 @@ export const MeterReadingsPage: React.FC = () => {
   const { isAdmin, user } = useAuth();
   const { data: rooms } = useRoomsQuery();
   const [form] = Form.useForm();
-  
+
   // Get settings values
   const waterRate = useSettingValue('water_rate', 22000);
   const electricityRate = useSettingValue('electricity_rate', 3500);
   const trashFee = useSettingValue('trash_fee', 52000);
-  
+
   // For regular users, default to their tenant room; for admins, no default selection
   const userRoomId = user?.tenant?.roomId;
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(
@@ -76,20 +76,20 @@ export const MeterReadingsPage: React.FC = () => {
   });
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const { data: readings, isLoading: readingLoading } = useMeterReadingsQuery(selectedRoomId || 0);
-  
+
   // Get room details for the selected room
   const { data: currentRoom } = useRoomQuery(selectedRoomId || 0);
-  
+
   // Get the most recent reading as previous reading
   const previousReading = readings && readings.length > 0 ? readings[0] : null;
 
   // console.log(previousReading)
-  
+
   const uploadMutation = useUploadMeterPhotoMutation();
 
   // Get available rooms for the user
-  const availableRooms = isAdmin() 
-    ? rooms 
+  const availableRooms = isAdmin()
+    ? rooms
     : (userRoomId && rooms ? rooms.filter(room => room.id === userRoomId) : []);
 
   // Auto-select room for regular users when user data loads
@@ -105,8 +105,8 @@ export const MeterReadingsPage: React.FC = () => {
     setWaterPhotoUrl('');
     setElectricityPhotoUrl('');
     setCalculatedBill({
-    totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
-  });
+      totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+    });
   };
 
   const handleReadingChange = () => {
@@ -126,12 +126,12 @@ export const MeterReadingsPage: React.FC = () => {
 
     const waterUsage = Math.max(0, waterReading - prevWaterReading);
     const electricityUsage = Math.max(0, electricityReading - prevElectricityReading);
-    
+
     const waterCost = waterUsage * waterRate;
     const electricityCost = electricityUsage * electricityRate;
 
     // console.log('Calculation:', { waterCost, electricityCost, baseRent, trashFee });
-    
+
     const total = waterCost + electricityCost + baseRent + trashFee;
     // console.log('Total:', total);
     setCalculatedBill({
@@ -186,17 +186,17 @@ export const MeterReadingsPage: React.FC = () => {
         waterPhotoUrl,
         electricityPhotoUrl,
       };
-      
+
       // console.log('Submitting reading:', submissionData);
       await submitMutation.mutateAsync(submissionData);
-      
+
       // Reset form after successful submission
       form.resetFields();
       setWaterPhotoUrl('');
       setElectricityPhotoUrl('');
       setCalculatedBill({
-    totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
-  });
+        totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+      });
     } catch (error) {
       console.error('Submission failed:', error);
     }
@@ -270,6 +270,27 @@ export const MeterReadingsPage: React.FC = () => {
               </Card>
             )}
 
+            {/* Reading History Button */}
+            <Card size="small">
+              <Button
+                icon={<HistoryOutlined />}
+                className="w-full"
+                onClick={() => setShowHistoryModal(true)}
+                disabled={!selectedRoomId}
+              >
+                View Reading History
+              </Button>
+            </Card>
+
+            {/* Reading History Modal */}
+            <ReadingHistoryModal
+              visible={showHistoryModal}
+              onClose={() => setShowHistoryModal(false)}
+              readings={readings || []}
+              loading={readingLoading}
+              roomNumber={currentRoom?.roomNumber}
+            />
+
             {/* Reading Input Form */}
             <Card title="Current Month Reading" size="small">
               <Form
@@ -284,7 +305,7 @@ export const MeterReadingsPage: React.FC = () => {
                   label="Water Meter Reading"
                   rules={[
                     { required: true, message: 'Please enter water reading' },
-                    { 
+                    {
                       validator: (_, value) => {
                         if (previousReading && value < toNumber(previousReading.waterReading)) {
                           return Promise.reject('Reading cannot be less than previous month');
@@ -311,8 +332,8 @@ export const MeterReadingsPage: React.FC = () => {
                     beforeUpload={(file) => handlePhotoUpload(file, 'water')}
                     disabled={uploadMutation.isPending || !selectedRoomId}
                   >
-                    <Button 
-                      icon={<CameraOutlined />} 
+                    <Button
+                      icon={<CameraOutlined />}
                       loading={uploadMutation.isPending}
                       className="w-full"
                       disabled={!selectedRoomId}
@@ -341,7 +362,7 @@ export const MeterReadingsPage: React.FC = () => {
                   label="Electricity Meter Reading"
                   rules={[
                     { required: true, message: 'Please enter electricity reading' },
-                    { 
+                    {
                       validator: (_, value) => {
                         if (previousReading && value < toNumber(previousReading.electricityReading)) {
                           return Promise.reject('Reading cannot be less than previous month');
@@ -368,8 +389,8 @@ export const MeterReadingsPage: React.FC = () => {
                     beforeUpload={(file) => handlePhotoUpload(file, 'electricity')}
                     disabled={uploadMutation.isPending || !selectedRoomId}
                   >
-                    <Button 
-                      icon={<CameraOutlined />} 
+                    <Button
+                      icon={<CameraOutlined />}
                       loading={uploadMutation.isPending}
                       className="w-full"
                       disabled={!selectedRoomId}
@@ -440,27 +461,6 @@ export const MeterReadingsPage: React.FC = () => {
             />
           </>
         )}
-
-        {/* Reading History Button */}
-        <Card size="small">
-          <Button
-            icon={<HistoryOutlined />}
-            className="w-full"
-            onClick={() => setShowHistoryModal(true)}
-            disabled={!selectedRoomId}
-          >
-            View Reading History
-          </Button>
-        </Card>
-
-        {/* Reading History Modal */}
-        <ReadingHistoryModal
-          visible={showHistoryModal}
-          onClose={() => setShowHistoryModal(false)}
-          readings={readings || []}
-          loading={readingLoading}
-          roomNumber={currentRoom?.roomNumber}
-        />
       </div>
     </PageErrorBoundary>
   );

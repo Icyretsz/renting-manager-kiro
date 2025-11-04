@@ -3,7 +3,6 @@ import { Card, Row, Col, Typography, Tag, Button, Modal, Divider } from 'antd';
 import { 
   HomeOutlined, 
   UserOutlined, 
-  PlusOutlined,
   EditOutlined,
   EyeOutlined 
 } from '@ant-design/icons';
@@ -11,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery } from '@/hooks/useRooms';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { EditRoomModal } from '@/components/Rooms';
 import { Room } from '@/types';
 
 const { Title, Text } = Typography;
@@ -20,6 +20,8 @@ export const RoomsPage: React.FC = () => {
   const { data: rooms, isLoading, error } = useRoomsQuery();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
 
   if (isLoading) {
     return <LoadingSpinner message="Loading rooms..." />;
@@ -41,6 +43,17 @@ export const RoomsPage: React.FC = () => {
     setModalVisible(true);
   };
 
+  const handleEditRoom = (room: Room, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the room click
+    setRoomToEdit(room);
+    setEditModalVisible(true);
+  };
+
+  const handleEditSuccess = () => {
+    setEditModalVisible(false);
+    setRoomToEdit(null);
+  };
+
   const RoomCard: React.FC<{ room: Room }> = ({ room }) => {
     const occupancyRate = (room.occupancyCount / room.maxTenants) * 100;
     const isFullyOccupied = room.occupancyCount >= room.maxTenants;
@@ -52,7 +65,10 @@ export const RoomsPage: React.FC = () => {
         onClick={() => handleRoomClick(room)}
         actions={isAdmin() ? [
           <EyeOutlined key="view" />,
-          <EditOutlined key="edit" />,
+          <EditOutlined 
+            key="edit" 
+            onClick={(e) => handleEditRoom(room, e)}
+          />,
         ] : [
           <EyeOutlined key="view" />
         ]}
@@ -86,7 +102,18 @@ export const RoomsPage: React.FC = () => {
           Close
         </Button>,
         ...(isAdmin() ? [
-          <Button key="edit" type="primary" icon={<EditOutlined />}>
+          <Button 
+            key="edit" 
+            type="primary" 
+            icon={<EditOutlined />}
+            onClick={() => {
+              setModalVisible(false);
+              if (selectedRoom) {
+                setRoomToEdit(selectedRoom);
+                setEditModalVisible(true);
+              }
+            }}
+          >
             Edit Room
           </Button>
         ] : [])
@@ -136,18 +163,11 @@ export const RoomsPage: React.FC = () => {
     <PageErrorBoundary>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <Title level={3} className="mb-1">Rooms</Title>
-            <Text className="text-gray-600">
-              Manage building rooms and occupancy
-            </Text>
-          </div>
-          {isAdmin() && (
-            <Button type="primary" icon={<PlusOutlined />} size="small">
-              Add Room
-            </Button>
-          )}
+        <div>
+          <Title level={3} className="mb-1">Rooms</Title>
+          <Text className="text-gray-600">
+            Manage building rooms and occupancy
+          </Text>
         </div>
 
         {/* Floor 1 */}
@@ -179,6 +199,16 @@ export const RoomsPage: React.FC = () => {
         </div>
 
         <RoomDetailModal />
+        
+        <EditRoomModal
+          room={roomToEdit}
+          visible={editModalVisible}
+          onCancel={() => {
+            setEditModalVisible(false);
+            setRoomToEdit(null);
+          }}
+          onSuccess={handleEditSuccess}
+        />
       </div>
     </PageErrorBoundary>
   );
