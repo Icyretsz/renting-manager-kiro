@@ -97,7 +97,7 @@ router.put('/:id/role',
 router.get('/:id/rooms', 
   userIdValidation,
   validateRequest,
-  userController.getUserRoomAssignments
+  userController.getUserTenantRoom
 );
 
 router.post('/:id/rooms', 

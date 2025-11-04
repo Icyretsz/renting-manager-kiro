@@ -16,6 +16,8 @@ import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { UserRoomsPage } from './pages/UserRoomsPage';
 import { MeterReadingsPage } from '@/pages/MeterReadingsPage';
 import { LoginPage } from '@/pages/LoginPage';
+import UnlinkedErrorPage from '@/pages/UnlinkedErrorPage';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useAuthStore } from './stores';
 
@@ -45,22 +47,30 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        <Route path="/unlinked-error" element={<UnlinkedErrorPage />} />
+        
+        {/* Protected routes - require authentication and tenant link */}
         <Route
           path="/"
           element={
-            <MainLayout>
-              <DashboardPage />
-            </MainLayout>
+            <ProtectedRoute requireTenantLink={userRole !== 'ADMIN'}>
+              <MainLayout>
+                <DashboardPage />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/admin"
           element={
             userRole === 'ADMIN' ? (
-              <MainLayout>
-                <AdminDashboardPage />
-              </MainLayout>
+              <ProtectedRoute requireTenantLink={false}>
+                <MainLayout>
+                  <AdminDashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
             ) : (
               <Navigate to="/unauthorized" replace />
             )
@@ -69,26 +79,32 @@ const AppContent = () => {
         <Route
           path="/rooms"
           element={
-            <MainLayout>
-              <RoomsPage />
-            </MainLayout>
+            <ProtectedRoute requireTenantLink={userRole !== 'ADMIN'}>
+              <MainLayout>
+                <RoomsPage />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/my-rooms"
           element={
-            <MainLayout>
-              <UserRoomsPage />
-            </MainLayout>
+            <ProtectedRoute requireTenantLink={true}>
+              <MainLayout>
+                <UserRoomsPage />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/tenants"
           element={
             userRole === 'ADMIN' ? (
-              <MainLayout>
-                <TenantsPage />
-              </MainLayout>
+              <ProtectedRoute requireTenantLink={false}>
+                <MainLayout>
+                  <TenantsPage />
+                </MainLayout>
+              </ProtectedRoute>
             ) : (
               <Navigate to="/unauthorized" replace />
             )
@@ -97,9 +113,11 @@ const AppContent = () => {
         <Route
           path="/meter-readings"
           element={
-            <MainLayout>
-              <MeterReadingsPage />
-            </MainLayout>
+            <ProtectedRoute requireTenantLink={userRole !== 'ADMIN'}>
+              <MainLayout>
+                <MeterReadingsPage />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -5,6 +5,7 @@ export interface User {
   email: string;
   name: string;
   role: 'ADMIN' | 'USER';
+  tenant?: Tenant; // Optional - populated if user is also a tenant
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +30,8 @@ export interface Tenant {
   phone?: string;
   roomId: number;
   room?: Room;
+  userId?: string; // Optional - links to User if tenant has an account
+  user?: User; // Optional - populated when tenant has an account
   moveInDate?: Date;
   moveOutDate?: Date;
   isActive: boolean;

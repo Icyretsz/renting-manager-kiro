@@ -1,11 +1,10 @@
 import { prisma } from '../config/database';
-import { Room, Tenant, UserRoomAssignment } from '@prisma/client';
+import { Room, Tenant } from '@prisma/client';
 import { AppError, ValidationError } from '../utils/errors';
 
 export interface RoomWithDetails extends Room {
   tenants: Tenant[];
   occupancyCount: number;
-  userAssignments?: UserRoomAssignment[];
 }
 
 export interface CreateRoomData {
@@ -26,15 +25,16 @@ export interface UpdateRoomData {
  * @param userId - User ID for filtering (regular users only see assigned rooms)
  */
 export const getAllRooms = async (userRole: string, userId?: string): Promise<RoomWithDetails[]> => {
-  const whereClause = userRole === 'USER' && userId 
-    ? {
-        userAssignments: {
-          some: {
-            userId: userId
-          }
-        }
+  const whereClause: any = {};
+
+  // For regular users, only show rooms where they are tenants
+  if (userRole === 'USER' && userId) {
+    whereClause.tenants = {
+      some: {
+        userId: userId
       }
-    : {};
+    };
+  }
 
   const rooms = await prisma.room.findMany({
     where: whereClause,
@@ -47,19 +47,7 @@ export const getAllRooms = async (userRole: string, userId?: string): Promise<Ro
           name: 'asc'
         }
       },
-      ...(userRole === 'ADMIN' ? {
-        userAssignments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          }
-        }
-      } : {}),
+
       _count: {
         select: {
           tenants: {
@@ -105,17 +93,7 @@ export const getRoomById = async (id: number, userRole: string, userId?: string)
           name: 'asc'
         }
       },
-      userAssignments: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      },
+
       _count: {
         select: {
           tenants: {
@@ -247,7 +225,7 @@ export const getRoomsByFloor = async (floor: number, userRole: string, userId?: 
   const whereClause: any = { floor };
   
   if (userRole === 'USER' && userId) {
-    whereClause.userAssignments = {
+    whereClause.tenants = {
       some: {
         userId: userId
       }
@@ -291,16 +269,16 @@ export const getRoomsByFloor = async (floor: number, userRole: string, userId?: 
  * Check if user has access to a specific room
  */
 export const checkUserRoomAccess = async (userId: string, roomId: number): Promise<boolean> => {
-  const assignment = await prisma.userRoomAssignment.findUnique({
-    where: {
-      userId_roomId: {
-        userId,
-        roomId
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      tenant: {
+        select: { roomId: true }
       }
     }
   });
 
-  return !!assignment;
+  return user?.tenant?.roomId === roomId;
 };
 
 /**

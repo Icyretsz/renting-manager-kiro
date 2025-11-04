@@ -17,7 +17,7 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
     const syncAuthState = async () => {
       if (isAuthenticated && user) {
         try {
-          console.log('Auth0Integration: Syncing authenticated user to store');
+          console.log('Auth0Integration: Syncing authenticated user to store', user);
           const token = await getAccessTokenSilently();
           
           const appUser: User = {
@@ -25,7 +25,7 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
             auth0Id: user.sub || '',
             email: user.email || '',
             name: user.name || user.nickname || '',
-            role: (user['https://rental-app.com/role'] as 'admin' | 'user') || 'user',
+            role: user.roleType[0],
             createdAt: new Date(),
             updatedAt: new Date(),
           };

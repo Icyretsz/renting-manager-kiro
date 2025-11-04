@@ -161,9 +161,12 @@ export const sendToAdmins = async (template: NotificationTemplate): Promise<void
  */
 export const sendToRoomUsers = async (roomId: number, template: NotificationTemplate): Promise<void> => {
     try {
-      // Get users assigned to the room
-      const roomUsers = await prisma.userRoomAssignment.findMany({
-        where: { roomId },
+      // Get users who are tenants of this room
+      const roomTenants = await prisma.tenant.findMany({
+        where: { 
+          roomId,
+          userId: { not: null } // Only tenants with user accounts
+        },
         include: {
           user: {
             select: {
@@ -174,11 +177,11 @@ export const sendToRoomUsers = async (roomId: number, template: NotificationTemp
         },
       });
 
-      const recipients: NotificationRecipient[] = roomUsers
-        .filter(assignment => assignment.user.fcmToken)
-        .map(assignment => ({
-          userId: assignment.user.id,
-          fcmToken: assignment.user.fcmToken!,
+      const recipients: NotificationRecipient[] = roomTenants
+        .filter(tenant => tenant.user?.fcmToken)
+        .map(tenant => ({
+          userId: tenant.user!.id,
+          fcmToken: tenant.user!.fcmToken!,
         }));
 
     await sendToUsers(recipients, template);

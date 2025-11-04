@@ -372,12 +372,21 @@ export const getMeterReadings = async (
 
     // Filter by user access for regular users
     if (userRole === 'USER' && userId) {
-      const userRooms = await prisma.userRoomAssignment.findMany({
-        where: { userId },
-        select: { roomId: true }
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          tenant: {
+            select: { roomId: true }
+          }
+        }
       });
-      const roomIds = userRooms.map(assignment => assignment.roomId);
-      whereClause.roomId = { in: roomIds };
+      
+      if (user?.tenant?.roomId) {
+        whereClause.roomId = user.tenant.roomId;
+      } else {
+        // User is not a tenant, no access to any rooms
+        whereClause.roomId = -1; // Non-existent room ID
+      }
     }
 
     const [readings, total] = await Promise.all([
@@ -1063,14 +1072,14 @@ export const deleteMeterReading = async (id: string): Promise<void> => {
  * Check if user has access to readings for a specific room
  */
 const checkUserReadingAccess = async (userId: string, roomId: number): Promise<boolean> => {
-    const assignment = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId,
-          roomId
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: {
+          select: { roomId: true }
         }
       }
     });
 
-  return !!assignment;
+  return user?.tenant?.roomId === roomId;
 };

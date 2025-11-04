@@ -22,7 +22,7 @@ export const findByAuth0Id = async (auth0Id: string) => {
     return await prisma.user.findUnique({
       where: { auth0Id },
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {
@@ -48,7 +48,7 @@ export const findById = async (userId: string) => {
     return await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {
@@ -74,7 +74,7 @@ export const getAllUsers = async () => {
   try {
     return await prisma.user.findMany({
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {
@@ -109,7 +109,7 @@ export const createUser = async (userData: CreateUserData) => {
         role: userData.role || 'USER',
       },
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {
@@ -136,7 +136,7 @@ export const updateUser = async (userId: string, userData: UpdateUserData) => {
       where: { id: userId },
       data: userData,
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {
@@ -198,189 +198,64 @@ export const syncWithAuth0 = async (auth0Profile: any) => {
   }
 };
 
+// Room assignment functions removed - users now access rooms through tenant relationship
+// Admin uses tenant linking system to manage user-room access
+
 /**
- * Assign user to rooms
+ * Get user's tenant room (if user is a tenant)
  */
-export const assignUserToRooms = async (userId: string, roomIds: number[]) => {
+export const getUserTenantRoom = async (userId: string) => {
   try {
-    // Verify user exists
     const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user) {
-      throw new NotFoundError('User not found');
-    }
-
-    // Verify all rooms exist
-    const rooms = await prisma.room.findMany({
-      where: { id: { in: roomIds } }
-    });
-
-    if (rooms.length !== roomIds.length) {
-      throw new NotFoundError('One or more rooms not found');
-    }
-
-    // Remove existing assignments
-    await prisma.userRoomAssignment.deleteMany({
-      where: { userId }
-    });
-
-    // Create new assignments
-    const assignments = await prisma.userRoomAssignment.createMany({
-      data: roomIds.map(roomId => ({
-        userId,
-        roomId,
-      })),
-    });
-
-    return assignments;
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw error;
-    }
-    throw new DatabaseError('Failed to assign user to rooms');
-  }
-};
-
-/**
- * Get user's room assignments
- */
-export const getUserRoomAssignments = async (userId: string) => {
-  try {
-    const assignments = await prisma.userRoomAssignment.findMany({
-      where: { userId },
+      where: { id: userId },
       include: {
-        room: {
-          select: {
-            id: true,
-            roomNumber: true,
-            floor: true,
-            baseRent: true,
+        tenant: {
+          include: {
+            room: {
+              select: {
+                id: true,
+                roomNumber: true,
+                floor: true,
+                baseRent: true,
+              }
+            }
           }
         }
       }
     });
 
-    return assignments.map(assignment => ({
-      roomId: assignment.room.id,
-      roomNumber: assignment.room.roomNumber,
-      floor: assignment.room.floor,
-      baseRent: assignment.room.baseRent,
-      assignedAt: assignment.assignedAt,
-    }));
+    if (!user?.tenant) {
+      return null; // User is not a tenant
+    }
+
+    return {
+      roomId: user.tenant.room.id,
+      roomNumber: user.tenant.room.roomNumber,
+      floor: user.tenant.room.floor,
+      baseRent: user.tenant.room.baseRent,
+      moveInDate: user.tenant.moveInDate,
+    };
   } catch (error) {
-    throw new DatabaseError('Failed to get user room assignments');
+    throw new DatabaseError('Failed to get user tenant room');
   }
 };
 
-/**
- * Remove user room assignment
- */
-export const removeUserRoomAssignment = async (userId: string, roomId: number) => {
-  try {
-    const assignment = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId,
-          roomId
-        }
-      }
-    });
+// Removed - users access rooms through tenant relationship
 
-    if (!assignment) {
-      throw new NotFoundError('Room assignment not found');
-    }
-
-    await prisma.userRoomAssignment.delete({
-      where: {
-        userId_roomId: {
-          userId,
-          roomId
-        }
-      }
-    });
-
-    return true;
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw error;
-    }
-    throw new DatabaseError('Failed to remove room assignment');
-  }
-};
+// Removed - users access rooms through tenant relationship
 
 /**
- * Add single room assignment to user
- */
-export const addUserRoomAssignment = async (userId: string, roomId: number) => {
-  try {
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user) {
-      throw new NotFoundError('User not found');
-    }
-
-    // Verify room exists
-    const room = await prisma.room.findUnique({
-      where: { id: roomId }
-    });
-
-    if (!room) {
-      throw new NotFoundError('Room not found');
-    }
-
-    // Check if assignment already exists
-    const existingAssignment = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId,
-          roomId
-        }
-      }
-    });
-
-    if (existingAssignment) {
-      return existingAssignment;
-    }
-
-    // Create new assignment
-    const assignment = await prisma.userRoomAssignment.create({
-      data: {
-        userId,
-        roomId
-      },
-      include: {
-        room: {
-          select: {
-            id: true,
-            roomNumber: true,
-            floor: true,
-            baseRent: true,
-          }
-        }
-      }
-    });
-
-    return assignment;
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      throw error;
-    }
-    throw new DatabaseError('Failed to add room assignment');
-  }
-};
-
-/**
- * Check if user has access to a specific room
+ * Check if user has access to a specific room (updated for tenant relationship)
  */
 export const hasRoomAccess = async (userId: string, roomId: number): Promise<boolean> => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: {
+        tenant: {
+          select: { roomId: true }
+        }
+      }
     });
 
     if (!user) {
@@ -392,24 +267,15 @@ export const hasRoomAccess = async (userId: string, roomId: number): Promise<boo
       return true;
     }
 
-    // Regular users only have access to assigned rooms
-    const assignment = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId,
-          roomId
-        }
-      }
-    });
-
-    return !!assignment;
+    // Regular users only have access to their tenant room
+    return user.tenant?.roomId === roomId;
   } catch (error) {
     return false;
   }
 };
 
 /**
- * Get user statistics (admin only)
+ * Get user statistics (admin only) - updated for tenant relationship
  */
 export const getUserStats = async () => {
   try {
@@ -419,22 +285,22 @@ export const getUserStats = async () => {
     });
     const regularUsers = totalUsers - adminUsers;
 
-    const usersWithRoomAssignments = await prisma.user.count({
+    const usersWithTenantRooms = await prisma.user.count({
       where: {
-        roomAssignments: {
-          some: {}
+        tenant: {
+          isNot: null
         }
       }
     });
 
-    const usersWithoutRoomAssignments = totalUsers - usersWithRoomAssignments;
+    const usersWithoutTenantRooms = totalUsers - usersWithTenantRooms;
 
     return {
       totalUsers,
       adminUsers,
       regularUsers,
-      usersWithRoomAssignments,
-      usersWithoutRoomAssignments
+      usersWithTenantRooms,
+      usersWithoutTenantRooms
     };
   } catch (error) {
     throw new DatabaseError('Failed to get user statistics');
@@ -458,7 +324,7 @@ export const updateUserRole = async (userId: string, role: 'ADMIN' | 'USER') => 
       where: { id: userId },
       data: { role },
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {
@@ -489,7 +355,7 @@ export const getUsersByRole = async (role: 'ADMIN' | 'USER') => {
     return await prisma.user.findMany({
       where: { role },
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {

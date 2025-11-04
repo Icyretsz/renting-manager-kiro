@@ -18,7 +18,7 @@ interface AuthenticatedRequest extends Request {
     email: string;
     name: string;
     role: 'ADMIN' | 'USER';
-    roomAssignments?: number[];
+    roomId?: number;
   };
 }
 
@@ -45,16 +45,7 @@ router.post('/meter-photos', uploadMeterPhotos, asyncHandler(async (req: Authent
 
   // Check if user has access to this room (for regular users)
   if (req.user.role === 'USER') {
-    const hasAccess = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId: req.user.id,
-          roomId: parseInt(roomId)
-        }
-      }
-    });
-
-    if (!hasAccess) {
+    if (req.user.roomId !== parseInt(roomId)) {
       throw new AppError('Access denied to this room', 403);
     }
   }
@@ -114,16 +105,7 @@ router.post('/photo', uploadSinglePhoto, asyncHandler(async (req: AuthenticatedR
 
   // Check if user has access to this room (for regular users)
   if (req.user.role === 'USER') {
-    const hasAccess = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId: req.user.id,
-          roomId: parseInt(roomId)
-        }
-      }
-    });
-
-    if (!hasAccess) {
+    if (req.user.roomId !== parseInt(roomId)) {
       throw new AppError('Access denied to this room', 403);
     }
   }
@@ -196,16 +178,7 @@ router.get('/file/:filename', asyncHandler(async (req: AuthenticatedRequest, res
 
     if (reading) {
       // Check if user has access to this room
-      const hasAccess = await prisma.userRoomAssignment.findUnique({
-        where: {
-          userId_roomId: {
-            userId: req.user.id,
-            roomId: reading.roomId
-          }
-        }
-      });
-
-      if (!hasAccess) {
+      if (req.user.roomId !== reading.roomId) {
         throw new AppError('Access denied to this file', 403);
       }
     }
@@ -251,16 +224,8 @@ router.get('/info/:filename', asyncHandler(async (req: AuthenticatedRequest, res
     });
 
     if (reading) {
-      const hasAccess = await prisma.userRoomAssignment.findUnique({
-        where: {
-          userId_roomId: {
-            userId: req.user.id,
-            roomId: reading.roomId
-          }
-        }
-      });
-
-      if (!hasAccess) {
+      // Check if user has access to this room
+      if (req.user.roomId !== reading.roomId) {
         throw new AppError('Access denied to this file', 403);
       }
     }

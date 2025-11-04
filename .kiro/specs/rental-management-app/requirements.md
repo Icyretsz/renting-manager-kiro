@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A rental management application for managing a single building with multiple rental rooms. The system enables tracking of tenants, individual room billing with utilities (water, electricity), base rent, and trash fees. The system will provide separate client and server applications with secure authentication and a modern user interface.
+A rental management application for managing a single building with multiple rental rooms. The system enables tracking of tenants, individual room billing with utilities (water, electricity), base rent, and trash fees. The system will provide separate client and server applications with secure authentication and a modern user interface. This app will be an admin-controlled app, this mean that: the admin will provisioning everything from creating and manipulating accounts, tenants, rooms, prices... The user will then log in with the admin-given credentials and use the app.
 
 ## Glossary
 

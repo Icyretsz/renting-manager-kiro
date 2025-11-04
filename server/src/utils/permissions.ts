@@ -234,9 +234,9 @@ export class PermissionHelper {
       return rooms.map(room => room.id);
     }
 
-    // Regular users can only access assigned rooms
-    const assignments = await userService.getUserRoomAssignments(userId);
-    return assignments.map((assignment: any) => assignment.roomId);
+    // Regular users can only access their tenant room
+    const tenantRoom = await userService.getUserTenantRoom(userId);
+    return tenantRoom ? [tenantRoom.roomId] : [];
   }
 }
 

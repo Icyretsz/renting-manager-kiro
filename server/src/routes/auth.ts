@@ -14,7 +14,7 @@ router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Resp
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
     include: {
-      roomAssignments: {
+      tenant: {
         include: {
           room: {
             select: {
@@ -42,12 +42,56 @@ router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Resp
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      roomAssignments: user.roomAssignments.map(assignment => ({
-        roomId: assignment.room.id,
-        roomNumber: assignment.room.roomNumber,
-        floor: assignment.room.floor,
-        assignedAt: assignment.assignedAt,
-      })),
+      tenantRoom: user.tenant ? {
+        roomId: user.tenant.room.id,
+        roomNumber: user.tenant.room.roomNumber,
+        floor: user.tenant.room.floor,
+        moveInDate: user.tenant.moveInDate,
+      } : null,
+    },
+  });
+}));
+
+/**
+ * Check if user is linked to a tenant
+ * GET /api/auth/tenant-status
+ */
+router.get('/tenant-status', authenticate, asyncHandler(async (req: Request, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+    include: {
+      tenant: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          roomId: true,
+          room: {
+            select: {
+              roomNumber: true,
+              floor: true,
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  const isLinked = !!user.tenant;
+
+  res.json({
+    success: true,
+    data: {
+      isLinked,
+      tenant: user.tenant ? {
+        id: user.tenant.id,
+        roomId: user.tenant.roomId,
+        roomNumber: user.tenant.room.roomNumber,
+        floor: user.tenant.room.floor,
+      } : null,
     },
   });
 }));
@@ -111,7 +155,7 @@ router.get('/users', authenticate, requireAdmin, asyncHandler(async (req: Reques
       skip,
       take: Number(limit),
       include: {
-        roomAssignments: {
+        tenant: {
           include: {
             room: {
               select: {
@@ -138,12 +182,12 @@ router.get('/users', authenticate, requireAdmin, asyncHandler(async (req: Reques
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      roomAssignments: user.roomAssignments.map(assignment => ({
-        roomId: assignment.room.id,
-        roomNumber: assignment.room.roomNumber,
-        floor: assignment.room.floor,
-        assignedAt: assignment.assignedAt,
-      })),
+      tenantRoom: user.tenant ? {
+        roomId: user.tenant.room.id,
+        roomNumber: user.tenant.room.roomNumber,
+        floor: user.tenant.room.floor,
+        moveInDate: user.tenant.moveInDate,
+      } : null,
     })),
     pagination: {
       page: Number(page),
@@ -188,27 +232,11 @@ router.post('/users/:userId/rooms', authenticate, requireAdmin, asyncHandler(asy
     throw new ValidationError('One or more rooms not found');
   }
 
-  // Remove existing assignments
-  await prisma.userRoomAssignment.deleteMany({
-    where: { userId }
-  });
-
-  // Create new assignments
-  const assignments = await prisma.userRoomAssignment.createMany({
-    data: roomIds.map((roomId: number) => ({
-      userId,
-      roomId,
-    })),
-  });
-
-  res.json({
-    success: true,
-    message: 'Room assignments updated successfully',
-    data: {
-      userId,
-      assignedRooms: roomIds,
-      assignmentCount: assignments.count,
-    },
+  // Room assignment functionality removed - admin uses tenant linking system
+  res.status(410).json({
+    success: false,
+    message: 'Room assignment endpoints removed - use tenant linking system',
+    data: null
   });
 }));
 
@@ -228,31 +256,10 @@ router.delete('/users/:userId/rooms/:roomId', authenticate, requireAdmin, asyncH
     throw new ValidationError('Invalid room ID');
   }
 
-  const assignment = await prisma.userRoomAssignment.findUnique({
-    where: {
-      userId_roomId: {
-        userId,
-        roomId: roomIdNum,
-      }
-    }
-  });
-
-  if (!assignment) {
-    throw new NotFoundError('Room assignment not found');
-  }
-
-  await prisma.userRoomAssignment.delete({
-    where: {
-      userId_roomId: {
-        userId,
-        roomId: roomIdNum,
-      }
-    }
-  });
-
-  res.json({
-    success: true,
-    message: 'Room assignment removed successfully',
+  // Room assignment functionality removed - admin uses tenant linking system
+  res.status(410).json({
+    success: false,
+    message: 'Room assignment endpoints removed - use tenant linking system',
   });
 }));
 

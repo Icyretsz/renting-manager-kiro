@@ -1,4 +1,28 @@
 import { prisma } from '../config/database';
+
+/**
+ * Helper function to get user's room access for billing queries
+ */
+const getUserRoomFilter = async (userRole: string, userId?: string): Promise<any> => {
+  if (userRole === 'USER' && userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: {
+          select: { roomId: true }
+        }
+      }
+    });
+    
+    if (user?.tenant?.roomId) {
+      return { roomId: user.tenant.roomId };
+    } else {
+      // User is not a tenant, no access to any rooms
+      return { roomId: -1 }; // Non-existent room ID
+    }
+  }
+  return {}; // Admin or no user filter
+};
 import { BillingRecord, PaymentStatus, MeterReading, ReadingStatus } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { AppError, ValidationError } from '../utils/errors';
@@ -300,14 +324,8 @@ export const getBillingRecords = async (
     const whereClause: any = { ...filters };
 
     // Filter by user access for regular users
-    if (userRole === 'USER' && userId) {
-      const userRooms = await prisma.userRoomAssignment.findMany({
-        where: { userId },
-        select: { roomId: true }
-      });
-      const roomIds = userRooms.map(assignment => assignment.roomId);
-      whereClause.roomId = { in: roomIds };
-    }
+    const userRoomFilter = await getUserRoomFilter(userRole || '', userId);
+    Object.assign(whereClause, userRoomFilter);
 
     // Filter by floor if specified
     if (filters.floor) {
@@ -496,14 +514,8 @@ export const getFinancialSummary = async (
     }
 
     // Filter by user access for regular users
-    if (userRole === 'USER' && userId) {
-      const userRooms = await prisma.userRoomAssignment.findMany({
-        where: { userId },
-        select: { roomId: true }
-      });
-      const roomIds = userRooms.map(assignment => assignment.roomId);
-      whereClause.roomId = { in: roomIds };
-    }
+    const userRoomFilter = await getUserRoomFilter(userRole || '', userId);
+    Object.assign(whereClause, userRoomFilter);
 
     const [billingRecords, totalRooms, occupiedRooms] = await Promise.all([
       prisma.billingRecord.findMany({
@@ -561,14 +573,8 @@ export const getMonthlyFinancialReport = async (
     const whereClause: any = { month, year };
 
     // Filter by user access for regular users
-    if (userRole === 'USER' && userId) {
-      const userRooms = await prisma.userRoomAssignment.findMany({
-        where: { userId },
-        select: { roomId: true }
-      });
-      const roomIds = userRooms.map(assignment => assignment.roomId);
-      whereClause.roomId = { in: roomIds };
-    }
+    const userRoomFilter = await getUserRoomFilter(userRole || '', userId);
+    Object.assign(whereClause, userRoomFilter);
 
     const billingRecords = await prisma.billingRecord.findMany({
       where: whereClause,
@@ -634,14 +640,8 @@ export const getYearlyFinancialReport = async (
     const whereClause: any = { year };
 
     // Filter by user access for regular users
-    if (userRole === 'USER' && userId) {
-      const userRooms = await prisma.userRoomAssignment.findMany({
-        where: { userId },
-        select: { roomId: true }
-      });
-      const roomIds = userRooms.map(assignment => assignment.roomId);
-      whereClause.roomId = { in: roomIds };
-    }
+    const userRoomFilter = await getUserRoomFilter(userRole || '', userId);
+    Object.assign(whereClause, userRoomFilter);
 
     const billingRecords = await prisma.billingRecord.findMany({
       where: whereClause,
@@ -784,14 +784,14 @@ const getPreviousMonthReading = async (roomId: number, month: number, year: numb
  * Check if user has access to billing records for a specific room
  */
 const checkUserBillingAccess = async (userId: string, roomId: number): Promise<boolean> => {
-    const assignment = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId,
-          roomId
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: {
+          select: { roomId: true }
         }
       }
     });
 
-  return !!assignment;
+  return user?.tenant?.roomId === roomId;
 };

@@ -257,28 +257,25 @@ CREATE TABLE rooms (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tenants table
+-- Tenants table (**UPDATED**)
 CREATE TABLE tenants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(50),
     room_id INTEGER REFERENCES rooms(id),
+    user_id UUID REFERENCES users(id), -- **NEW**: Optional link to user account
     move_in_date DATE,
     move_out_date DATE,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id) -- **NEW**: One user can only be linked to one tenant
 );
 
--- User room assignments (for regular users)
-CREATE TABLE user_room_assignments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    room_id INTEGER REFERENCES rooms(id),
-    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, room_id)
-);
+-- **SCHEMA UPDATED**: User room assignments removed
+-- Users now access rooms through tenant relationship
+-- Tenants table updated with optional user_id for account linking
 
 -- Meter readings table
 CREATE TABLE meter_readings (

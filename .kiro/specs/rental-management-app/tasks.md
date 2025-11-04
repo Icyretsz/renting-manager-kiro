@@ -45,8 +45,9 @@
     - Add tenant move-in/move-out functionality
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-  - [x] 3.3 Build user role and permission system
-    - Create user-room assignment functionality for regular users
+  - [x] 3.3 Build user role and permission system (**REFACTORED**)
+    - ~~Create user-room assignment functionality for regular users~~ **REMOVED**
+    - **NEW**: Users now access rooms through tenant relationship (User ↔ Tenant → Room)
     - Implement role-based data filtering in services
     - Add user profile management endpoints
     - Create permission validation utilities
@@ -192,44 +193,66 @@
     - Add export functionality for financial reports
     - _Requirements: 8.2, 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ]* 11. Testing and quality assurance
-  - [ ]* 11.1 Write backend unit and integration tests
+- [ ] 11. **NEW**: Implement Admin Tenant-User Account Linking System
+  - [ ] 11.1 Create tenant linking backend services
+    - Build service to link existing user accounts to tenant records
+    - Implement service to create new tenants with optional user linking
+    - Add service to unlink user accounts from tenants
+    - Create suggestion system based on email matching
+    - _Requirements: Admin-controlled user-tenant relationship management_
+
+  - [ ] 11.2 Build admin tenant linking interface
+    - Create admin interface to view unlinked users and tenants
+    - Implement linking/unlinking functionality with confirmation dialogs
+    - Add tenant creation form with optional user account linking
+    - Build suggestion display for automatic email-based matching
+    - _Requirements: Admin-only tenant management interface_
+
+  - [ ] 11.3 Simplify user experience
+    - Users simply log in with provided credentials
+    - App automatically shows their room data if linked to tenant
+    - No user-facing linking or registration complexity
+    - Admin handles all account management behind the scenes
+    - _Requirements: Simple user experience with admin-controlled access_
+
+- [ ]* 12. Testing and quality assurance
+  - [ ]* 12.1 Write backend unit and integration tests
     - Create unit tests for service layer functions
     - Write integration tests for API endpoints
     - Add database testing with test data seeding
     - Test authentication and authorization middleware
     - _Requirements: All backend requirements_
 
-  - [ ]* 11.2 Implement frontend component and integration tests
+  - [ ]* 12.2 Implement frontend component and integration tests
     - Write unit tests for React components using React Testing Library
     - Create integration tests for user workflows
     - Add tests for state management (Zustand stores and React Query)
     - Test authentication flows and role-based access
     - _Requirements: All frontend requirements_
 
-  - [ ]* 11.3 End-to-end testing for critical workflows
+  - [ ]* 12.3 End-to-end testing for critical workflows
     - Create E2E tests for meter reading submission and approval workflow
     - Test billing calculation and financial reporting
     - Add tests for notification system and user interactions
     - Test file upload and photo management functionality
     - _Requirements: 5.1-5.5, 6.1-6.4, 7.1-7.5_
 
-- [ ] 12. Deployment and production setup
-  - [ ] 12.1 Configure production environment
+- [ ] 13. Deployment and production setup
+  - [ ] 13.1 Configure production environment
     - Set up Docker containers for client and server applications
     - Configure production database with proper indexing
     - Set up environment variables and secrets management
     - Configure file storage for production (local or cloud)
     - _Requirements: 11.1, 11.2_
 
-  - [ ] 12.2 Implement monitoring and logging
+  - [ ] 13.2 Implement monitoring and logging
     - Set up application logging for both client and server
     - Configure error tracking and monitoring
     - Add performance monitoring for API endpoints
     - Implement health checks and status endpoints
     - _Requirements: 11.3, 11.4_
 
-  - [ ]* 12.3 Security hardening and optimization
+  - [ ]* 13.3 Security hardening and optimization
     - Implement security headers and HTTPS configuration
     - Add rate limiting and DDoS protection
     - Optimize database queries and add proper indexing

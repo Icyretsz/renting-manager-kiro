@@ -88,16 +88,16 @@ export const checkReadingAccess = async (
  * Check if user has access to a specific room
  */
 export const checkUserRoomAccess = async (userId: string, roomId: number): Promise<boolean> => {
-    const assignment = await prisma.userRoomAssignment.findUnique({
-      where: {
-        userId_roomId: {
-          userId,
-          roomId,
-        },
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: {
+          select: { roomId: true }
+        }
+      }
     });
 
-  return !!assignment;
+  return user?.tenant?.roomId === roomId;
 };
 
 /**
@@ -293,13 +293,17 @@ export const getUserAccessibleRooms = async (userId: string, userRole: 'ADMIN' |
       return rooms.map(room => room.id);
     }
 
-    // Regular users only have access to assigned rooms
-    const assignments = await prisma.userRoomAssignment.findMany({
-      where: { userId },
-      select: { roomId: true },
+    // Regular users only have access to their tenant room
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: {
+          select: { roomId: true }
+        }
+      }
     });
 
-  return assignments.map(assignment => assignment.roomId);
+  return user?.tenant?.roomId ? [user.tenant.roomId] : [];
 };
 
 /**

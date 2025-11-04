@@ -35,16 +35,16 @@ export interface TenantFilters {
  * Check if user has access to a specific room
  */
 const checkUserRoomAccess = async (userId: string, roomId: number): Promise<boolean> => {
-  const assignment = await prisma.userRoomAssignment.findUnique({
-    where: {
-      userId_roomId: {
-        userId,
-        roomId
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      tenant: {
+        select: { roomId: true }
       }
     }
   });
 
-  return !!assignment;
+  return user?.tenant?.roomId === roomId;
 };
 
 /**
@@ -60,15 +60,20 @@ export const getAllTenants = async (
 ): Promise<TenantWithRoom[]> => {
   const whereClause: any = {};
 
-  // Role-based filtering
+  // Role-based filtering - users can only see tenants in their own room
   if (userRole === 'USER' && userId) {
-    whereClause.room = {
-      userAssignments: {
-        some: {
-          userId: userId
-        }
-      }
-    };
+    // First get the user's room through their tenant record
+    const userTenant = await prisma.tenant.findFirst({
+      where: { userId: userId, isActive: true },
+      select: { roomId: true }
+    });
+    
+    if (userTenant) {
+      whereClause.roomId = userTenant.roomId;
+    } else {
+      // User is not a tenant, no access to any tenants
+      whereClause.id = -1; // Non-existent ID
+    }
   }
 
   // Apply additional filters
@@ -115,15 +120,20 @@ export const getAllTenants = async (
 export const getTenantById = async (id: string, userRole: string, userId?: string): Promise<TenantWithRoom | null> => {
   const whereClause: any = { id };
 
-  // Role-based filtering
+  // Role-based filtering - users can only see tenants in their own room
   if (userRole === 'USER' && userId) {
-    whereClause.room = {
-      userAssignments: {
-        some: {
-          userId: userId
-        }
-      }
-    };
+    // First get the user's room through their tenant record
+    const userTenant = await prisma.tenant.findFirst({
+      where: { userId: userId, isActive: true },
+      select: { roomId: true }
+    });
+    
+    if (userTenant) {
+      whereClause.roomId = userTenant.roomId;
+    } else {
+      // User is not a tenant, no access to any tenants
+      whereClause.id = -1; // Non-existent ID
+    }
   }
 
   const tenant = await prisma.tenant.findFirst({
@@ -509,15 +519,20 @@ export const searchTenants = async (
     ]
   };
 
-  // Role-based filtering
+  // Role-based filtering - users can only see tenants in their own room
   if (userRole === 'USER' && userId) {
-    whereClause.room = {
-      userAssignments: {
-        some: {
-          userId: userId
-        }
-      }
-    };
+    // First get the user's room through their tenant record
+    const userTenant = await prisma.tenant.findFirst({
+      where: { userId: userId, isActive: true },
+      select: { roomId: true }
+    });
+    
+    if (userTenant) {
+      whereClause.roomId = userTenant.roomId;
+    } else {
+      // User is not a tenant, no access to any tenants
+      whereClause.id = -1; // Non-existent ID
+    }
   }
 
   const tenants = await prisma.tenant.findMany({

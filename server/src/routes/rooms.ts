@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as roomController from '../controllers/roomController';
 import { authenticateToken } from '../middleware/auth';
+import { requireTenantLink } from '../middleware/tenantLink';
 import { validateRequest } from '../middleware/validation';
 import { body, param } from 'express-validator';
 
@@ -47,8 +48,9 @@ const floorValidation = [
     .withMessage('Floor must be 1 or 2')
 ];
 
-// Apply authentication to all routes
+// Apply authentication and tenant link check to all routes
 router.use(authenticateToken);
+router.use(requireTenantLink);
 
 // Routes
 router.get('/', roomController.getAllRooms);

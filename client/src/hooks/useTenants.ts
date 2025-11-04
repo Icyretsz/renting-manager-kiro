@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
 import { Tenant, ApiResponse } from '@/types';
+import { authService, TenantStatus } from '@/services/authService';
 
 // Query keys
 export const tenantKeys = {
@@ -92,5 +93,16 @@ export const useDeleteTenantMutation = () => {
       queryClient.invalidateQueries({ queryKey: tenantKeys.all });
       queryClient.removeQueries({ queryKey: tenantKeys.detail(tenantId) });
     },
+  });
+};
+
+// Check if user have linked to a tenant
+export const useTenantStatus = () => {
+  return useQuery<TenantStatus>({
+    queryKey: ['tenant-status'],
+    queryFn: authService.checkTenantStatus,
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 };

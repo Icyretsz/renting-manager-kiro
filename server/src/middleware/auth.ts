@@ -14,7 +14,7 @@ declare global {
         email: string;
         name: string;
         role: 'ADMIN' | 'USER';
-        roomAssignments?: number[];
+        roomId?: number; // The room this user is a tenant of (if any)
       };
     }
   }
@@ -45,14 +45,14 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
       auth0Id: auth0UserInfo.sub,
       email: auth0UserInfo.email,
       name: auth0UserInfo.name || auth0UserInfo.nickname || auth0UserInfo.email,
-      role: auth0UserInfo.roleType[0]!,
+      roles: auth0UserInfo.roleType || [],
     };
 
     // Find or create user in database
     let user = await prisma.user.findUnique({
       where: { auth0Id: userInfo.auth0Id },
       include: {
-        roomAssignments: {
+        tenant: {
           select: { roomId: true }
         }
       }
@@ -65,10 +65,10 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
           auth0Id: userInfo.auth0Id,
           email: userInfo.email,
           name: userInfo.name,
-          role: userInfo.role.includes('admin') ? 'ADMIN' : 'USER',
+          role: userInfo.roles.includes('admin') ? 'ADMIN' : 'USER',
         },
         include: {
-          roomAssignments: {
+          tenant: {
             select: { roomId: true }
           }
         }
@@ -87,7 +87,7 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
             name: userInfo.name,
           },
           include: {
-            roomAssignments: {
+            tenant: {
               select: { roomId: true }
             }
           }
@@ -96,14 +96,20 @@ export const authenticateToken = async (req: Request, _res: Response, next: Next
     }
 
     // Attach user to request
-    req.user = {
+    const userObj: any = {
       id: user.id,
       auth0Id: user.auth0Id,
       email: user.email,
       name: user.name,
-      role: user.role,
-      roomAssignments: user.roomAssignments.map(assignment => assignment.roomId),
+      role: user.role as 'ADMIN' | 'USER',
     };
+    
+    // Only add roomId if user is a tenant
+    if (user.tenant?.roomId) {
+      userObj.roomId = user.tenant.roomId;
+    }
+    
+    req.user = userObj;
 
     next();
   } catch (error) {
@@ -146,7 +152,8 @@ export const requireRoomAccess = (roomIdParam: string = 'roomId') => {
       return next(new AuthorizationError('Room ID required'));
     }
 
-    if (!req.user.roomAssignments?.includes(roomId)) {
+    // Check if user is a tenant of this room
+    if (req.user.roomId !== roomId) {
       return next(new AuthorizationError('Access denied for this room'));
     }
 

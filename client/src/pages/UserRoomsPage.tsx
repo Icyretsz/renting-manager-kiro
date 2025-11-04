@@ -15,16 +15,16 @@ import { Room } from '@/types';
 const { Title, Text } = Typography;
 
 export const UserRoomsPage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { data: allRooms, isLoading } = useRoomsQuery();
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading your rooms..." />;
+    return <LoadingSpinner message="Loading room information..." />;
   }
 
-  // For regular users, filter rooms they have access to
-  // This would typically come from a user-room assignment API
-  const userRooms = isAdmin() ? allRooms : allRooms?.slice(0, 3); // Mock: first 3 rooms for demo
+  // For regular users, they only have access to their tenant room (if any)
+  // For admins, they can see all rooms
+  const userRooms = isAdmin() ? allRooms : (user?.tenant?.room ? [user.tenant.room] : []);
 
   if (!userRooms || userRooms.length === 0) {
     return (
@@ -32,7 +32,7 @@ export const UserRoomsPage: React.FC = () => {
         <div className="text-center py-8">
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No rooms assigned to you"
+            description={isAdmin() ? "No rooms found" : "You are not assigned to any room as a tenant"}
           />
         </div>
       </PageErrorBoundary>
@@ -121,12 +121,12 @@ export const UserRoomsPage: React.FC = () => {
         {/* Header */}
         <div>
           <Title level={3} className="mb-1">
-            {isAdmin() ? 'All Rooms' : 'My Assigned Rooms'}
+            {isAdmin() ? 'All Rooms' : 'My Room'}
           </Title>
           <Text className="text-gray-600">
             {isAdmin() 
               ? 'Overview of all building rooms' 
-              : 'Rooms you have access to manage'
+              : 'Your assigned room as a tenant'
             }
           </Text>
         </div>

@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import * as meterReadingController from '../controllers/meterReadingController';
 import { authenticateToken } from '../middleware/auth';
+import { requireTenantLink } from '../middleware/tenantLink';
 import { validateMeterReading, validateRoomId, validateReadingId, validateRequired } from '../middleware/validation';
 import * as readingAccess from '../middleware/readingAccess';
 
 const router = Router();
 
-// Apply authentication to all routes
+// Apply authentication and tenant link check to all routes
 router.use(authenticateToken);
+router.use(requireTenantLink);
 
 /**
  * @route POST /api/readings

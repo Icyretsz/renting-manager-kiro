@@ -20,6 +20,10 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
 
       login: (token: string, user: User) => {
+        // Store user email in localStorage for unlinked error page
+        if (user.email) {
+          localStorage.setItem('userEmail', user.email);
+        }
         set({
           user,
           token,
@@ -28,6 +32,8 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: () => {
+        // Clear user email from localStorage
+        localStorage.removeItem('userEmail');
         set({
           user: null,
           token: null,

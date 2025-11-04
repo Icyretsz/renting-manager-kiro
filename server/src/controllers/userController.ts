@@ -153,26 +153,26 @@ export const updateUserRole = async (req: AuthenticatedRequest, res: Response, n
 };
 
 /**
- * Get user room assignments
- * GET /api/users/:id/rooms
+ * Get user tenant room (if user is a tenant)
+ * GET /api/users/:id/tenant-room
  */
-export const getUserRoomAssignments = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const getUserTenantRoom = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const targetUserId = getStringParam(req.params, 'id', 'User ID is required');
     const currentUserId = req.user?.id;
     const currentUserRole = req.user?.role;
 
-    // Users can only view their own assignments, admins can view any
+    // Users can only view their own tenant room, admins can view any
     if (currentUserRole !== 'ADMIN' && targetUserId !== currentUserId) {
       throw new AppError('Access denied', 403);
     }
 
-    const assignments = await userService.getUserRoomAssignments(targetUserId);
+    const tenantRoom = await userService.getUserTenantRoom(targetUserId);
 
     res.json({
       success: true,
-      data: assignments,
-      message: 'Room assignments retrieved successfully'
+      data: tenantRoom,
+      message: tenantRoom ? 'User tenant room retrieved successfully' : 'User is not a tenant'
     });
   } catch (error) {
     next(error);
@@ -189,24 +189,10 @@ export const assignUserToRooms = async (req: AuthenticatedRequest, res: Response
       throw new AppError('Admin access required', 403);
     }
 
-    const userId = getStringParam(req.params, 'id', 'User ID is required');
-    const { roomIds } = req.body;
-
-    if (!Array.isArray(roomIds) || roomIds.length === 0) {
-      throw new AppError('Room IDs array is required', 400);
-    }
-
-    // Validate all room IDs are numbers
-    const validRoomIds = roomIds.filter(id => Number.isInteger(id) && id > 0);
-    if (validRoomIds.length !== roomIds.length) {
-      throw new AppError('All room IDs must be positive integers', 400);
-    }
-
-    await userService.assignUserToRooms(userId, validRoomIds);
-
-    res.json({
-      success: true,
-      message: 'User assigned to rooms successfully'
+    // Room assignment functionality removed - admin uses tenant linking system
+    res.status(410).json({
+      success: false,
+      message: 'Room assignment endpoints removed - use tenant linking system'
     });
   } catch (error) {
     next(error);
@@ -217,46 +203,23 @@ export const assignUserToRooms = async (req: AuthenticatedRequest, res: Response
  * Add single room assignment (admin only)
  * POST /api/users/:id/rooms/:roomId
  */
-export const addRoomAssignment = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const addRoomAssignment = async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
   try {
     if (req.user?.role !== 'ADMIN') {
       throw new AppError('Admin access required', 403);
     }
 
-    const userId = getStringParam(req.params, 'id', 'User ID is required');
-    const roomId = parseIntParam(req.params, 'roomId', 'Room ID is required');
-
-    const assignment = await userService.addUserRoomAssignment(userId, roomId);
-
-    res.json({
-      success: true,
-      data: assignment,
-      message: 'Room assignment added successfully'
-    });
+    // Room assignment functions removed - admin uses tenant linking system
+    throw new AppError('Room assignment endpoints removed - use tenant linking system', 410);
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * Remove room assignment (admin only)
- * DELETE /api/users/:id/rooms/:roomId
- */
-export const removeRoomAssignment = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+// Room assignment functions removed - admin uses tenant linking system
+export const removeRoomAssignment = async (_req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
   try {
-    if (req.user?.role !== 'ADMIN') {
-      throw new AppError('Admin access required', 403);
-    }
-
-    const userId = getStringParam(req.params, 'id', 'User ID is required');
-    const roomId = parseIntParam(req.params, 'roomId', 'Room ID is required');
-
-    await userService.removeUserRoomAssignment(userId, roomId);
-
-    res.json({
-      success: true,
-      message: 'Room assignment removed successfully'
-    });
+    throw new AppError('Room assignment endpoints removed - use tenant linking system', 410);
   } catch (error) {
     next(error);
   }
