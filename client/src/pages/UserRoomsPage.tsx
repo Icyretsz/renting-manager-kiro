@@ -15,16 +15,18 @@ import { Room } from '@/types';
 const { Title, Text } = Typography;
 
 export const UserRoomsPage: React.FC = () => {
-  const { isAdmin, user } = useAuth();
-  const { data: allRooms, isLoading } = useRoomsQuery();
+  const { isAdmin, user, isLoading: authLoading } = useAuth();
+  const { data: allRooms, isLoading: roomsLoading } = useRoomsQuery();
 
-  if (isLoading) {
+  if (authLoading || roomsLoading) {
     return <LoadingSpinner message="Loading room information..." />;
   }
 
   // For regular users, they only have access to their tenant room (if any)
   // For admins, they can see all rooms
   const userRooms = isAdmin() ? allRooms : (user?.tenant?.room ? [user.tenant.room] : []);
+
+
 
   if (!userRooms || userRooms.length === 0) {
     return (

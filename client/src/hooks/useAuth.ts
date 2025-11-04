@@ -1,14 +1,16 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { User } from '@/types';
+import { useUserProfile } from './useUserProfile';
 
 export const useAuth = () => {
   const { 
     loginWithRedirect, 
     logout: auth0Logout, 
     isAuthenticated,
-    isLoading,
-    user: auth0User
+    isLoading: auth0Loading,
   } = useAuth0();
+
+  // Fetch complete user profile from API (includes tenant relationship)
+  const { data: user, isLoading: profileLoading } = useUserProfile();
 
   const login = () => {
     loginWithRedirect();
@@ -22,17 +24,6 @@ export const useAuth = () => {
     });
   };
 
-  // Transform Auth0 user to our User type
-  const user: User | null = auth0User ? {
-    id: auth0User.sub || '',
-    auth0Id: auth0User.sub || '',
-    email: auth0User.email || '',
-    name: auth0User.name || auth0User.nickname || '',
-    role: auth0User.roleType[0],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  } : null;
-
   const isAdmin = () => {
     return user?.role === 'ADMIN';
   };
@@ -41,8 +32,11 @@ export const useAuth = () => {
     return user?.role === 'USER';
   };
 
+  // Combined loading state
+  const isLoading = auth0Loading || (isAuthenticated && profileLoading);
+
   return {
-    user,
+    user: user || null,
     isAuthenticated,
     isLoading,
     login,
