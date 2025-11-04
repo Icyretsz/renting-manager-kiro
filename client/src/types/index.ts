@@ -17,7 +17,7 @@ export interface Room {
   floor: 1 | 2;
   baseRent: string | number; // Prisma Decimal comes as string
   maxTenants: number;
-  currentTenants: Tenant[];
+  tenants: Tenant[];
   occupancyCount: number;
   createdAt: Date;
   updatedAt: Date;
