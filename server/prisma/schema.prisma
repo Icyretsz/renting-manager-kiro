@@ -135,6 +135,18 @@ model Notification {
   @@map("notifications")
 }
 
+model Setting {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       Decimal  @db.Decimal(10, 2)
+  description String?
+  updatedBy   String?  @map("updated_by")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("settings")
+}
+
 enum Role {
   ADMIN
   USER

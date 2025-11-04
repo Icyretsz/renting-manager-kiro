@@ -103,6 +103,17 @@ export interface Notification {
   createdAt: Date;
 }
 
+// Settings
+export interface Setting {
+  id: number;
+  key: string;
+  value: string | number; // Prisma Decimal comes as string
+  description?: string;
+  updatedBy?: string;
+  updatedAt: Date;
+  createdAt: Date;
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   success: boolean;

@@ -58,10 +58,8 @@ export const RoomsPage: React.FC = () => {
         ]}
       >
         <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
+          <Title level={5} className="mb-1 flex justify-center items-center gap-2">
             <HomeOutlined className="text-2xl text-blue-500" />
-          </div>
-          <Title level={5} className="mb-1">
             Room {room.roomNumber}
           </Title>
           <div className="flex items-center justify-center mb-2">
@@ -106,13 +104,13 @@ export const RoomsPage: React.FC = () => {
             <Text strong>Occupancy:</Text> {selectedRoom.occupancyCount}/{selectedRoom.maxTenants}
           </div>
           
-          {selectedRoom.currentTenants && selectedRoom.currentTenants.length > 0 && (
+          {selectedRoom.tenants && selectedRoom.tenants.length > 0 && (
             <>
               <Divider />
               <div>
                 <Text strong>Current Tenants:</Text>
                 <div className="mt-2 space-y-2">
-                  {selectedRoom.currentTenants.map((tenant) => (
+                  {selectedRoom.tenants.map((tenant) => (
                     <div key={tenant.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <div>
                         <div className="font-medium">{tenant.name}</div>

@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery } from '@/hooks/useRooms';
 import { useMeterReadingsQuery, useSubmitMeterReadingMutation } from '@/hooks/useMeterReadings';
+import { useSettingValue } from '@/hooks/useSettings';
 import { useUploadMeterPhotoMutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
@@ -47,6 +48,11 @@ export const MeterReadingsPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const { data: rooms } = useRoomsQuery();
   const [form] = Form.useForm();
+  
+  // Get settings values
+  const waterRate = useSettingValue('water_rate', 22000);
+  const electricityRate = useSettingValue('electricity_rate', 3500);
+  const trashFee = useSettingValue('trash_fee', 52000);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [waterPhotoUrl, setWaterPhotoUrl] = useState<string>('');
   const [electricityPhotoUrl, setElectricityPhotoUrl] = useState<string>('');
@@ -90,9 +96,8 @@ export const MeterReadingsPage: React.FC = () => {
     const waterUsage = Math.max(0, waterReading - prevWaterReading);
     const electricityUsage = Math.max(0, electricityReading - prevElectricityReading);
     
-    const waterCost = waterUsage * 22000; // ₱22,000 per unit
-    const electricityCost = electricityUsage * 3500; // ₱3,500 per unit
-    const trashFee = 52000; // Fixed ₱52,000
+    const waterCost = waterUsage * waterRate;
+    const electricityCost = electricityUsage * electricityRate;
 
     // console.log('Calculation:', { waterCost, electricityCost, baseRent, trashFee });
     

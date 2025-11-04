@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery, useRoomQuery } from '@/hooks/useRooms';
+import { useSettingValue } from '@/hooks/useSettings';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { Room } from '@/types';
@@ -21,6 +22,11 @@ export const UserRoomsPage: React.FC = () => {
   // For regular users, fetch detailed room data if they have a tenant room
   const userRoomId = user?.tenant?.roomId;
   const { data: userRoomDetails, isLoading: userRoomLoading } = useRoomQuery(userRoomId || 0);
+
+  // Get utility rates from settings
+  const waterRate = useSettingValue('water_rate', 22000);
+  const electricityRate = useSettingValue('electricity_rate', 3500);
+  const trashFee = useSettingValue('trash_fee', 52000);
 
   if (authLoading || roomsLoading || (!isAdmin() && userRoomId && userRoomLoading)) {
     return <LoadingSpinner message="Loading room information..." />;
@@ -47,13 +53,13 @@ export const UserRoomsPage: React.FC = () => {
         <div className="space-y-3">
           {/* Room Header */}
           <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <HomeOutlined className="text-2xl text-blue-500" />
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <HomeOutlined className="text-lg text-blue-500" />
+              <Title level={5} className="mb-0">
+                Room {room.roomNumber}
+              </Title>
             </div>
-            <Title level={5} className="mb-1">
-              Room {room.roomNumber}
-            </Title>
-            <Text className="text-sm text-gray-600">
+            <Text className="text-xs text-gray-600">
               Floor {room.floor}
             </Text>
           </div>
@@ -72,14 +78,30 @@ export const UserRoomsPage: React.FC = () => {
           </div>
 
           {/* Rent Info */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <DollarOutlined className="mr-1 text-gray-500" />
-              <Text className="text-sm">Base Rent</Text>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <DollarOutlined className="mr-1 text-gray-500" />
+                <Text className="text-sm">Base Rent</Text>
+              </div>
+              <Text className="text-sm font-medium">
+                {Number(room.baseRent).toLocaleString() || 'Not set'} VNĐ
+              </Text>
             </div>
-            <Text className="text-sm font-medium">
-              ₱{room.baseRent?.toLocaleString() || 'Not set'}
-            </Text>
+            <div className="text-xs text-gray-500 space-y-1">
+              <div className="flex justify-between">
+                <span>Water:</span>
+                <span>{waterRate.toLocaleString()} VNĐ/m³</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Electricity:</span>
+                <span>{electricityRate.toLocaleString()} VNĐ/kWh</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Trash:</span>
+                <span>{trashFee.toLocaleString()} VNĐ/month</span>
+              </div>
+            </div>
           </div>
 
           {/* Current Tenants */}
@@ -107,24 +129,17 @@ export const UserRoomsPage: React.FC = () => {
 
   // Detailed room view component for regular users
   const RoomDetailsView: React.FC<{ room: Room }> = ({ room }) => {
-    const occupancyRate = (room.occupancyCount / room.maxTenants) * 100;
-    const isFullyOccupied = room.occupancyCount >= room.maxTenants;
-
-    console.log(room)
+    // console.log(room)
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-2">
         {/* Room Header */}
         <div className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <HomeOutlined className="text-6xl text-blue-500" />
+          <div className="flex items-center justify-center gap-3">
+              <div className='font-bold text-xl'>
+                Room {room.roomNumber} (Floor {room.floor})
+              </div>
           </div>
-          <Title level={2} className="mb-2">
-            Room {room.roomNumber}
-          </Title>
-          <Text className="text-lg text-gray-600">
-            Floor {room.floor}
-          </Text>
         </div>
 
         {/* Room Details Cards */}
@@ -133,8 +148,11 @@ export const UserRoomsPage: React.FC = () => {
           <Col xs={24} sm={12}>
             <Card>
               <div className="text-center">
-                <UserOutlined className="text-3xl text-blue-500 mb-1" />
-                <Title level={4} className="mb-2">Occupancy</Title>
+                
+                <Title level={4} className="mb-2 flex justify-center items-center gap-2">
+                  <UserOutlined className="text-3xl text-blue-500" />
+                  Occupancy
+                </Title>
                 <div className='flex justify-center items-center gap-15'>
                   <div className="space-y-2">
                     <Text className="text-2xl font-bold">
@@ -174,11 +192,40 @@ export const UserRoomsPage: React.FC = () => {
           <Col xs={24} sm={12}>
             <Card>
               <div className="text-center">
-                <DollarOutlined className="text-3xl text-green-500 mb-3" />
-                <Title level={4} className="mb-2">Base Rent</Title>
-                <Text className="text-2xl font-bold text-green-600">
-                  {Number(room.baseRent).toLocaleString() || 'Not set'} VNĐ
-                </Text>
+                <Title level={4} className="mb-2 flex justify-center items-center gap-2">
+                  <DollarOutlined className="text-3xl text-green-500" />
+                  Pricing Information
+                </Title>
+                
+                {/* Base Rent */}
+                <div className="mb-4">
+                  <Text className="text-2xl font-bold text-green-600">
+                    {Number(room.baseRent).toLocaleString() || 'Not set'} VNĐ
+                  </Text>
+                  <div className="text-sm text-gray-600">Base Rent (Monthly)</div>
+                </div>
+
+                <Divider className="my-3" />
+
+                {/* Utility Rates */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center">
+                    <Text className="text-sm text-gray-600">Water Rate:</Text>
+                    <Text className="text-sm font-medium">{waterRate.toLocaleString()} VNĐ/m³</Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text className="text-sm text-gray-600">Electricity Rate:</Text>
+                    <Text className="text-sm font-medium">{electricityRate.toLocaleString()} VNĐ/kWh</Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text className="text-sm text-gray-600">Trash Fee:</Text>
+                    <Text className="text-sm font-medium">{trashFee.toLocaleString()} VNĐ/month</Text>
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-500 mt-3">
+                  * Utility charges based on actual usage
+                </div>
               </div>
             </Card>
           </Col>

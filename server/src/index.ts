@@ -90,6 +90,7 @@ import userRoutes from './routes/users';
 import meterReadingRoutes from './routes/meterReadings';
 import notificationRoutes from './routes/notifications';
 import billingRoutes from './routes/billing';
+import settingsRoutes from './routes/settings';
 
 // API routes
 app.use('/api/upload', uploadRoutes);
@@ -100,6 +101,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/readings', meterReadingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/billing', billingRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // 404 handler for API routes
 app.use('/api/*', (req, _res, next) => {
@@ -127,9 +129,18 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🌍 Environment: ${process.env['NODE_ENV'] || 'development'}`);
   console.log(`📁 Upload directory: ${process.env['UPLOAD_DIR'] || 'uploads'}`);
+  
+  // Initialize default settings
+  try {
+    const { initializeDefaultSettings } = await import('./services/settingsService');
+    await initializeDefaultSettings();
+    console.log('⚙️ Default settings initialized');
+  } catch (error) {
+    console.error('Failed to initialize default settings:', error);
+  }
 });
