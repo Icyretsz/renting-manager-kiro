@@ -27,6 +27,7 @@ import { useSettingValue } from '@/hooks/useSettings';
 import { useUploadMeterPhotoMutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { ReadingHistoryModal } from '@/components/MeterReadings';
 
 
 const { Title, Text } = Typography;
@@ -73,6 +74,7 @@ export const MeterReadingsPage: React.FC = () => {
   const [calculatedBill, setCalculatedBill] = useState<CalculatedBill>({
     totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
   });
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const { data: readings, isLoading: readingLoading } = useMeterReadingsQuery(selectedRoomId || 0);
   
   // Get room details for the selected room
@@ -444,13 +446,21 @@ export const MeterReadingsPage: React.FC = () => {
           <Button
             icon={<HistoryOutlined />}
             className="w-full"
-            onClick={() => {
-              // Navigate to reading history
-            }}
+            onClick={() => setShowHistoryModal(true)}
+            disabled={!selectedRoomId}
           >
             View Reading History
           </Button>
         </Card>
+
+        {/* Reading History Modal */}
+        <ReadingHistoryModal
+          visible={showHistoryModal}
+          onClose={() => setShowHistoryModal(false)}
+          readings={readings || []}
+          loading={readingLoading}
+          roomNumber={currentRoom?.roomNumber}
+        />
       </div>
     </PageErrorBoundary>
   );
