@@ -19,7 +19,8 @@ import {
   EyeOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  HistoryOutlined
 } from '@ant-design/icons';
 import { MeterReading } from '@/types';
 
@@ -39,7 +40,7 @@ const toNumber = (value: string | number): number => {
 };
 
 const getStatusColor = (status: string) => {
-  switch (status) {
+  switch (status.toLowerCase()) {
     case 'approved':
       return 'green';
     case 'rejected':
@@ -52,12 +53,12 @@ const getStatusColor = (status: string) => {
 };
 
 const getStatusIcon = (status: string) => {
-  switch (status) {
+  switch (status.toLowerCase()) {
     case 'approved':
       return <CheckCircleOutlined />;
     case 'rejected':
       return <CloseCircleOutlined />;
-    case 'pending':
+    case 'PENDING':
       return <ClockCircleOutlined />;
     default:
       return null;
@@ -236,6 +237,44 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     )}
                   </Col>
                 </Row>
+                
+                {/* Modification History */}
+                {reading.modifications && reading.modifications.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="flex items-center mb-2">
+                      <HistoryOutlined className="text-gray-500 mr-1" />
+                      <Text strong className="text-sm">Modification History</Text>
+                    </div>
+                    <div className="space-y-2">
+                      {reading.modifications.map((mod) => (
+                        <div key={mod.id} className="text-xs bg-white p-2 rounded border">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium capitalize">
+                                {mod.modificationType}
+                              </span>
+                              {mod.fieldName && (
+                                <span className="text-gray-600"> - {mod.fieldName}</span>
+                              )}
+                            </div>
+                            <span className="text-gray-500">
+                              {new Date(mod.modifiedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {mod.oldValue && mod.newValue && (
+                            <div className="text-gray-600 mt-1">
+                              Changed from "{mod.oldValue}" to "{mod.newValue}"
+                            </div>
+                          )}
+                          <div className="text-gray-500 mt-1">
+                            By {mod.user?.name || 'Unknown'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 {reading.approvedAt && (
                   <div className="mt-2 text-xs text-gray-500">
                     Approved on: {new Date(reading.approvedAt).toLocaleDateString()}

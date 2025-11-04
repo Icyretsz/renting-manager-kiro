@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { MeterReading, ApiResponse } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
 
 // Query keys
 export const meterReadingKeys = {
@@ -15,24 +17,47 @@ export const meterReadingKeys = {
 
 // Fetch meter readings for a room
 export const useMeterReadingsQuery = (roomId: number) => {
+  const { isAuthenticated } = useAuth0();
+  const { token, user } = useAuthStore();
+
   return useQuery({
     queryKey: meterReadingKeys.byRoom(roomId),
     queryFn: async (): Promise<MeterReading[]> => {
       const response = await api.get<ApiResponse<MeterReading[]>>(`/readings/room/${roomId}/history`);
       return response.data.data || [];
     },
-    enabled: !!roomId,
+    enabled: !!roomId && isAuthenticated && !!token && !!user,
   });
 };
 
-// Fetch pending readings (admin only)
+// Fetch pending readings (admin only) - DEPRECATED: Use useAllReadingsQuery instead
 export const usePendingReadingsQuery = () => {
+  const { isAuthenticated } = useAuth0();
+  const { token, user } = useAuthStore();
+
   return useQuery({
     queryKey: meterReadingKeys.pending(),
     queryFn: async (): Promise<MeterReading[]> => {
-      const response = await api.get<ApiResponse<MeterReading[]>>('/readings/pending');
+      const response = await api.get<ApiResponse<MeterReading[]>>('/readings/pending/all');
       return response.data.data || [];
     },
+    enabled: isAuthenticated && !!token && !!user && user.role === 'ADMIN',
+  });
+};
+
+// Fetch all readings for admin approval (admin only)
+export const useAllReadingsQuery = () => {
+  const { isAuthenticated } = useAuth0();
+  const { token, user } = useAuthStore();
+
+  return useQuery({
+    queryKey: [...meterReadingKeys.all, 'admin-all'],
+    queryFn: async (): Promise<MeterReading[]> => {
+      const response = await api.get<ApiResponse<MeterReading[]>>('/readings/');
+      return response.data.data || [];
+    },
+    enabled: isAuthenticated && !!token && !!user && user.role === 'ADMIN',
+    staleTime: 30000, // 30 seconds
   });
 };
 

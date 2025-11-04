@@ -22,12 +22,13 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery, useRoomQuery } from '@/hooks/useRooms';
-import { useMeterReadingsQuery, useSubmitMeterReadingMutation } from '@/hooks/useMeterReadings';
+import { useMeterReadingsQuery, useSubmitMeterReadingMutation, useUpdateMeterReadingMutation } from '@/hooks/useMeterReadings';
 import { useSettingValue } from '@/hooks/useSettings';
 import { useUploadMeterPhotoMutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { ReadingHistoryModal } from '@/components/MeterReadings';
+import { Tag } from 'lucide-react';
 
 
 const { Title, Text } = Typography;
@@ -82,6 +83,19 @@ export const MeterReadingsPage: React.FC = () => {
 
   // Get the most recent reading as previous reading
   const previousReading = readings && readings.length > 0 ? readings[0] : null;
+  
+  // Get current month's reading if it exists
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+  const currentMonthReading = readings?.find(r => r.month === currentMonth && r.year === currentYear);
+  
+  // Determine if user can edit current month's reading
+  const canEditCurrentReading = !currentMonthReading || 
+    ((currentMonthReading.status === 'PENDING' || currentMonthReading.status === 'REJECTED') && (!isAdmin() || currentMonthReading.submittedBy === user?.id));
+  
+  // For admin, they can always edit any reading
+  const canAdminOverride = isAdmin() && currentMonthReading;
 
   // console.log(previousReading)
 
@@ -98,6 +112,26 @@ export const MeterReadingsPage: React.FC = () => {
       setSelectedRoomId(userRoomId);
     }
   }, [isAdmin, userRoomId, selectedRoomId]);
+
+  // Pre-fill form with current month reading if it exists
+  useEffect(() => {
+    if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
+      form.setFieldsValue({
+        waterReading: toNumber(currentMonthReading.waterReading),
+        electricityReading: toNumber(currentMonthReading.electricityReading),
+      });
+      setWaterPhotoUrl(currentMonthReading.waterPhotoUrl || '');
+      setElectricityPhotoUrl(currentMonthReading.electricityPhotoUrl || '');
+      
+      // Calculate bill with existing values
+      if (previousReading && currentRoom) {
+        calculateBill(
+          toNumber(currentMonthReading.waterReading),
+          toNumber(currentMonthReading.electricityReading)
+        );
+      }
+    }
+  }, [currentMonthReading, canEditCurrentReading, canAdminOverride, form, previousReading, currentRoom]);
 
   const handleRoomChange = (roomId: number) => {
     setSelectedRoomId(roomId);
@@ -169,6 +203,8 @@ export const MeterReadingsPage: React.FC = () => {
 
   const submitMutation = useSubmitMeterReadingMutation();
 
+  const updateMutation = useUpdateMeterReadingMutation();
+
   const handleSubmit = async (values: ReadingFormData) => {
     if (!selectedRoomId) {
       console.error('No room selected');
@@ -176,27 +212,36 @@ export const MeterReadingsPage: React.FC = () => {
     }
 
     try {
-      const currentDate = new Date();
       const submissionData = {
         roomId: selectedRoomId,
-        month: currentDate.getMonth() + 1, // JavaScript months are 0-indexed
-        year: currentDate.getFullYear(),
+        month: currentMonth,
+        year: currentYear,
         waterReading: values.waterReading,
         electricityReading: values.electricityReading,
         waterPhotoUrl,
         electricityPhotoUrl,
       };
 
-      // console.log('Submitting reading:', submissionData);
-      await submitMutation.mutateAsync(submissionData);
+      if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
+        // Update existing reading
+        await updateMutation.mutateAsync({
+          readingId: currentMonthReading.id,
+          data: submissionData
+        });
+      } else {
+        // Create new reading
+        await submitMutation.mutateAsync(submissionData);
+      }
 
-      // Reset form after successful submission
-      form.resetFields();
-      setWaterPhotoUrl('');
-      setElectricityPhotoUrl('');
-      setCalculatedBill({
-        totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
-      });
+      // Reset form after successful submission only if creating new
+      if (!currentMonthReading) {
+        form.resetFields();
+        setWaterPhotoUrl('');
+        setElectricityPhotoUrl('');
+        setCalculatedBill({
+          totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+        });
+      }
     } catch (error) {
       console.error('Submission failed:', error);
     }
@@ -243,8 +288,88 @@ export const MeterReadingsPage: React.FC = () => {
 
         {selectedRoomId && availableRooms && availableRooms.length > 0 && (
           <>
+            {/* Current Month Reading Status */}
+            {currentMonthReading && (
+              <Card 
+                title={`Current Month Reading (${currentMonth}/${currentYear})`} 
+                size="small"
+                className={
+                  currentMonthReading.status === 'APPROVED' ? 'border-green-200 bg-green-50' :
+                  currentMonthReading.status === 'REJECTED' ? 'border-red-200 bg-red-50' :
+                  'border-orange-200 bg-orange-50'
+                }
+              >
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Statistic
+                      title="Water"
+                      value={toNumber(currentMonthReading.waterReading)}
+                      precision={1}
+                      suffix="units"
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Statistic
+                      title="Electricity"
+                      value={toNumber(currentMonthReading.electricityReading)}
+                      precision={1}
+                      suffix="units"
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <div className="text-center">
+                      <div className="text-sm text-gray-500 mb-1">Status</div>
+                      <div className={`font-bold ${currentMonthReading.status === 'APPROVED' ? 'text-green-500' : currentMonthReading.status === 'REJECTED' ? 'text-red-500' : 'text-orange-500'}`}>
+                        {currentMonthReading.status.toUpperCase()}
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+                
+                {currentMonthReading.status === 'APPROVED' && !isAdmin() && (
+                  <Alert
+                    message="Reading Approved"
+                    description="This reading has been approved and cannot be modified. Contact admin if changes are needed."
+                    type="success"
+                    showIcon
+                    className="mt-3"
+                  />
+                )}
+                
+                {currentMonthReading.status === 'REJECTED' && (
+                  <Alert
+                    message="Reading Rejected"
+                    description="This reading was rejected. Please submit a new reading with correct values."
+                    type="error"
+                    showIcon
+                    className="mt-3"
+                  />
+                )}
+                
+                {currentMonthReading.status === 'PENDING' && (
+                  <Alert
+                    message="Pending Approval"
+                    description="This reading is waiting for admin approval. You can still modify it until it's approved."
+                    type="warning"
+                    showIcon
+                    className="mt-3"
+                  />
+                )}
+
+                {canAdminOverride && (
+                  <Alert
+                    message="Admin Override Available"
+                    description="As an admin, you can modify this approved reading. Changes will be logged in the modification history."
+                    type="info"
+                    showIcon
+                    className="mt-3"
+                  />
+                )}
+              </Card>
+            )}
+
             {/* Previous Reading Info */}
-            {previousReading && (
+            {previousReading && previousReading.id !== currentMonthReading?.id && (
               <Card title="Previous Reading" size="small">
                 <Row gutter={16}>
                   <Col span={12}>
@@ -292,12 +417,36 @@ export const MeterReadingsPage: React.FC = () => {
             />
 
             {/* Reading Input Form */}
-            <Card title="Current Month Reading" size="small">
+            <Card 
+              title={
+                currentMonthReading && !canEditCurrentReading && !canAdminOverride
+                  ? "Current Month Reading (Read Only)"
+                  : currentMonthReading && canAdminOverride
+                  ? "Current Month Reading (Admin Override)"
+                  : "Current Month Reading"
+              }
+              size="small"
+            >
+              {!canEditCurrentReading && !canAdminOverride ? (
+                <Alert
+                  message="Reading Not Editable"
+                  description={
+                    currentMonthReading?.status === 'APPROVED'
+                      ? "This reading has been approved and cannot be modified."
+                      : "You cannot edit this reading."
+                  }
+                  type="info"
+                  showIcon
+                  className="mb-4"
+                />
+              ) : null}
+              
               <Form
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
                 onValuesChange={handleReadingChange}
+                disabled={!canEditCurrentReading && !canAdminOverride}
               >
                 {/* Water Reading */}
                 <Form.Item
@@ -442,10 +591,21 @@ export const MeterReadingsPage: React.FC = () => {
                     icon={<SaveOutlined />}
                     className="w-full"
                     size="large"
-                    loading={submitMutation.isPending}
-                    disabled={!waterPhotoUrl || !electricityPhotoUrl || submitMutation.isPending}
+                    loading={submitMutation.isPending || updateMutation.isPending}
+                    disabled={
+                      (!canEditCurrentReading && !canAdminOverride) ||
+                      !waterPhotoUrl || 
+                      !electricityPhotoUrl || 
+                      submitMutation.isPending || 
+                      updateMutation.isPending
+                    }
                   >
-                    Submit Reading
+                    {currentMonthReading && (canEditCurrentReading || canAdminOverride)
+                      ? canAdminOverride 
+                        ? 'Update Reading (Admin Override)'
+                        : 'Update Reading'
+                      : 'Submit Reading'
+                    }
                   </Button>
                 </Form.Item>
               </Form>

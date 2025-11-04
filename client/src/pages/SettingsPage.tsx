@@ -17,6 +17,7 @@ import {
 } from '@/hooks/useSettings';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { NotificationSettings } from '@/components/Notifications';
 import { Setting } from '@/types';
 
 const { Title, Text } = Typography;
@@ -199,6 +200,9 @@ export const SettingsPage: React.FC = () => {
             </Button>
           </Space>
         </div>
+
+        {/* Notification Settings */}
+        <NotificationSettings />
 
         {/* Settings Table */}
         <Card>

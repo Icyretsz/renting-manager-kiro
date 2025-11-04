@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { Setting, ApiResponse } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
 
 // Query keys
 export const settingsKeys = {
@@ -12,17 +14,24 @@ export const settingsKeys = {
 
 // Fetch all settings
 export const useSettingsQuery = () => {
+  const { isAuthenticated } = useAuth0();
+  const { token, user } = useAuthStore();
+
   return useQuery({
     queryKey: settingsKeys.lists(),
     queryFn: async (): Promise<Setting[]> => {
       const response = await api.get<ApiResponse<Setting[]>>('/settings');
       return response.data.data || [];
     },
+    enabled: isAuthenticated && !!token && !!user,
   });
 };
 
 // Fetch single setting by key
 export const useSettingQuery = (key: string) => {
+  const { isAuthenticated } = useAuth0();
+  const { token, user } = useAuthStore();
+
   return useQuery({
     queryKey: settingsKeys.detail(key),
     queryFn: async (): Promise<Setting> => {
@@ -32,7 +41,7 @@ export const useSettingQuery = (key: string) => {
       }
       return response.data.data;
     },
-    enabled: !!key,
+    enabled: !!key && isAuthenticated && !!token && !!user,
   });
 };
 

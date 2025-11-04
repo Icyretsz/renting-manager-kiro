@@ -53,7 +53,7 @@ export interface MeterReading {
   baseRent: string | number; // Prisma Decimal comes as string
   trashFee: string | number; // Prisma Decimal comes as string
   totalAmount?: string | number; // Prisma Decimal comes as string
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   submittedBy: string;
   submittedAt: Date;
   approvedBy?: string;

@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { Tenant, ApiResponse } from '@/types';
 import { authService, TenantStatus } from '@/services/authService';
+import { useAuthStore } from '@/stores/authStore';
 
 // Query keys
 export const tenantKeys = {
@@ -15,6 +17,9 @@ export const tenantKeys = {
 
 // Fetch all tenants
 export const useTenantsQuery = (roomId?: number) => {
+  const { isAuthenticated } = useAuth0();
+  const { token, user } = useAuthStore();
+
   return useQuery({
     queryKey: roomId ? tenantKeys.byRoom(roomId) : tenantKeys.lists(),
     queryFn: async (): Promise<Tenant[]> => {
@@ -22,11 +27,15 @@ export const useTenantsQuery = (roomId?: number) => {
       const response = await api.get<ApiResponse<Tenant[]>>(url);
       return response.data.data || [];
     },
+    enabled: isAuthenticated && !!token && !!user,
   });
 };
 
 // Fetch single tenant
 export const useTenantQuery = (tenantId: string) => {
+  const { isAuthenticated } = useAuth0();
+  const { token, user } = useAuthStore();
+
   return useQuery({
     queryKey: tenantKeys.detail(tenantId),
     queryFn: async (): Promise<Tenant> => {
@@ -36,7 +45,7 @@ export const useTenantQuery = (tenantId: string) => {
       }
       return response.data.data;
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId && isAuthenticated && !!token && !!user,
   });
 };
 
@@ -98,9 +107,13 @@ export const useDeleteTenantMutation = () => {
 
 // Check if user have linked to a tenant
 export const useTenantStatus = () => {
+  const { isAuthenticated } = useAuth0();
+  const { token } = useAuthStore();
+
   return useQuery<TenantStatus>({
     queryKey: ['tenant-status'],
     queryFn: authService.checkTenantStatus,
+    enabled: isAuthenticated && !!token,
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

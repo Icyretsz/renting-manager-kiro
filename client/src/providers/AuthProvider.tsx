@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { useAuthStore } from '@/stores/authStore';
 import { auth0Config } from '@/config/auth0';
+import { useFirebaseMessaging } from '@/hooks/useFirebaseMessaging';
 import { User } from '@/types';
 
 interface AuthProviderProps {
@@ -12,6 +13,9 @@ interface AuthProviderProps {
 const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, user, getAccessTokenSilently } = useAuth0();
   const { login, logout } = useAuthStore();
+  
+  // Initialize Firebase messaging when user is authenticated
+  useFirebaseMessaging();
 
   useEffect(() => {
     const syncAuthState = async () => {
@@ -19,7 +23,7 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
         try {
           // console.log('Auth0Integration: Syncing authenticated user to store', user);
           const token = await getAccessTokenSilently();
-          // console.log('Auth0Integration: Got access token:', token ? 'Token received' : 'No token');
+          console.log('Auth0Integration: Got access token:', token ? 'Token received' : 'No token');
           
           const appUser: User = {
             id: user.sub || '',

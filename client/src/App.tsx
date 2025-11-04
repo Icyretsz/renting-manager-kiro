@@ -15,6 +15,7 @@ import { TenantsPage } from '@/pages/TenantsPage';
 import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
 import { UserRoomsPage } from './pages/UserRoomsPage';
 import { MeterReadingsPage } from '@/pages/MeterReadingsPage';
+import { ApprovalsPage } from '@/pages/ApprovalsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import UnlinkedErrorPage from '@/pages/UnlinkedErrorPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -125,6 +126,20 @@ const AppContent = () => {
                 <MeterReadingsPage />
               </MainLayout>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/approvals"
+          element={
+            userRole === 'ADMIN' ? (
+              <ProtectedRoute requireTenantLink={false}>
+                <MainLayout>
+                  <ApprovalsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/unauthorized" replace />
+            )
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

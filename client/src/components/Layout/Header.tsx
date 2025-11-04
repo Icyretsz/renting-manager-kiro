@@ -7,15 +7,14 @@ import {
   MenuOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
-import { useNotificationStore } from '@/stores/notificationStore';
 import { useUIStore } from '@/stores/uiStore';
+import { NotificationBell } from '@/components/Notifications';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
 
 export const MobileHeader: React.FC = () => {
   const { logout } = useAuth();
-  const { unreadCount } = useNotificationStore();
   const { openModal } = useUIStore();
 
   const userMenuItems = [
@@ -57,14 +56,7 @@ export const MobileHeader: React.FC = () => {
       {/* Right side - Notifications and User Menu */}
       <div className="flex items-center space-x-2">
         {/* Notifications */}
-        <Badge count={unreadCount} size="small">
-          <Button
-            type="text"
-            icon={<BellOutlined />}
-            className="flex items-center justify-center p-1"
-            onClick={() => openModal('notifications')}
-          />
-        </Badge>
+        <NotificationBell />
 
         {/* User Menu */}
         <Dropdown

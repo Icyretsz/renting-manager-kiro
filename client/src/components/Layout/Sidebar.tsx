@@ -70,7 +70,7 @@ export const MobileDrawer: React.FC = () => {
     {
       key: '/approvals',
       icon: <CheckCircleOutlined />,
-      label: 'Approvals',
+      label: 'Reading Approvals',
       onClick: () => handleNavigation('/approvals'),
     },
     {
