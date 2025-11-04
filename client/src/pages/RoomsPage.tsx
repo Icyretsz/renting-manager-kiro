@@ -98,7 +98,7 @@ export const RoomsPage: React.FC = () => {
             <Text strong>Floor:</Text> {selectedRoom.floor}
           </div>
           <div>
-            <Text strong>Base Rent:</Text> ₱{selectedRoom.baseRent?.toLocaleString() || 'Not set'}
+            <Text strong>Base Rent:</Text> {Number(selectedRoom.baseRent).toLocaleString() || 'Not set'} VNĐ
           </div>
           <div>
             <Text strong>Occupancy:</Text> {selectedRoom.occupancyCount}/{selectedRoom.maxTenants}

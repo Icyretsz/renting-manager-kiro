@@ -113,7 +113,7 @@ export const AdminDashboardPage: React.FC = () => {
               <Statistic
                 title="Monthly Revenue"
                 value={monthlyRevenue}
-                prefix="₱"
+                suffix="VNĐ"
                 precision={0}
                 valueStyle={{ color: '#cf1322' }}
               />

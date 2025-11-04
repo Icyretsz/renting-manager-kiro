@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   Form, 
@@ -21,12 +21,13 @@ import {
   SaveOutlined
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
-import { useRoomsQuery } from '@/hooks/useRooms';
+import { useRoomsQuery, useRoomQuery } from '@/hooks/useRooms';
 import { useMeterReadingsQuery, useSubmitMeterReadingMutation } from '@/hooks/useMeterReadings';
 import { useSettingValue } from '@/hooks/useSettings';
 import { useUploadMeterPhotoMutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -39,13 +40,21 @@ interface ReadingFormData {
   electricityPhoto?: File;
 }
 
+interface CalculatedBill {
+  totalBill: number,
+  electricityUsage: number,
+  waterUsage: number,
+  electricityBill: number,
+  waterBill: number
+}
+
 // Utility function to safely convert Prisma Decimal strings to numbers
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
 };
 
 export const MeterReadingsPage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { data: rooms } = useRoomsQuery();
   const [form] = Form.useForm();
   
@@ -53,12 +62,21 @@ export const MeterReadingsPage: React.FC = () => {
   const waterRate = useSettingValue('water_rate', 22000);
   const electricityRate = useSettingValue('electricity_rate', 3500);
   const trashFee = useSettingValue('trash_fee', 52000);
-  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  
+  // For regular users, default to their tenant room; for admins, no default selection
+  const userRoomId = user?.tenant?.roomId;
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(
+    !isAdmin() && userRoomId ? userRoomId : null
+  );
   const [waterPhotoUrl, setWaterPhotoUrl] = useState<string>('');
   const [electricityPhotoUrl, setElectricityPhotoUrl] = useState<string>('');
-  const [calculatedBill, setCalculatedBill] = useState<number>(0);
-  
+  const [calculatedBill, setCalculatedBill] = useState<CalculatedBill>({
+    totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+  });
   const { data: readings, isLoading: readingLoading } = useMeterReadingsQuery(selectedRoomId || 0);
+  
+  // Get room details for the selected room
+  const { data: currentRoom } = useRoomQuery(selectedRoomId || 0);
   
   // Get the most recent reading as previous reading
   const previousReading = readings && readings.length > 0 ? readings[0] : null;
@@ -68,30 +86,41 @@ export const MeterReadingsPage: React.FC = () => {
   const uploadMutation = useUploadMeterPhotoMutation();
 
   // Get available rooms for the user
-  const availableRooms = isAdmin() ? rooms : rooms?.slice(0, 3); // Mock: first 3 rooms for regular users
+  const availableRooms = isAdmin() 
+    ? rooms 
+    : (userRoomId && rooms ? rooms.filter(room => room.id === userRoomId) : []);
+
+  // Auto-select room for regular users when user data loads
+  useEffect(() => {
+    if (!isAdmin() && userRoomId && !selectedRoomId) {
+      setSelectedRoomId(userRoomId);
+    }
+  }, [isAdmin, userRoomId, selectedRoomId]);
 
   const handleRoomChange = (roomId: number) => {
     setSelectedRoomId(roomId);
     form.resetFields(['waterReading', 'electricityReading']);
     setWaterPhotoUrl('');
     setElectricityPhotoUrl('');
-    setCalculatedBill(0);
+    setCalculatedBill({
+    totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+  });
   };
 
   const handleReadingChange = () => {
     const values = form.getFieldsValue();
-    if (values.waterReading && values.electricityReading && previousReading) {
+    if (values.waterReading && values.electricityReading && previousReading && currentRoom) {
       calculateBill(values.waterReading, values.electricityReading);
     }
   };
 
   const calculateBill = (waterReading: number, electricityReading: number) => {
-    if (!previousReading) return;
+    if (!previousReading || !currentRoom) return;
 
     // Convert string values to numbers for calculations
     const prevWaterReading = toNumber(previousReading.waterReading);
     const prevElectricityReading = toNumber(previousReading.electricityReading);
-    const baseRent = toNumber(previousReading.baseRent);
+    const baseRent = toNumber(currentRoom.baseRent); // Use current room's base rent
 
     const waterUsage = Math.max(0, waterReading - prevWaterReading);
     const electricityUsage = Math.max(0, electricityReading - prevElectricityReading);
@@ -103,7 +132,13 @@ export const MeterReadingsPage: React.FC = () => {
     
     const total = waterCost + electricityCost + baseRent + trashFee;
     // console.log('Total:', total);
-    setCalculatedBill(total);
+    setCalculatedBill({
+      totalBill: total,
+      electricityUsage: electricityUsage,
+      waterUsage: waterUsage,
+      electricityBill: electricityCost,
+      waterBill: waterCost
+    });
   };
 
   const handlePhotoUpload = async (file: File, type: 'water' | 'electricity') => {
@@ -157,7 +192,9 @@ export const MeterReadingsPage: React.FC = () => {
       form.resetFields();
       setWaterPhotoUrl('');
       setElectricityPhotoUrl('');
-      setCalculatedBill(0);
+      setCalculatedBill({
+    totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+  });
     } catch (error) {
       console.error('Submission failed:', error);
     }
@@ -181,12 +218,13 @@ export const MeterReadingsPage: React.FC = () => {
         </div>
 
         {/* Room Selection */}
-        <Card title="Select Room" size="small">
+        <Card title={isAdmin() ? "Select Room" : "Your Room"} size="small">
           <Select
-            placeholder="Choose a room"
+            placeholder={isAdmin() ? "Choose a room" : "Your assigned room"}
             className="w-full"
             value={selectedRoomId}
             onChange={handleRoomChange}
+            disabled={!isAdmin()}
           >
             {availableRooms?.map((room) => (
               <Option key={room.id} value={room.id}>
@@ -194,9 +232,14 @@ export const MeterReadingsPage: React.FC = () => {
               </Option>
             ))}
           </Select>
+          {!isAdmin() && !userRoomId && (
+            <div className="mt-2 text-sm text-gray-500">
+              You are not assigned to any room as a tenant. Contact your administrator.
+            </div>
+          )}
         </Card>
 
-        {selectedRoomId && (
+        {selectedRoomId && availableRooms && availableRooms.length > 0 && (
           <>
             {/* Previous Reading Info */}
             {previousReading && (
@@ -346,17 +389,21 @@ export const MeterReadingsPage: React.FC = () => {
                 </Form.Item>
 
                 {/* Bill Calculation */}
-                {calculatedBill > 0 && (
+                {calculatedBill.totalBill > 0 && (
                   <Card className="bg-blue-50 border-blue-200" size="small">
                     <div className="text-center">
                       <CalculatorOutlined className="text-2xl text-blue-500 mb-2" />
                       <Statistic
                         title="Calculated Monthly Bill"
-                        value={calculatedBill}
+                        value={calculatedBill.totalBill}
                         precision={0}
-                        prefix="₱"
+                        suffix="VNĐ"
                         valueStyle={{ color: '#1890ff', fontSize: '24px' }}
                       />
+                      <div>Electricity: {calculatedBill.electricityUsage} kWh x {electricityRate.toLocaleString()} = {calculatedBill.electricityBill.toLocaleString()} VNĐ</div>
+                      <div>Water: {calculatedBill.waterUsage} m³ x {waterRate.toLocaleString()} = {calculatedBill.waterBill.toLocaleString()} VNĐ</div>
+                      <div>Trash fee: {trashFee.toLocaleString()} VNĐ</div>
+                      <div>Base rent: {currentRoom ? Number(currentRoom.baseRent).toLocaleString() : 'Loading...'} VNĐ</div>
                       <div className="text-xs text-gray-600 mt-2">
                         Including base rent, utilities, and trash fee
                       </div>
