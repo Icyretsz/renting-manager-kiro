@@ -73,7 +73,7 @@ export const TenantsPage: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       // Here you would call the API to create/update tenant
-      console.log('Tenant data:', values);
+      // console.log('Tenant data:', values);
       setModalVisible(false);
       form.resetFields();
     } catch (error) {

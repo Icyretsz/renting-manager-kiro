@@ -26,11 +26,11 @@ const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
   const { token, user: appUser } = useAuthStore()
 
-  console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
+  // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
 
   useEffect(() => {
-    console.log('Token:', token)
-    console.log('App User:', appUser)
+    // console.log('Token:', token)
+    // console.log('App User:', appUser)
   }, [token, appUser])
   
   // Show loading while Auth0 is initializing

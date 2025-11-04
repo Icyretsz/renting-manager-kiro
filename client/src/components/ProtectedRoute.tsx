@@ -16,14 +16,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isLoading: authLoading } = useAuth0();
   const { data: tenantStatus, isLoading: tenantLoading, error } = useTenantStatus();
 
-  console.log('ProtectedRoute:', { 
-    isAuthenticated, 
-    authLoading, 
-    tenantLoading, 
-    tenantStatus, 
-    error: error?.message,
-    requireTenantLink 
-  });
+  // console.log('ProtectedRoute:', { 
+  //   isAuthenticated, 
+  //   authLoading, 
+  //   tenantLoading, 
+  //   tenantStatus, 
+  //   error: error?.message,
+  //   requireTenantLink 
+  // });
 
   // Show loading while Auth0 is initializing
   if (authLoading) {

@@ -17,9 +17,9 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
     const syncAuthState = async () => {
       if (isAuthenticated && user) {
         try {
-          console.log('Auth0Integration: Syncing authenticated user to store', user);
+          // console.log('Auth0Integration: Syncing authenticated user to store', user);
           const token = await getAccessTokenSilently();
-          console.log('Auth0Integration: Got access token:', token ? 'Token received' : 'No token');
+          // console.log('Auth0Integration: Got access token:', token ? 'Token received' : 'No token');
           
           const appUser: User = {
             id: user.sub || '',
@@ -31,13 +31,13 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
             updatedAt: new Date(),
           };
 
-          console.log('Auth0Integration: Created app user:', appUser);
+          // console.log('Auth0Integration: Created app user:', appUser);
           login(token, appUser);
         } catch (error) {
           console.error('Error getting access token:', error);
         }
       } else if (!isAuthenticated) {
-        console.log('Auth0Integration: User not authenticated, clearing store');
+        // console.log('Auth0Integration: User not authenticated, clearing store');
         logout();
       }
     };

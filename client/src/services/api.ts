@@ -32,7 +32,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      console.log('401 error - Token expired or invalid, clearing auth state');
+      // console.log('401 error - Token expired or invalid, clearing auth state');
       useAuthStore.getState().logout();
       // Don't redirect here - let Auth0 handle it naturally
       // The app will show LoginPage when isAuthenticated becomes false

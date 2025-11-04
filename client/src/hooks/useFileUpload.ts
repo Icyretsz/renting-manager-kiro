@@ -10,7 +10,7 @@ export const useUploadMeterPhotoMutation = () => {
       formData.append('photo', file);
       formData.append('roomId', roomId.toString());
       formData.append('meterType', meterType);
-      console.log('Uploading:', { roomId, meterType, fileName: file.name });
+      // console.log('Uploading:', { roomId, meterType, fileName: file.name });
 
       const response = await api.post<ApiResponse<{ photoUrl: string; filename: string }>>(
         '/upload/photo',

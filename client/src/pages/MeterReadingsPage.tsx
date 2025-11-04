@@ -57,7 +57,7 @@ export const MeterReadingsPage: React.FC = () => {
   // Get the most recent reading as previous reading
   const previousReading = readings && readings.length > 0 ? readings[0] : null;
 
-  console.log(previousReading)
+  // console.log(previousReading)
   
   const uploadMutation = useUploadMeterPhotoMutation();
 
@@ -94,10 +94,10 @@ export const MeterReadingsPage: React.FC = () => {
     const electricityCost = electricityUsage * 3500; // ₱3,500 per unit
     const trashFee = 52000; // Fixed ₱52,000
 
-    console.log('Calculation:', { waterCost, electricityCost, baseRent, trashFee });
+    // console.log('Calculation:', { waterCost, electricityCost, baseRent, trashFee });
     
     const total = waterCost + electricityCost + baseRent + trashFee;
-    console.log('Total:', total);
+    // console.log('Total:', total);
     setCalculatedBill(total);
   };
 
@@ -145,7 +145,7 @@ export const MeterReadingsPage: React.FC = () => {
         electricityPhotoUrl,
       };
       
-      console.log('Submitting reading:', submissionData);
+      // console.log('Submitting reading:', submissionData);
       await submitMutation.mutateAsync(submissionData);
       
       // Reset form after successful submission
