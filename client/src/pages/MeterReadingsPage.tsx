@@ -28,7 +28,6 @@ import { useUploadMeterPhotoMutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { ReadingHistoryModal } from '@/components/MeterReadings';
-import { Tag } from 'lucide-react';
 
 
 const { Title, Text } = Typography;
@@ -81,21 +80,38 @@ export const MeterReadingsPage: React.FC = () => {
   // Get room details for the selected room
   const { data: currentRoom } = useRoomQuery(selectedRoomId || 0);
 
-  // Get the most recent reading as previous reading
-  const previousReading = readings && readings.length > 0 ? readings[0] : null;
+  // Get the most recent approved reading as previous reading for billing calculations
+  const previousReading = readings?.find(r => r.status === 'APPROVED') || null;
   
-  // Get current month's reading if it exists
+  // Get current month's readings (there can be multiple now)
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
-  const currentMonthReading = readings?.find(r => r.month === currentMonth && r.year === currentYear);
+  const currentMonthReadings = readings?.filter(r => r.month === currentMonth && r.year === currentYear) || [];
+  
+  // Get the most relevant reading for the current month:
+  // 1. APPROVED reading (if exists)
+  // 2. PENDING reading (if exists and user can edit it)
+  // 3. Most recent REJECTED reading (for display purposes)
+  const currentMonthReading = currentMonthReadings.find(r => r.status === 'APPROVED') ||
+    currentMonthReadings.find(r => r.status === 'PENDING' && (!isAdmin() ? r.submittedBy === user?.id : true)) ||
+    currentMonthReadings.filter(r => r.status === 'REJECTED').sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0];
   
   // Determine if user can edit current month's reading
-  const canEditCurrentReading = !currentMonthReading || 
-    ((currentMonthReading.status === 'PENDING' || currentMonthReading.status === 'REJECTED') && (!isAdmin() || currentMonthReading.submittedBy === user?.id));
+  const canEditCurrentReading = currentMonthReading && 
+    currentMonthReading.status === 'PENDING' && 
+    (!isAdmin() ? currentMonthReading.submittedBy === user?.id : true);
   
-  // For admin, they can always edit any reading
-  const canAdminOverride = isAdmin() && currentMonthReading;
+  // For admin, they can always edit APPROVED readings (override)
+  const canAdminOverride = isAdmin() && currentMonthReading && currentMonthReading.status === 'APPROVED';
+  
+  // Check if we should allow creating a new reading
+  // - No readings exist for current month
+  // - Only REJECTED readings exist (user can resubmit)
+  // - User has REJECTED reading and wants to resubmit
+  const hasApprovedReading = currentMonthReadings.some(r => r.status === 'APPROVED');
+  const hasPendingReading = currentMonthReadings.some(r => r.status === 'PENDING' && (!isAdmin() ? r.submittedBy === user?.id : true));
+  const canCreateNewReading = !hasApprovedReading && !hasPendingReading;
 
   // console.log(previousReading)
 
@@ -113,7 +129,7 @@ export const MeterReadingsPage: React.FC = () => {
     }
   }, [isAdmin, userRoomId, selectedRoomId]);
 
-  // Pre-fill form with current month reading if it exists
+  // Pre-fill form with current month reading if it exists and is editable
   useEffect(() => {
     if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
       form.setFieldsValue({
@@ -130,8 +146,16 @@ export const MeterReadingsPage: React.FC = () => {
           toNumber(currentMonthReading.electricityReading)
         );
       }
+    } else if (canCreateNewReading) {
+      // Clear form when user can create new reading (no editable reading exists)
+      form.resetFields();
+      setWaterPhotoUrl('');
+      setElectricityPhotoUrl('');
+      setCalculatedBill({
+        totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+      });
     }
-  }, [currentMonthReading, canEditCurrentReading, canAdminOverride, form, previousReading, currentRoom]);
+  }, [currentMonthReading, canEditCurrentReading, canAdminOverride, canCreateNewReading, form, previousReading, currentRoom]);
 
   const handleRoomChange = (roomId: number) => {
     setSelectedRoomId(roomId);
@@ -223,18 +247,21 @@ export const MeterReadingsPage: React.FC = () => {
       };
 
       if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
-        // Update existing reading
+        // Update existing reading (PENDING or admin override on APPROVED)
         await updateMutation.mutateAsync({
           readingId: currentMonthReading.id,
           data: submissionData
         });
-      } else {
-        // Create new reading
+      } else if (canCreateNewReading) {
+        // Create new reading (no editable reading exists)
         await submitMutation.mutateAsync(submissionData);
+      } else {
+        console.error('Cannot submit: no valid action available');
+        return;
       }
 
-      // Reset form after successful submission only if creating new
-      if (!currentMonthReading) {
+      // Reset form after successful submission only if creating new reading
+      if (canCreateNewReading && !currentMonthReading) {
         form.resetFields();
         setWaterPhotoUrl('');
         setElectricityPhotoUrl('');
@@ -298,6 +325,13 @@ export const MeterReadingsPage: React.FC = () => {
                   currentMonthReading.status === 'REJECTED' ? 'border-red-200 bg-red-50' :
                   'border-orange-200 bg-orange-50'
                 }
+                extra={
+                  currentMonthReadings.length > 1 && (
+                    <span className="text-xs text-gray-500">
+                      {currentMonthReadings.length} submissions
+                    </span>
+                  )
+                }
               >
                 <Row gutter={16}>
                   <Col span={8}>
@@ -339,7 +373,7 @@ export const MeterReadingsPage: React.FC = () => {
                 {currentMonthReading.status === 'REJECTED' && (
                   <Alert
                     message="Reading Rejected"
-                    description="This reading was rejected. Please submit a new reading with correct values."
+                    description={`This reading was rejected. ${canCreateNewReading ? 'You can submit a new reading below.' : 'Please wait for admin review of other submissions.'}`}
                     type="error"
                     showIcon
                     className="mt-3"
@@ -419,23 +453,29 @@ export const MeterReadingsPage: React.FC = () => {
             {/* Reading Input Form */}
             <Card 
               title={
-                currentMonthReading && !canEditCurrentReading && !canAdminOverride
-                  ? "Current Month Reading (Read Only)"
-                  : currentMonthReading && canAdminOverride
+                canAdminOverride
                   ? "Current Month Reading (Admin Override)"
+                  : canEditCurrentReading
+                  ? "Edit Current Month Reading"
+                  : canCreateNewReading
+                  ? "Submit New Reading"
                   : "Current Month Reading"
               }
               size="small"
             >
-              {!canEditCurrentReading && !canAdminOverride ? (
+              {hasApprovedReading && !canAdminOverride ? (
                 <Alert
-                  message="Reading Not Editable"
-                  description={
-                    currentMonthReading?.status === 'APPROVED'
-                      ? "This reading has been approved and cannot be modified."
-                      : "You cannot edit this reading."
-                  }
-                  type="info"
+                  message="Reading Already Approved"
+                  description="An approved reading exists for this month and cannot be modified."
+                  type="success"
+                  showIcon
+                  className="mb-4"
+                />
+              ) : hasPendingReading && !canEditCurrentReading && !canCreateNewReading ? (
+                <Alert
+                  message="Reading Pending Review"
+                  description="A reading is currently pending admin approval. You cannot submit another until it's reviewed."
+                  type="warning"
                   showIcon
                   className="mb-4"
                 />
@@ -446,7 +486,7 @@ export const MeterReadingsPage: React.FC = () => {
                 layout="vertical"
                 onFinish={handleSubmit}
                 onValuesChange={handleReadingChange}
-                disabled={!canEditCurrentReading && !canAdminOverride}
+                disabled={!canEditCurrentReading && !canAdminOverride && !canCreateNewReading}
               >
                 {/* Water Reading */}
                 <Form.Item
@@ -593,18 +633,20 @@ export const MeterReadingsPage: React.FC = () => {
                     size="large"
                     loading={submitMutation.isPending || updateMutation.isPending}
                     disabled={
-                      (!canEditCurrentReading && !canAdminOverride) ||
+                      (!canEditCurrentReading && !canAdminOverride && !canCreateNewReading) ||
                       !waterPhotoUrl || 
                       !electricityPhotoUrl || 
                       submitMutation.isPending || 
                       updateMutation.isPending
                     }
                   >
-                    {currentMonthReading && (canEditCurrentReading || canAdminOverride)
-                      ? canAdminOverride 
-                        ? 'Update Reading (Admin Override)'
-                        : 'Update Reading'
-                      : 'Submit Reading'
+                    {canAdminOverride
+                      ? 'Update Reading (Admin Override)'
+                      : canEditCurrentReading
+                      ? 'Update Reading'
+                      : canCreateNewReading
+                      ? 'Submit New Reading'
+                      : 'Cannot Submit'
                     }
                   </Button>
                 </Form.Item>

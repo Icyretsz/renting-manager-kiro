@@ -927,25 +927,26 @@ export const calculateTotalAmount = async (
   }
 
 /**
- * Get previous month's reading for a room
+ * Get previous month's reading for a room (only approved readings)
  */
 export const getPreviousMonthReading = async (roomId: number, month: number, year: number): Promise<MeterReading | null> => {
-    let prevMonth = month - 1;
-    let prevYear = year;
-
-    if (prevMonth === 0) {
-      prevMonth = 12;
-      prevYear = year - 1;
-    }
-
-    return await prisma.meterReading.findUnique({
+    // Find the most recent approved reading before the given month/year
+    return await prisma.meterReading.findFirst({
       where: {
-        roomId_month_year: {
-          roomId,
-          month: prevMonth,
-          year: prevYear
-        }
-      }
+        roomId,
+        status: ReadingStatus.APPROVED,
+        OR: [
+          { year: { lt: year } },
+          { 
+            year: year,
+            month: { lt: month }
+          }
+        ]
+      },
+      orderBy: [
+        { year: 'desc' },
+        { month: 'desc' }
+      ]
     });
   }
 
@@ -997,19 +998,21 @@ const validateMeterReadingData = async (data: CreateMeterReadingData): Promise<v
   }
 
 /**
- * Validate unique reading per room/month/year
+ * Validate unique approved reading per room/month/year
+ * Multiple PENDING/REJECTED readings are allowed, but only one APPROVED reading
  */
 const validateUniqueReading = async (roomId: number, month: number, year: number): Promise<void> => {
-    const existingReading = await prisma.meterReading.findFirst({
+    const existingApprovedReading = await prisma.meterReading.findFirst({
       where: {
         roomId,
         month,
-        year
+        year,
+        status: ReadingStatus.APPROVED
       }
     });
 
-    if (existingReading) {
-      throw new ValidationError(`Reading already exists for room ${roomId} in ${month}/${year}`);
+    if (existingApprovedReading) {
+      throw new ValidationError(`An approved reading already exists for room ${roomId} in ${month}/${year}`);
     }
   }
 

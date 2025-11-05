@@ -81,7 +81,6 @@ model MeterReading {
   submitter           User                  @relation("SubmittedBy", fields: [submittedBy], references: [id])
   modifications       ReadingModification[]
 
-  @@unique([roomId, month, year])
   @@map("meter_readings")
 }
 

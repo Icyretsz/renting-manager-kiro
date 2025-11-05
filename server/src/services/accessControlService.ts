@@ -67,8 +67,8 @@ export const checkReadingAccess = async (
       canApprove = isPending;
       canReject = isPending;
     } else {
-      // Regular users can only edit their own pending readings
-      canEdit = isOwner && isPending;
+      // Regular users can only edit their own pending or rejected readings
+      canEdit = isOwner && (isPending || reading.status === ReadingStatus.REJECTED);
       canApprove = false;
       canReject = false;
     }
@@ -121,6 +121,10 @@ export const validateReadingModification = async (
 
       if (!access.isOwner && !access.isAdmin) {
         throw new AppError('Can only modify your own readings', 403);
+      }
+
+      if (access.status === ReadingStatus.REJECTED && !access.isOwner && !access.isAdmin) {
+        throw new AppError('Can only resubmit your own rejected readings', 403);
       }
 
     throw new AppError('Insufficient permissions to modify this reading', 403);
@@ -218,7 +222,7 @@ export const getReadingStatusInfo = async (readingId: string): Promise<{
 
     return {
       status,
-      canBeModified: isPending, // Only pending readings can be modified by tenants
+      canBeModified: isPending || status === ReadingStatus.REJECTED, // Pending and rejected readings can be modified
       canBeApproved: isPending,
       canBeRejected: isPending,
       statusDescription,
