@@ -178,8 +178,6 @@ const UserManagementPage: React.FC = () => {
         moveOutDate: values.moveOutDate?.toDate()
       };
 
-      console.log(tenantData)
-
       if (selectedTenant) {
         await updateTenantMutation.mutateAsync({
           tenantId: selectedTenant.id,
@@ -375,15 +373,20 @@ const UserManagementPage: React.FC = () => {
     </Card>
   );
 
-  // Group tenants by room
+  // Group tenants by room and status
   const groupTenantsByRoom = () => {
-    const grouped: { [key: number]: Tenant[] } = {};
+    const grouped: { [key: number]: { active: Tenant[], inactive: Tenant[] } } = {};
     
     filteredTenants.forEach(tenant => {
       if (!grouped[tenant.roomId]) {
-        grouped[tenant.roomId] = [];
+        grouped[tenant.roomId] = { active: [], inactive: [] };
       }
-      grouped[tenant.roomId].push(tenant);
+      
+      if (tenant.isActive) {
+        grouped[tenant.roomId].active.push(tenant);
+      } else {
+        grouped[tenant.roomId].inactive.push(tenant);
+      }
     });
 
     return grouped;
@@ -694,7 +697,10 @@ const UserManagementPage: React.FC = () => {
                   return (
                     <Collapse defaultActiveKey={roomNumbers.map(num => `room-${num}`)} ghost>
                       {roomNumbers.map(roomNumber => {
-                        const roomTenants = groupedTenants[roomNumber];
+                        const roomData = groupedTenants[roomNumber];
+                        const activeTenants = roomData.active;
+                        const inactiveTenants = roomData.inactive;
+                        const totalTenants = activeTenants.length + inactiveTenants.length;
                         const floor = Math.ceil(roomNumber / 9);
                         
                         return (
@@ -705,12 +711,71 @@ const UserManagementPage: React.FC = () => {
                                   <Avatar icon={<HomeOutlined />} style={{ backgroundColor: '#1890ff', marginRight: '8px' }} size="small" />
                                   <Text strong>Room {roomNumber} - Floor {floor}</Text>
                                 </div>
-                                <Badge count={roomTenants.length} style={{ backgroundColor: '#52c41a' }} />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  {activeTenants.length > 0 && (
+                                    <Badge count={activeTenants.length} style={{ backgroundColor: '#52c41a' }} title="Active tenants" />
+                                  )}
+                                  {inactiveTenants.length > 0 && (
+                                    <Badge count={inactiveTenants.length} style={{ backgroundColor: '#d9d9d9' }} title="Inactive tenants" />
+                                  )}
+                                </div>
                               </div>
                             } 
                             key={`room-${roomNumber}`}
                           >
-                            {roomTenants.map(renderTenantCard)}
+                            {/* Active Tenants */}
+                            {activeTenants.length > 0 && (
+                              <div style={{ marginBottom: inactiveTenants.length > 0 ? '16px' : '0' }}>
+                                <div style={{ 
+                                  marginBottom: '8px', 
+                                  padding: '4px 8px', 
+                                  backgroundColor: '#f6ffed', 
+                                  borderRadius: '4px',
+                                  border: '1px solid #b7eb8f'
+                                }}>
+                                  <Text strong style={{ color: '#52c41a', fontSize: '12px' }}>
+                                    Current Tenants ({activeTenants.length})
+                                  </Text>
+                                </div>
+                                {activeTenants.map(renderTenantCard)}
+                              </div>
+                            )}
+
+                            {/* Inactive Tenants - Collapsed by default */}
+                            {inactiveTenants.length > 0 && (
+                              <Collapse ghost size="small">
+                                <Panel 
+                                  header={
+                                    <div style={{ 
+                                      padding: '4px 8px', 
+                                      backgroundColor: '#fff2e8', 
+                                      borderRadius: '4px',
+                                      border: '1px solid #ffbb96',
+                                      margin: '-4px -8px'
+                                    }}>
+                                      <Text strong style={{ color: '#fa8c16', fontSize: '12px' }}>
+                                        Moved Out ({inactiveTenants.length})
+                                      </Text>
+                                    </div>
+                                  }
+                                  key={`inactive-${roomNumber}`}
+                                >
+                                  {inactiveTenants.map(renderTenantCard)}
+                                </Panel>
+                              </Collapse>
+                            )}
+
+                            {/* Empty room message */}
+                            {activeTenants.length === 0 && inactiveTenants.length === 0 && (
+                              <div style={{ 
+                                textAlign: 'center', 
+                                padding: '20px 0', 
+                                color: '#999',
+                                fontStyle: 'italic'
+                              }}>
+                                No tenants in this room
+                              </div>
+                            )}
                           </Panel>
                         );
                       })}
