@@ -37,6 +37,7 @@ import {
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { MeterReading } from '@/types';
+import getActorInfo from '@/utils/getActorInfo';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -514,7 +515,10 @@ export const ApprovalsPage: React.FC = () => {
                             </div>
                           )}
                           <div className="text-xs text-gray-500">
-                            By {mod.modifier?.tenant?.name || 'Unknown'} on {new Date(mod.modifiedAt).toLocaleString()}
+                            {(() => {
+                              const actor = getActorInfo(mod, selectedReading);
+                              return `By ${actor.name} (${actor.role})${actor.roomId ? ` - Room ${actor.roomId}` : ''} on ${new Date(mod.modifiedAt).toLocaleString()}`;
+                            })()}
                           </div>
                         </div>
                       ),
