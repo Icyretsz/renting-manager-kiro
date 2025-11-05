@@ -333,15 +333,30 @@ export const updateMeterReading = async (id: string, data: UpdateMeterReadingDat
   // Send notification if admin modified an approved reading
   if (userRole === 'ADMIN' && existingReading.status === ReadingStatus.APPROVED && modifications.length > 0) {
     try {
-      // TODO: Implement notifyReadingModified in notificationService
-      // await notificationService.notifyReadingModified(
-      //   updatedReading.roomId, 
-      //   updatedReading.room.roomNumber, 
-      //   updatedReading.month, 
-      //   updatedReading.year
-      // );
+      const { notifyReadingModified } = await import('./notificationService');
+      await notifyReadingModified(
+        updatedReading.roomId, 
+        updatedReading.room.roomNumber, 
+        updatedReading.month, 
+        updatedReading.year
+      );
     } catch (error) {
       console.error('Failed to send notification for reading modification:', error);
+      // Don't throw error as the update was successful
+    }
+  }
+
+  // Send notification if user updated their readings (notify admins)
+  if (userRole === 'USER' && modifications.length > 0) {
+    try {
+      const { notifyReadingUpdated } = await import('./notificationService');
+      await notifyReadingUpdated(
+        updatedReading.room.roomNumber, 
+        updatedReading.month, 
+        updatedReading.year
+      );
+    } catch (error) {
+      console.error('Failed to send notification for reading update:', error);
       // Don't throw error as the update was successful
     }
   }

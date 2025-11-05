@@ -34,14 +34,17 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     });
 
     io.on("connection", (socket) => {
-        console.log(`User connected: ${socket.id} (userId: ${socket.userId})`);
+        console.log(`🔌 User connected: ${socket.id} (userId: ${socket.userId}, role: ${socket.userRole})`);
         
         // Join user to their personal room for targeted notifications
-        socket.join(`user:${socket.userId}`);
+        const userRoom = `user:${socket.userId}`;
+        socket.join(userRoom);
+        console.log(`👤 User ${socket.userId} joined room: ${userRoom}`);
         
         // Join admin users to admin room
         if (socket.userRole === 'ADMIN') {
             socket.join('admins');
+            console.log(`👑 Admin ${socket.userId} joined admins room`);
         }
 
         socket.on('disconnect', (reason) => {
@@ -68,8 +71,15 @@ export const getSocketIO = (): Server => {
 // Notification event emitters
 export const emitNotificationToUser = (userId: string, notification: any) => {
     if (io) {
-        io.to(`user:${userId}`).emit('notification:new', notification);
-        console.log(`Notification sent to user ${userId}:`, notification.title);
+        const userRoom = `user:${userId}`;
+        const socketsInRoom = io.sockets.adapter.rooms.get(userRoom);
+        console.log(`📤 Emitting notification to room: ${userRoom}`);
+        console.log(`👥 Sockets in room: ${socketsInRoom ? socketsInRoom.size : 0}`);
+        
+        io.to(userRoom).emit('notification:new', notification);
+        console.log(`✅ Notification sent to user ${userId}:`, notification.title);
+    } else {
+        console.error('❌ Socket.IO not initialized when trying to emit notification');
     }
 };
 

@@ -8,7 +8,6 @@ interface SocketStore {
     isConnected: boolean;
     connect: (token: string) => void;
     disconnect: () => void;
-    setupNotificationListeners: () => void;
 }
 
 export const useSocketStore = create<SocketStore>((set, get) => ({
@@ -46,9 +45,6 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         socket.on('connect', () => {
             console.log('Socket connected:', socket.id);
             set({ isConnected: true, socket });
-            
-            // Setup notification listeners after connection
-            get().setupNotificationListeners();
         });
 
         socket.on('disconnect', (reason) => {
@@ -73,45 +69,5 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         }
     },
 
-    setupNotificationListeners: () => {
-        const { socket } = get();
-        if (!socket) return;
 
-        const { addNotification, updateNotification } = useNotificationStore.getState();
-
-        // Listen for new notifications
-        socket.on('notification:new', (notification) => {
-            console.log('New notification received:', notification);
-            addNotification(notification);
-            
-            // Show browser notification if permission is granted
-            if (Notification.permission === 'granted') {
-                new Notification(notification.title, {
-                    body: notification.message,
-                    icon: '/favicon.ico',
-                    badge: '/favicon.ico',
-                });
-            }
-        });
-
-        // Listen for notification updates (read status, etc.)
-        socket.on('notification:update', (update) => {
-            console.log('Notification update received:', update);
-            if (update.type === 'read') {
-                const { markAsRead } = useNotificationStore.getState();
-                markAsRead(update.notificationId);
-            }
-        });
-
-        // Listen for bulk notification updates
-        socket.on('notification:bulk_update', (update) => {
-            console.log('Bulk notification update received:', update);
-            if (update.type === 'mark_all_read') {
-                const { markAllAsRead } = useNotificationStore.getState();
-                markAllAsRead();
-            }
-        });
-
-        console.log('Notification listeners setup complete');
-    },
 }));

@@ -12,7 +12,7 @@ export interface NotificationTemplate {
 
 export interface NotificationRecipient {
   userId: string;
-  fcmToken?: string;
+  fcmToken?: string | undefined;
 }
 
 // Notification templates for different events
@@ -22,6 +22,18 @@ const templates = {
       body: `Room ${roomNumber} has submitted meter readings for ${month}/${year}. Tap to review and approve.`,
       data: {
         type: 'reading_submitted',
+        roomNumber: roomNumber.toString(),
+        month: month.toString(),
+        year: year.toString(),
+        action: 'review_reading',
+      },
+    }),
+
+    READING_UPDATED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
+      title: 'Meter Reading Updated',
+      body: `Room ${roomNumber} has updated their meter readings for ${month}/${year}. Tap to review changes.`,
+      data: {
+        type: 'reading_updated',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
@@ -86,46 +98,53 @@ export const sendToUsers = async (
   template: NotificationTemplate,
   saveToHistory: boolean = true
 ): Promise<void> => {
+  // Always save to history and emit WebSocket notifications first
+  if (saveToHistory) {
     try {
-      // Filter recipients with FCM tokens
-      const validRecipients = recipients.filter(r => r.fcmToken);
-      
-      if (validRecipients.length === 0) {
-        console.warn('No valid FCM tokens found for notification');
-        return;
-      }
+      await saveNotificationHistory(recipients, template);
+      console.log(`WebSocket notifications sent to ${recipients.length} users`);
+    } catch (error) {
+      console.error('Error saving notification history and emitting WebSocket:', error);
+      // Don't throw - continue with Firebase notifications
+    }
+  }
 
-      // Prepare FCM message
-      const message = {
-        notification: {
-          title: template.title,
-          body: template.body,
-        },
-        data: template.data || {},
-        tokens: validRecipients.map(r => r.fcmToken!),
-      };
+  // Send Firebase push notifications (independent of WebSocket)
+  try {
+    // Filter recipients with FCM tokens
+    const validRecipients = recipients.filter(r => r.fcmToken);
+    
+    if (validRecipients.length === 0) {
+      console.warn('No valid FCM tokens found for Firebase notification');
+      return; // WebSocket notifications already sent above
+    }
 
-      // Send via Firebase
-      const response = await admin.messaging().sendMulticast(message);
-      
-      console.log(`Notification sent successfully: ${response.successCount} success, ${response.failureCount} failures`);
+    // Prepare FCM message
+    const message = {
+      notification: {
+        title: template.title,
+        body: template.body,
+      },
+      data: template.data || {},
+      tokens: validRecipients.map(r => r.fcmToken!),
+    };
 
-      // Save to notification history if requested
-      if (saveToHistory) {
-        await saveNotificationHistory(recipients, template);
-      }
+    // Send via Firebase
+    const response = await admin.messaging().sendMulticast(message);
+    
+    console.log(`Firebase notifications sent: ${response.successCount} success, ${response.failureCount} failures`);
 
-      // Handle failed tokens (optional: remove invalid tokens from database)
-      if (response.failureCount > 0) {
-        response.responses.forEach((resp, idx) => {
-          if (!resp.success) {
-            console.error(`Failed to send to token ${validRecipients[idx]?.fcmToken}: ${resp.error?.message}`);
-          }
-        });
-      }
+    // Handle failed tokens (optional: remove invalid tokens from database)
+    if (response.failureCount > 0) {
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          console.error(`Failed to send Firebase to token ${validRecipients[idx]?.fcmToken}: ${resp.error?.message}`);
+        }
+      });
+    }
   } catch (error) {
-    console.error('Error sending notification:', error);
-    throw error;
+    console.error('Error sending Firebase notification:', error);
+    // Don't throw - WebSocket notifications already sent
   }
 };
 
@@ -133,27 +152,25 @@ export const sendToUsers = async (
  * Send notification to admin users
  */
 export const sendToAdmins = async (template: NotificationTemplate): Promise<void> => {
-    try {
-      // Get all admin users with FCM tokens
-      const adminUsers = await prisma.user.findMany({
-        where: { 
-          role: 'ADMIN',
-          fcmToken: { not: null }
-        },
-        select: {
-          id: true,
-          fcmToken: true,
-        },
-      });
+  try {
+    // Get all admin users (including those without FCM tokens for WebSocket)
+    const adminUsers = await prisma.user.findMany({
+      where: { 
+        role: 'ADMIN'
+      },
+      select: {
+        id: true,
+        fcmToken: true,
+      },
+    });
 
-      const recipients: NotificationRecipient[] = adminUsers
-        .filter(user => user.fcmToken)
-        .map(user => ({
-          userId: user.id,
-          fcmToken: user.fcmToken!,
-        }));
+    const recipients: NotificationRecipient[] = adminUsers.map(user => ({
+      userId: user.id,
+      fcmToken: user.fcmToken || undefined,
+    }));
 
-    await sendToUsers(recipients, template);
+    console.log(`Sending notification to ${recipients.length} admin users`);
+    await sendToUsers(recipients, template, true);
   } catch (error) {
     console.error('Error sending notification to admins:', error);
     throw error;
@@ -164,31 +181,32 @@ export const sendToAdmins = async (template: NotificationTemplate): Promise<void
  * Send notification to users assigned to specific room
  */
 export const sendToRoomUsers = async (roomId: number, template: NotificationTemplate): Promise<void> => {
-    try {
-      // Get users who are tenants of this room
-      const roomTenants = await prisma.tenant.findMany({
-        where: { 
-          roomId,
-          userId: { not: null } // Only tenants with user accounts
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              fcmToken: true,
-            },
+  try {
+    // Get users who are tenants of this room (including those without FCM tokens for WebSocket)
+    const roomTenants = await prisma.tenant.findMany({
+      where: { 
+        roomId,
+        userId: { not: null } // Only tenants with user accounts
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fcmToken: true,
           },
         },
-      });
+      },
+    });
 
-      const recipients: NotificationRecipient[] = roomTenants
-        .filter(tenant => tenant.user?.fcmToken)
-        .map(tenant => ({
-          userId: tenant.user!.id,
-          fcmToken: tenant.user!.fcmToken!,
-        }));
+    const recipients: NotificationRecipient[] = roomTenants
+      .filter(tenant => tenant.user) // Ensure user exists
+      .map(tenant => ({
+        userId: tenant.user!.id,
+        fcmToken: tenant.user!.fcmToken || undefined,
+      }));
 
-    await sendToUsers(recipients, template);
+    console.log(`Sending notification to ${recipients.length} room ${roomId} users`);
+    await sendToUsers(recipients, template, true);
   } catch (error) {
     console.error('Error sending notification to room users:', error);
     throw error;
@@ -200,6 +218,14 @@ export const sendToRoomUsers = async (roomId: number, template: NotificationTemp
  */
 export const notifyReadingSubmitted = async (roomNumber: number, month: number, year: number): Promise<void> => {
   const template = templates.READING_SUBMITTED(roomNumber, month, year);
+  await sendToAdmins(template);
+};
+
+/**
+ * Notify admins about meter reading updates
+ */
+export const notifyReadingUpdated = async (roomNumber: number, month: number, year: number): Promise<void> => {
+  const template = templates.READING_UPDATED(roomNumber, month, year);
   await sendToAdmins(template);
 };
 
@@ -270,8 +296,22 @@ const saveNotificationHistory = async (
       );
 
       // Emit WebSocket events for real-time notifications
+      // Need to get Auth0 sub for each user to match socket room names
+      const userIds = [...new Set(createdNotifications.map(n => n.userId))];
+      const users = await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, auth0Id: true }
+      });
+
       createdNotifications.forEach(notification => {
-        emitNotificationToUser(notification.userId, notification);
+        const user = users.find(u => u.id === notification.userId);
+        const auth0Id = user?.auth0Id;
+        
+        if (auth0Id) {
+          emitNotificationToUser(auth0Id, notification);
+        } else {
+          console.warn(`No Auth0 ID found for user ${notification.userId}`);
+        }
       });
 
     } catch (error) {
@@ -340,12 +380,20 @@ export const markAsRead = async (userId: string, notificationIds: string[]): Pro
       });
 
       // Emit WebSocket update for each notification
-      notificationIds.forEach(notificationId => {
-        emitNotificationUpdate(userId, {
-          type: 'read',
-          notificationId,
-        });
+      // Get Auth0 ID for the user
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { auth0Id: true }
       });
+
+      if (user?.auth0Id) {
+        notificationIds.forEach(notificationId => {
+          emitNotificationUpdate(user.auth0Id!, {
+            type: 'read',
+            notificationId,
+          });
+        });
+      }
     } catch (error) {
       console.error('Error marking notifications as read:', error);
     throw error;
@@ -368,9 +416,17 @@ export const markAllAsRead = async (userId: string): Promise<void> => {
       });
 
       // Emit WebSocket update for bulk read
-      emitNotificationUpdate(userId, {
-        type: 'mark_all_read',
+      // Get Auth0 ID for the user
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { auth0Id: true }
       });
+
+      if (user?.auth0Id) {
+        emitNotificationUpdate(user.auth0Id, {
+          type: 'mark_all_read',
+        });
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     throw error;

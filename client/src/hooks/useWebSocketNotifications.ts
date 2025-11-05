@@ -7,11 +7,18 @@ export const useWebSocketNotifications = () => {
   const { addNotification, markAsRead, markAllAsRead, updateNotification } = useNotificationStore();
 
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    console.log('useWebSocketNotifications effect running:', { socket: !!socket, isConnected });
+    
+    if (!socket || !isConnected) {
+      console.log('Socket not ready, skipping listener setup');
+      return;
+    }
+
+    console.log('Setting up WebSocket notification listeners...');
 
     // Listen for new notifications
     const handleNewNotification = (notification: any) => {
-      console.log('New notification received via WebSocket:', notification);
+      console.log('🔔 New notification received via WebSocket:', notification);
       addNotification(notification);
       
       // Show browser notification if permission is granted
@@ -41,12 +48,16 @@ export const useWebSocketNotifications = () => {
     };
 
     // Set up event listeners
+    console.log('📡 Registering WebSocket event listeners...');
     socket.on('notification:new', handleNewNotification);
     socket.on('notification:update', handleNotificationUpdate);
     socket.on('notification:bulk_update', handleBulkUpdate);
 
+    console.log('✅ WebSocket notification listeners registered successfully');
+
     // Cleanup listeners on unmount or socket change
     return () => {
+      console.log('🧹 Cleaning up WebSocket notification listeners');
       socket.off('notification:new', handleNewNotification);
       socket.off('notification:update', handleNotificationUpdate);
       socket.off('notification:bulk_update', handleBulkUpdate);
