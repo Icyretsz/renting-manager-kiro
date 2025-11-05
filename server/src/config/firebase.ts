@@ -5,15 +5,19 @@ const initializeFirebase = () => {
   if (!admin.apps.length) {
     // In production, use service account key file or environment variables
     // For development, you can use the service account key JSON
-    const serviceAccountKey = process.env['FIREBASE_SERVICE_ACCOUNT_KEY'];
     const projectId = process.env['FIREBASE_PROJECT_ID'];
+    const privateKey = process.env['FIREBASE_PRIVATE_KEY'];
+    const clientEmail = process.env['FIREBASE_CLIENT_EMAIL'];
     
-    if (serviceAccountKey && projectId) {
+    if (projectId && privateKey && clientEmail) {
       try {
-        const serviceAccount = JSON.parse(serviceAccountKey);
         admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          projectId: projectId,
+          credential: admin.credential.cert({
+            projectId,
+            privateKey: privateKey.replace(/\\n/g, '\n'),
+            clientEmail,
+          }),
+          projectId,
         });
         console.log('Firebase initialized successfully');
       } catch (error) {

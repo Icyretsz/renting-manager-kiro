@@ -129,7 +129,7 @@ AUTH0_CLIENT_SECRET=your-client-secret
 
 # Firebase Configuration
 FIREBASE_PROJECT_ID=your-firebase-project-id
-FIREBASE_PRIVATE_KEY=your-firebase-private-key
+FIREBASE_SERVICE_ACCOUNT_KEY=your-firebase-private-key
 FIREBASE_CLIENT_EMAIL=your-firebase-client-email
 ```
 
