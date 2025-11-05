@@ -286,7 +286,7 @@ const sendPaymentSuccessNotification = async (billingRecordId: string): Promise<
     // Send notification to all active tenants in the room
     for (const tenant of billingRecord.room.tenants) {
       if (tenant.user) {
-        await prisma.notification.create({
+        const notification = await prisma.notification.create({
           data: {
             userId: tenant.user.id,
             title: 'Payment Confirmed',
@@ -294,6 +294,14 @@ const sendPaymentSuccessNotification = async (billingRecordId: string): Promise<
             type: 'payment_success'
           }
         });
+
+        // Emit WebSocket notification
+        try {
+          const { emitNotificationToUser } = await import('../config/socket');
+          emitNotificationToUser(tenant.user.id, notification);
+        } catch (socketError) {
+          console.error('Failed to emit WebSocket notification:', socketError);
+        }
       }
     }
   } catch (error) {

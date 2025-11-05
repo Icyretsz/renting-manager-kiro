@@ -25,21 +25,27 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useAuthStore } from './stores';
 import { useSocketStore } from './stores/socketStore';
+import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
 
 // Main app content that requires authentication
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
   const { token, user: appUser } = useAuthStore()
   const { connect, disconnect, isConnected } = useSocketStore();
+  
+  // Initialize WebSocket notifications
+  useWebSocketNotifications();
 
   // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
   useEffect(() => {
-        if (isAuthenticated) connect();
+        if (isAuthenticated && token) {
+            connect(token);
+        }
         
         return () => {
             disconnect();
         };
-    }, [connect, disconnect, isAuthenticated]);
+    }, [connect, disconnect, isAuthenticated, token]);
 
   useEffect(() => {
     // console.log('Token:', token)

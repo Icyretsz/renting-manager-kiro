@@ -15,7 +15,7 @@ export const notificationKeys = {
   unread: () => [...notificationKeys.all, 'unread'] as const,
 };
 
-// Fetch user notifications
+// Fetch user notifications (initial load only, no polling)
 export const useNotificationsQuery = () => {
   const { isAuthenticated } = useAuth0();
   const { token, user } = useAuthStore();
@@ -33,10 +33,13 @@ export const useNotificationsQuery = () => {
       return notifications;
     },
     enabled: isAuthenticated && !!token && !!user, // Only fetch when authenticated with token
+    staleTime: Infinity, // Don't refetch automatically - rely on WebSocket updates
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 
-// Fetch unread notifications count
+// Fetch unread notifications count (initial load only)
 export const useUnreadNotificationsQuery = () => {
   const { isAuthenticated } = useAuth0();
   const { token, user } = useAuthStore();
@@ -48,6 +51,9 @@ export const useUnreadNotificationsQuery = () => {
       return response.data.data?.count || 0;
     },
     enabled: isAuthenticated && !!token && !!user, // Only fetch when authenticated with token
+    staleTime: Infinity, // Don't refetch automatically - rely on WebSocket updates
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 };
 
@@ -62,11 +68,11 @@ export const useMarkNotificationReadMutation = () => {
       return response.data.data;
     },
     onSuccess: (_, notificationId) => {
-      // Update local store
+      // Update local store immediately for optimistic UI
       markAsRead(notificationId);
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      // No need to invalidate queries - WebSocket will handle real-time updates
+      // queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 };
@@ -82,11 +88,11 @@ export const useMarkAllNotificationsReadMutation = () => {
       return response.data;
     },
     onSuccess: () => {
-      // Update local store
+      // Update local store immediately for optimistic UI
       markAllAsRead();
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      // No need to invalidate queries - WebSocket will handle real-time updates
+      // queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 };
@@ -102,11 +108,11 @@ export const useDeleteNotificationMutation = () => {
       return response.data;
     },
     onSuccess: (_, notificationId) => {
-      // Update local store
+      // Update local store immediately for optimistic UI
       removeNotification(notificationId);
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      // No need to invalidate queries - WebSocket will handle real-time updates
+      // queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 };
@@ -122,11 +128,11 @@ export const useClearAllNotificationsMutation = () => {
       return response.data;
     },
     onSuccess: () => {
-      // Update local store
+      // Update local store immediately for optimistic UI
       clearAll();
       
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+      // No need to invalidate queries - WebSocket will handle real-time updates
+      // queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 };

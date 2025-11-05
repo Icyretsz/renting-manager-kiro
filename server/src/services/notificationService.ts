@@ -1,5 +1,6 @@
 import admin from '../config/firebase';
 import { PrismaClient } from '@prisma/client';
+import { emitNotificationToUser, emitNotificationUpdate } from '../config/socket';
 
 const prisma = new PrismaClient();
 
@@ -244,7 +245,7 @@ export const notifyBillGenerated = async (
 };
 
 /**
- * Save notification to history for tracking
+ * Save notification to history for tracking and emit WebSocket events
  */
 const saveNotificationHistory = async (
   recipients: NotificationRecipient[],
@@ -259,9 +260,17 @@ const saveNotificationHistory = async (
         readStatus: false,
       }));
 
-      await prisma.notification.createMany({
-        data: notifications,
+      const createdNotifications = await Promise.all(
+        notifications.map(notification => 
+          prisma.notification.create({ data: notification })
+        )
+      );
+
+      // Emit WebSocket events for real-time notifications
+      createdNotifications.forEach(notification => {
+        emitNotificationToUser(notification.userId, notification);
       });
+
     } catch (error) {
       console.error('Error saving notification history:', error);
     // Don't throw here as notification sending was successful
@@ -326,6 +335,14 @@ export const markAsRead = async (userId: string, notificationIds: string[]): Pro
           readStatus: true,
         },
       });
+
+      // Emit WebSocket update for each notification
+      notificationIds.forEach(notificationId => {
+        emitNotificationUpdate(userId, {
+          type: 'read',
+          notificationId,
+        });
+      });
     } catch (error) {
       console.error('Error marking notifications as read:', error);
     throw error;
@@ -345,6 +362,11 @@ export const markAllAsRead = async (userId: string): Promise<void> => {
         data: {
           readStatus: true,
         },
+      });
+
+      // Emit WebSocket update for bulk read
+      emitNotificationUpdate(userId, {
+        type: 'mark_all_read',
       });
     } catch (error) {
       console.error('Error marking all notifications as read:', error);

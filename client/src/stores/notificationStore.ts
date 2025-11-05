@@ -10,6 +10,7 @@ interface NotificationStore {
   removeNotification: (id: string) => void;
   clearAll: () => void;
   setNotifications: (notifications: Notification[]) => void;
+  updateNotification: (notification: Notification) => void;
 }
 
 export const useNotificationStore = create<NotificationStore>((set) => ({
@@ -75,6 +76,19 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
     set({
       notifications,
       unreadCount,
+    });
+  },
+
+  updateNotification: (notification: Notification) => {
+    set((state) => {
+      const updatedNotifications = state.notifications.map(n => 
+        n.id === notification.id ? notification : n
+      );
+      const unreadCount = updatedNotifications.filter(n => !n.readStatus).length;
+      return {
+        notifications: updatedNotifications,
+        unreadCount,
+      };
     });
   },
 }));

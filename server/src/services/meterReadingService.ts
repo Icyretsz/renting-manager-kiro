@@ -740,7 +740,7 @@ export const approveReading = async (id: string, approvedBy: string): Promise<Me
       // Send "tap to see bill and pay" notification to each tenant
       for (const tenant of roomTenants) {
         if (tenant.user) {
-          await prisma.notification.create({
+          const notification = await prisma.notification.create({
             data: {
               userId: tenant.user.id,
               title: 'Bill Ready for Payment',
@@ -748,6 +748,14 @@ export const approveReading = async (id: string, approvedBy: string): Promise<Me
               type: 'bill_ready'
             }
           });
+
+          // Emit WebSocket notification
+          try {
+            const { emitNotificationToUser } = await import('../config/socket');
+            emitNotificationToUser(tenant.user.id, notification);
+          } catch (socketError) {
+            console.error('Failed to emit WebSocket notification:', socketError);
+          }
         }
       }
     }

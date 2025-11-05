@@ -82,6 +82,43 @@ export const markNotificationsAsRead = async (req: Request, res: Response): Prom
 };
 
 /**
+ * Mark single notification as read
+ */
+export const markSingleNotificationAsRead = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new AppError('User not authenticated', 401);
+      }
+
+      const { notificationId } = req.params;
+      if (!notificationId) {
+        throw new AppError('Notification ID is required', 400);
+      }
+
+      await notificationService.markAsRead(userId, [notificationId]);
+
+      res.json({
+        success: true,
+        message: 'Notification marked as read',
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      if (error instanceof AppError) {
+        res.status(error.statusCode).json({
+          success: false,
+          error: error.message,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Internal server error',
+        });
+    }
+  }
+};
+
+/**
  * Mark all notifications as read for the user
  */
 export const markAllNotificationsAsRead = async (req: Request, res: Response): Promise<void> => {
