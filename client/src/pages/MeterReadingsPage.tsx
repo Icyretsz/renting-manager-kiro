@@ -519,7 +519,7 @@ export const MeterReadingsPage: React.FC = () => {
                     accept="image/*"
                     showUploadList={false}
                     beforeUpload={(file) => handlePhotoUpload(file, 'water')}
-                    disabled={uploadMutation.isPending || !selectedRoomId}
+                    disabled={uploadMutation.isPending || !selectedRoomId || (!canEditCurrentReading && !canAdminOverride && !canCreateNewReading)}
                   >
                     <Button
                       icon={<CameraOutlined />}

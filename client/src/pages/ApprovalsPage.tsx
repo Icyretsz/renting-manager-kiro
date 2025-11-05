@@ -335,7 +335,7 @@ export const ApprovalsPage: React.FC = () => {
                             Approve
                           </Button>
                         </Popconfirm>
-                        <Popconfirm
+                        {/* <Popconfirm
                           title="Reject this reading?"
                           description="The tenant will need to resubmit."
                           onConfirm={() => handleReject(reading.id)}
@@ -350,7 +350,7 @@ export const ApprovalsPage: React.FC = () => {
                           >
                             Reject
                           </Button>
-                        </Popconfirm>
+                        </Popconfirm> */}
                       </Space>
                     )}
                   </div>

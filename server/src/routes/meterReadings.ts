@@ -86,12 +86,12 @@ router.post(
  * @desc Reject a meter reading
  * @access Private (Admin only)
  */
-router.post(
-  '/:id/reject',
-  validateReadingId,
-  readingAccess.canRejectReading,
-  meterReadingController.rejectReading
-);
+// router.post(
+//   '/:id/reject',
+//   validateReadingId,
+//   readingAccess.canRejectReading,
+//   meterReadingController.rejectReading
+// );
 
 /**
  * @route GET /api/readings/room/:roomId/history
