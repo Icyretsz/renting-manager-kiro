@@ -364,4 +364,24 @@ export const exportFinancialData = async (req: Request, res: Response, next: Nex
   } catch (error) {
     next(error);
   }
+};/**
+ * Ge
+t yearly trend data for financial dashboard
+ */
+export const getYearlyTrendData = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userRole = req.user?.role || 'USER';
+    const userId = req.user?.id;
+
+    const year = parseOptionalIntParam(req.query, 'year') || new Date().getFullYear();
+
+    const trendData = await billingService.getYearlyTrendData(year, userRole, userId);
+
+    res.json({
+      success: true,
+      data: trendData
+    });
+  } catch (error) {
+    next(error);
+  }
 };

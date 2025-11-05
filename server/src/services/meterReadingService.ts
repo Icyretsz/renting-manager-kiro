@@ -707,24 +707,52 @@ export const approveReading = async (id: string, approvedBy: string): Promise<Me
   await logModification(id, approvedBy, ModificationType.APPROVE, 'status', 'PENDING', 'APPROVED');
 
   // Generate billing record for approved reading
+  let billingRecordId: string | null = null;
   try {
-    await billingService.generateBillingRecord(id);
+    const billingRecord = await billingService.generateBillingRecord(id);
+    billingRecordId = billingRecord.id;
   } catch (error) {
     console.error('Failed to generate billing record for approved reading:', error);
     // Don't throw error as the approval was successful
   }
 
-  // Send notification to room users about approval
+  // Send payment notification to room tenants
   try {
-    // TODO: Implement notifyReadingApproved in notificationService
-    // await notificationService.notifyReadingApproved(
-    //   updatedReading.roomId, 
-    //   updatedReading.room.roomNumber, 
-    //   updatedReading.month, 
-    //   updatedReading.year
-    // );
+    if (billingRecordId) {
+      // Get all active tenants in the room with user accounts
+      const roomTenants = await prisma.tenant.findMany({
+        where: {
+          roomId: updatedReading.roomId,
+          isActive: true,
+          userId: { not: null }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              fcmToken: true
+            }
+          }
+        }
+      });
+
+      // Send "tap to see bill and pay" notification to each tenant
+      for (const tenant of roomTenants) {
+        if (tenant.user) {
+          await prisma.notification.create({
+            data: {
+              userId: tenant.user.id,
+              title: 'Bill Ready for Payment',
+              message: `Your bill for Room ${updatedReading.room.roomNumber} - ${getMonthName(updatedReading.month)} ${updatedReading.year} is ready. Tap to see bill details and pay.`,
+              type: 'bill_ready'
+            }
+          });
+        }
+      }
+    }
   } catch (error) {
-    console.error('Failed to send notification for reading approval:', error);
+    console.error('Failed to send payment notification for reading approval:', error);
     // Don't throw error as the approval was successful
   }
 
@@ -1298,4 +1326,15 @@ const checkUserReadingAccess = async (userId: string, roomId: number): Promise<b
   });
 
   return user?.tenant?.roomId === roomId;
+};
+/**
+
+ * Get month name from month number
+ */
+const getMonthName = (month: number): string => {
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  return months[month - 1] || 'Unknown';
 };

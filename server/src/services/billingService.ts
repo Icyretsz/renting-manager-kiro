@@ -794,3 +794,73 @@ const checkUserBillingAccess = async (userId: string, roomId: number): Promise<b
 
   return user?.tenant?.roomId === roomId;
 };
+
+/**
+ * Get yearly trend data for financial dashboard
+ */
+export const getYearlyTrendData = async (
+  year: number,
+  userRole?: string,
+  userId?: string
+): Promise<Array<{
+  month: number;
+  monthName: string;
+  totalIncome: number;
+  totalPaid: number;
+  totalUnpaid: number;
+  totalOverdue: number;
+}>> => {
+  const whereClause: any = { year };
+
+  // Filter by user access for regular users
+  const userRoomFilter = await getUserRoomFilter(userRole || '', userId);
+  Object.assign(whereClause, userRoomFilter);
+
+  const billingRecords = await prisma.billingRecord.findMany({
+    where: whereClause,
+    select: {
+      month: true,
+      totalAmount: true,
+      paymentStatus: true
+    },
+    orderBy: {
+      month: 'asc'
+    }
+  });
+
+  // Initialize all months with zero values
+  const monthlyData: { [key: number]: { totalIncome: number; totalPaid: number; totalUnpaid: number; totalOverdue: number } } = {};
+  
+  for (let month = 1; month <= 12; month++) {
+    monthlyData[month] = { totalIncome: 0, totalPaid: 0, totalUnpaid: 0, totalOverdue: 0 };
+  }
+
+  // Aggregate data by month
+  billingRecords.forEach(record => {
+    const month = record.month;
+    const amount = record.totalAmount.toNumber();
+    
+    if (monthlyData[month]) {
+      monthlyData[month].totalIncome += amount;
+      
+      if (record.paymentStatus === PaymentStatus.PAID) {
+        monthlyData[month].totalPaid += amount;
+      } else if (record.paymentStatus === PaymentStatus.UNPAID) {
+        monthlyData[month].totalUnpaid += amount;
+      } else if (record.paymentStatus === PaymentStatus.OVERDUE) {
+        monthlyData[month].totalOverdue += amount;
+      }
+    }
+  });
+
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  return Object.entries(monthlyData).map(([month, data]) => ({
+    month: parseInt(month),
+    monthName: monthNames[parseInt(month) - 1] || 'Unknown',
+    ...data
+  }));
+};

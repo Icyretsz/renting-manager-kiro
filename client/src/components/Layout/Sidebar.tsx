@@ -74,10 +74,16 @@ export const MobileDrawer: React.FC = () => {
       onClick: () => handleNavigation('/approvals'),
     },
     {
-      key: '/reports',
+      key: '/financial-dashboard',
       icon: <DollarOutlined />,
-      label: 'Financial Reports',
-      onClick: () => handleNavigation('/reports'),
+      label: 'Financial Dashboard',
+      onClick: () => handleNavigation('/financial-dashboard'),
+    },
+    {
+      key: '/user-management',
+      icon: <UserOutlined />,
+      label: 'User Management',
+      onClick: () => handleNavigation('/user-management'),
     },
   ];
 

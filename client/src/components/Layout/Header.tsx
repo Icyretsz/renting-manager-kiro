@@ -1,13 +1,12 @@
 import React from 'react';
-import { Layout, Avatar, Dropdown, Badge, Button, Typography } from 'antd';
+import { Layout, Avatar, Dropdown, Typography } from 'antd';
 import {
   UserOutlined,
   LogoutOutlined,
-  BellOutlined,
-  MenuOutlined,
+
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
-import { useUIStore } from '@/stores/uiStore';
+
 import { NotificationBell } from '@/components/Notifications';
 
 const { Header: AntHeader } = Layout;
@@ -15,7 +14,7 @@ const { Text } = Typography;
 
 export const MobileHeader: React.FC = () => {
   const { logout } = useAuth();
-  const { openModal } = useUIStore();
+
 
   const userMenuItems = [
     {

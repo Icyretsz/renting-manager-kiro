@@ -116,9 +116,70 @@ export interface BillingRecord {
   baseRent: string | number; // Prisma Decimal comes as string
   trashFee: string | number; // Prisma Decimal comes as string
   totalAmount: string | number; // Prisma Decimal comes as string
-  paymentStatus: 'unpaid' | 'paid' | 'overdue';
+  paymentStatus: 'UNPAID' | 'PAID' | 'OVERDUE';
   paymentDate?: Date;
+  paymentReference?: string;
+  paymentLinkId?: string;
+  paymentTransactionId?: string;
   createdAt: Date;
+  room?: {
+    id: number;
+    roomNumber: number;
+    floor: number;
+    baseRent: string | number;
+  };
+  reading?: {
+    id: string;
+    month: number;
+    year: number;
+    waterReading: string | number;
+    electricityReading: string | number;
+    status: string;
+    submittedAt: Date;
+    approvedAt?: Date;
+  };
+}
+
+// Payment related types
+export interface PaymentLink {
+  checkoutUrl: string;
+  qrCode: string;
+  orderCode: number;
+  amount: number;
+  description: string;
+}
+
+// Financial Summary and Reports
+export interface FinancialSummary {
+  totalIncome: number;
+  totalPaid: number;
+  totalUnpaid: number;
+  totalOverdue: number;
+  roomCount: number;
+  occupiedRooms: number;
+  averageRoomIncome: number;
+}
+
+export interface MonthlyFinancialReport {
+  month: number;
+  year: number;
+  totalIncome: number;
+  totalPaid: number;
+  totalUnpaid: number;
+  totalOverdue: number;
+  roomBreakdown: Array<{
+    roomId: number;
+    roomNumber: number;
+    floor: number;
+    totalAmount: number;
+    paymentStatus: string;
+    waterUsage: number;
+    electricityUsage: number;
+    waterCost: number;
+    electricityCost: number;
+    baseRent: number;
+    trashFee: number;
+  }>;
 }
 
 // Notifications

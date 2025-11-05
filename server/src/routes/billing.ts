@@ -36,11 +36,11 @@ router.get('/:id', billingController.getBillingRecordById);
 router.get('/', billingController.getBillingRecords);
 
 /**
- * @route GET /api/billing/room/:roomId/history
+ * @route GET /api/billing/room/:roomId
  * @desc Get billing history for a specific room
  * @access Authenticated users (filtered by access)
  */
-router.get('/room/:roomId/history', billingController.getRoomBillingHistory);
+router.get('/room/:roomId', billingController.getRoomBillingHistory);
 
 /**
  * @route PUT /api/billing/:id/payment-status
@@ -57,25 +57,32 @@ router.put('/:id/payment-status', requireAdmin, billingController.updatePaymentS
 router.post('/mark-overdue', requireAdmin, billingController.markOverduePayments);
 
 /**
- * @route GET /api/billing/reports/summary
+ * @route GET /api/billing/summary
  * @desc Get financial summary
  * @access Authenticated users (filtered by access)
  */
-router.get('/reports/summary', billingController.getFinancialSummary);
+router.get('/summary', billingController.getFinancialSummary);
 
 /**
- * @route GET /api/billing/reports/monthly
+ * @route GET /api/billing/monthly
  * @desc Get monthly financial report
  * @access Authenticated users (filtered by access)
  */
-router.get('/reports/monthly', billingController.getMonthlyFinancialReport);
+router.get('/monthly', billingController.getMonthlyFinancialReport);
 
 /**
- * @route GET /api/billing/reports/yearly
+ * @route GET /api/billing/yearly
  * @desc Get yearly financial report
  * @access Authenticated users (filtered by access)
  */
-router.get('/reports/yearly', billingController.getYearlyFinancialReport);
+router.get('/yearly', billingController.getYearlyFinancialReport);
+
+/**
+ * @route GET /api/billing/yearly-trend
+ * @desc Get yearly trend data for financial dashboard
+ * @access Authenticated users (filtered by access)
+ */
+router.get('/yearly-trend', billingController.getYearlyTrendData);
 
 /**
  * @route GET /api/billing/export

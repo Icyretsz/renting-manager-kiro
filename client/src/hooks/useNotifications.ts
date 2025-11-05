@@ -63,7 +63,7 @@ export const useMarkNotificationReadMutation = () => {
       const response = await api.put<ApiResponse<Notification>>(`/notifications/${notificationId}/read`);
       return response.data.data;
     },
-    onSuccess: (data, notificationId) => {
+    onSuccess: (_, notificationId) => {
       // Update local store
       markAsRead(notificationId);
       
@@ -103,7 +103,7 @@ export const useDeleteNotificationMutation = () => {
       const response = await api.delete<ApiResponse<void>>(`/notifications/${notificationId}`);
       return response.data;
     },
-    onSuccess: (data, notificationId) => {
+    onSuccess: (_, notificationId) => {
       // Update local store
       removeNotification(notificationId);
       

@@ -91,6 +91,8 @@ import meterReadingRoutes from './routes/meterReadings';
 import notificationRoutes from './routes/notifications';
 import billingRoutes from './routes/billing';
 import settingsRoutes from './routes/settings';
+import paymentRoutes from './routes/payments';
+import userManagementRoutes from './routes/userManagement';
 
 // API routes
 app.use('/api/upload', uploadRoutes);
@@ -102,6 +104,8 @@ app.use('/api/readings', meterReadingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/user-management', userManagementRoutes);
 
 // 404 handler for API routes
 app.use('/api/*', (req, _res, next) => {

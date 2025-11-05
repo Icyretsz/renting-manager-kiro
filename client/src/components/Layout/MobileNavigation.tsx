@@ -49,14 +49,23 @@ export const MobileNavigation: React.FC = () => {
       label: 'Billing',
       path: '/billing',
     },
-    ...(isAdmin() ? [{
+    ...(isAdmin() ? [
+      {
       key: 'approvals',
       icon: <CheckCircleOutlined />,
       label: 'Approvals',
       path: '/approvals',
       adminOnly: true,
       badge: 0, // This would be populated with pending approvals count
-    }] : []),
+    },
+    {
+      key: 'tenants',
+      icon: <CheckCircleOutlined />,
+      label: 'Users',
+      path: '/user-management',
+      adminOnly: true,
+    }
+  ] : []),
   ];
 
   const handleNavigation = (path: string) => {

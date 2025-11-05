@@ -178,22 +178,32 @@
     - Build modification tracking display for transparency
     - _Requirements: 5.1, 5.2, 6.3, 6.4_
 
-- [ ] 10. Develop financial reporting and billing interfaces
-  - [ ] 10.1 Create billing history and payment tracking
-    - Build billing history display with filtering and search
-    - Implement payment status indicators and overdue highlighting
-    - Add room-based billing views for regular users
-    - Create comprehensive billing views for admin users
-    - _Requirements: 8.1, 8.3, 8.4_
+- [x] 10. Develop financial reporting and billing interfaces
+  - [x] 10.1 Implement PayOS payment integration
+    - Install and configure PayOS SDK for payment processing
+    - Create PayOS service for on-demand QR code generation with billing details
+    - Implement payment status tracking and webhook handling for payment confirmations
+    - Store payment references and status in billing records (not QR URLs due to expiry)
+    - Enhance notification system: send "tap to see bill and pay" message when readings approved
+    - _Requirements: Payment processing integration with QR code generation_
 
-  - [ ] 10.2 Implement financial reporting dashboard
-    - Create financial dashboard with charts and graphs using Chart.js or Recharts
+  - [x] 10.2 Build role-based billing interface
+    - **USER role billing page**: Show individual bill details with dynamic QR code generation for unpaid bills
+    - **ADMIN role billing page**: Show comprehensive billing history overview across all rooms
+    - Implement payment status indicators and overdue highlighting for both roles
+    - Add QR code regeneration logic: create fresh QR code on each billing page visit for unpaid bills (USER role only)
+    - Build billing history display with filtering and search capabilities
+    - _Requirements: 8.1, 8.3, 8.4, Role-based billing interface_
+
+  - [x] 10.3 Implement financial reporting and analytics dashboard
+    - Create admin-only financial dashboard with charts and graphs using Chart.js or Recharts
     - Build income tracking visualizations by room and floor
-    - Implement monthly/yearly financial summaries
-    - Add export functionality for financial reports
+    - Implement monthly/yearly financial summaries and trends
+    - Add export functionality for financial reports (CSV, PDF)
+    - Create revenue analysis and occupancy rate tracking
     - _Requirements: 8.2, 9.1, 9.2, 9.3, 9.4, 9.5_
 
-  - [ ] 10.3 Build comprehensive user and tenant management interface
+  - [x] 10.4 Build comprehensive user and tenant management interface
     - Create admin users management page with CRUD operations
     - Implement tenant management interface with room assignment
     - Build user profile management with role assignment

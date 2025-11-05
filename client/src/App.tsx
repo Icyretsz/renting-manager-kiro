@@ -18,6 +18,9 @@ import { MeterReadingsPage } from '@/pages/MeterReadingsPage';
 import { ApprovalsPage } from '@/pages/ApprovalsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import UnlinkedErrorPage from '@/pages/UnlinkedErrorPage';
+import BillingPage from '@/pages/BillingPage';
+import FinancialDashboardPage from '@/pages/FinancialDashboardPage';
+import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useAuthStore } from './stores';
@@ -135,6 +138,44 @@ const AppContent = () => {
               <ProtectedRoute requireTenantLink={false}>
                 <MainLayout>
                   <ApprovalsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/unauthorized" replace />
+            )
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute requireTenantLink={userRole !== 'ADMIN'}>
+              <MainLayout>
+                <BillingPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/financial-dashboard"
+          element={
+            userRole === 'ADMIN' ? (
+              <ProtectedRoute requireTenantLink={false}>
+                <MainLayout>
+                  <FinancialDashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/unauthorized" replace />
+            )
+          }
+        />
+        <Route
+          path="/user-management"
+          element={
+            userRole === 'ADMIN' ? (
+              <ProtectedRoute requireTenantLink={false}>
+                <MainLayout>
+                  <UserManagementPage />
                 </MainLayout>
               </ProtectedRoute>
             ) : (
