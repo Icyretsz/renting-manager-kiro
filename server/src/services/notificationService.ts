@@ -19,23 +19,25 @@ export interface NotificationRecipient {
 const templates = {
     READING_SUBMITTED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'New Meter Reading Submitted',
-      body: `Room ${roomNumber} has submitted meter readings for ${month}/${year}`,
+      body: `Room ${roomNumber} has submitted meter readings for ${month}/${year}. Tap to review and approve.`,
       data: {
         type: 'reading_submitted',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
+        action: 'review_reading',
       },
     }),
 
     READING_APPROVED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Approved',
-      body: `Your meter readings for Room ${roomNumber} (${month}/${year}) have been approved`,
+      body: `Your meter readings for Room ${roomNumber} (${month}/${year}) have been approved. Tap to view your readings.`,
       data: {
         type: 'reading_approved',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
+        action: 'view_readings',
       },
     }),
 
@@ -64,13 +66,14 @@ const templates = {
 
     BILL_GENERATED: (roomNumber: number, month: number, year: number, amount: number): NotificationTemplate => ({
       title: 'Monthly Bill Generated',
-      body: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: $${amount.toFixed(2)}`,
+      body: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: ₫${amount.toFixed(2)}. Tap to view and pay.`,
       data: {
         type: 'bill_generated',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
         amount: amount.toString(),
+        action: 'pay_bill',
       },
     }),
   };

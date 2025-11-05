@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './NotificationBell.css';
 import {
   Badge,
   Button,
   Dropdown,
-  List,
   Typography,
   Space,
   Empty,
-  Divider,
   Popconfirm,
 } from 'antd';
 import {
@@ -16,6 +16,7 @@ import {
   CheckOutlined,
   ClearOutlined,
   EyeOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import { useNotificationStore } from '@/stores/notificationStore';
 import {
@@ -26,10 +27,15 @@ import {
   useClearAllNotificationsMutation,
 } from '@/hooks/useNotifications';
 import { Notification } from '@/types';
+import { 
+  getNotificationNavigation, 
+  getNotificationIcon 
+} from '@/utils/notificationNavigation';
 
 const { Text } = Typography;
 
 export const NotificationBell: React.FC = () => {
+  const navigate = useNavigate();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const { notifications, unreadCount } = useNotificationStore();
   
@@ -72,22 +78,7 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'reading_submitted':
-        return '📊';
-      case 'reading_approved':
-        return '✅';
-      case 'reading_rejected':
-        return '❌';
-      case 'payment_due':
-        return '💰';
-      case 'system':
-        return '🔔';
-      default:
-        return '📢';
-    }
-  };
+
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
@@ -105,75 +96,158 @@ export const NotificationBell: React.FC = () => {
     return new Date(date).toLocaleDateString();
   };
 
-  const renderNotificationItem = (notification: Notification) => (
-    <List.Item
-      key={notification.id}
-      className={`px-4 py-3 hover:bg-gray-50 ${!notification.readStatus ? 'bg-blue-50' : ''}`}
-      actions={[
-        <Space key="actions">
-          {!notification.readStatus && (
-            <Button
-              type="text"
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => handleMarkAsRead(notification.id)}
-              loading={markReadMutation.isPending}
-            />
-          )}
-          <Popconfirm
-            title="Delete this notification?"
-            onConfirm={() => handleDeleteNotification(notification.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              danger
-              loading={deleteMutation.isPending}
-            />
-          </Popconfirm>
-        </Space>,
-      ]}
-    >
-      <List.Item.Meta
-        avatar={
-          <div className="text-lg">
-            {getNotificationIcon(notification.type)}
+  // Handle notification click to navigate to relevant page
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read if not already read
+    if (!notification.readStatus) {
+      handleMarkAsRead(notification.id);
+    }
+
+    // Get navigation info
+    const navigationInfo = getNotificationNavigation(notification);
+    
+    if (navigationInfo.shouldNavigate) {
+      navigate(navigationInfo.path);
+      setDropdownVisible(false); // Close dropdown after navigation
+    }
+  };
+
+  const renderNotificationItem = (notification: Notification) => {
+    const navigationInfo = getNotificationNavigation(notification);
+    const isClickable = navigationInfo.shouldNavigate;
+    const IconComponent = getNotificationIcon(notification.type);
+    
+    return (
+      <div
+        key={notification.id}
+        className={`notification-item relative p-4 transition-all duration-200 ${
+          isClickable ? 'hover:bg-blue-50 cursor-pointer active:bg-blue-100 touch-manipulation' : 'cursor-default'
+        } ${!notification.readStatus ? 'bg-blue-25 border-l-4 border-blue-500' : ''}`}
+        onClick={isClickable ? () => handleNotificationClick(notification) : undefined}
+        role={isClickable ? 'button' : 'listitem'}
+        tabIndex={isClickable ? 0 : -1}
+        onKeyDown={isClickable ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleNotificationClick(notification);
+          }
+        } : undefined}
+      >
+        <div className="flex items-start space-x-3">
+          {/* Icon */}
+          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+            !notification.readStatus ? 'bg-blue-100' : 'bg-gray-100'
+          }`}>
+            <IconComponent className={`text-lg ${
+              !notification.readStatus ? 'text-blue-600' : 'text-gray-500'
+            }`} />
           </div>
-        }
-        title={
-          <div className="flex items-center justify-between">
-            <Text strong={!notification.readStatus} className="text-sm">
-              {notification.title}
-            </Text>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0 pr-2">
+                <Text 
+                  strong={!notification.readStatus} 
+                  className={`text-sm block ${
+                    !notification.readStatus ? 'text-gray-900' : 'text-gray-700'
+                  }`}
+                  style={{ 
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {notification.title}
+                </Text>
+                <Text 
+                  className={`text-xs mt-1 block ${
+                    !notification.readStatus ? 'text-gray-600' : 'text-gray-500'
+                  }`}
+                  style={{ 
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}
+                >
+                  {notification.message}
+                </Text>
+                <div className="flex items-center justify-between mt-2">
+                  <Text type="secondary" className="text-xs">
+                    {formatTimeAgo(notification.createdAt)}
+                  </Text>
+                  {isClickable && (
+                    <div className="flex items-center text-blue-600">
+                      <Text className="text-xs mr-1">Tap</Text>
+                      <RightOutlined className="text-xs" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="notification-item-actions flex flex-col items-center space-y-1" onClick={(e) => e.stopPropagation()}>
+                {!notification.readStatus && (
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EyeOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkAsRead(notification.id);
+                    }}
+                    loading={markReadMutation.isPending}
+                    className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 w-8 h-8 flex items-center justify-center"
+                  />
+                )}
+                <Popconfirm
+                  title="Delete?"
+                  onConfirm={(e) => {
+                    e?.stopPropagation();
+                    handleDeleteNotification(notification.id);
+                  }}
+                  okText="Yes"
+                  cancelText="No"
+                  placement="topRight"
+                  //onClick={(e) => e?.stopPropagation()}
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    loading={deleteMutation.isPending}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 w-8 h-8 flex items-center justify-center"
+                  />
+                </Popconfirm>
+              </div>
+            </div>
+
+            {/* Unread indicator */}
             {!notification.readStatus && (
-              <div className="w-2 h-2 bg-blue-500 rounded-full ml-2" />
+              <div className="absolute top-4 right-4 w-2 h-2 bg-blue-500 rounded-full"></div>
             )}
           </div>
-        }
-        description={
-          <div>
-            <div className="text-sm text-gray-600 mb-1">
-              {notification.message}
-            </div>
-            <div className="text-xs text-gray-400">
-              {formatTimeAgo(notification.createdAt)}
-            </div>
-          </div>
-        }
-      />
-    </List.Item>
-  );
+        </div>
+      </div>
+    );
+  };
 
   const dropdownContent = (
-    <div className="w-80 max-h-96 overflow-hidden bg-white rounded-lg shadow-lg">
+    <div className="w-screen max-w-sm mx-2 bg-white rounded-lg shadow-xl border border-gray-200">
       {/* Header */}
-      <div className="px-4 py-3 border-b bg-gray-50">
+      <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center justify-between">
-          <Text strong>Notifications</Text>
-          <Space>
+          <div className="flex items-center space-x-2">
+            <BellOutlined className="text-blue-600" />
+            <Text strong className="text-gray-800">Notifications</Text>
+            {unreadCount > 0 && (
+              <Badge count={unreadCount} size="small" />
+            )}
+          </div>
+          <Space size="small">
             {unreadCount > 0 && (
               <Button
                 type="text"
@@ -181,9 +255,8 @@ export const NotificationBell: React.FC = () => {
                 icon={<CheckOutlined />}
                 onClick={handleMarkAllAsRead}
                 loading={markAllReadMutation.isPending}
-              >
-                Mark all read
-              </Button>
+                className="text-blue-600 hover:bg-blue-100"
+              />
             )}
             {notifications.length > 0 && (
               <Popconfirm
@@ -192,16 +265,15 @@ export const NotificationBell: React.FC = () => {
                 onConfirm={handleClearAll}
                 okText="Yes"
                 cancelText="No"
+                placement="bottomRight"
               >
                 <Button
                   type="text"
                   size="small"
                   icon={<ClearOutlined />}
-                  danger
                   loading={clearAllMutation.isPending}
-                >
-                  Clear all
-                </Button>
+                  className="text-red-500 hover:bg-red-50"
+                />
               </Popconfirm>
             )}
           </Space>
@@ -209,38 +281,45 @@ export const NotificationBell: React.FC = () => {
       </div>
 
       {/* Notifications List */}
-      <div className="max-h-80 overflow-y-auto">
+      <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {isLoading ? (
-          <div className="p-4 text-center">
-            <Text type="secondary">Loading notifications...</Text>
+          <div className="p-6 text-center">
+            <div className="animate-pulse">
+              <BellOutlined className="text-2xl text-gray-300 mb-2" />
+              <Text type="secondary">Loading notifications...</Text>
+            </div>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-4">
+          <div className="p-6 text-center">
             <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="No notifications"
-              className="my-4"
+              image={<BellOutlined className="text-4xl text-gray-300" />}
+              description={
+                <Text type="secondary" className="text-sm">
+                  No notifications yet
+                </Text>
+              }
+              className="my-2"
             />
           </div>
         ) : (
-          <List
-            dataSource={notifications.slice(0, 10)} // Show only first 10
-            renderItem={renderNotificationItem}
-            split={false}
-          />
+          <div>
+            {notifications.slice(0, 8).map(renderNotificationItem)}
+          </div>
         )}
       </div>
 
       {/* Footer */}
-      {notifications.length > 10 && (
-        <>
-          <Divider className="my-0" />
-          <div className="px-4 py-2 text-center bg-gray-50">
-            <Button type="link" size="small" onClick={() => setDropdownVisible(false)}>
-              View all notifications
-            </Button>
-          </div>
-        </>
+      {notifications.length > 8 && (
+        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
+          <Button 
+            type="link" 
+            size="small" 
+            onClick={() => setDropdownVisible(false)}
+            className="w-full text-center text-blue-600"
+          >
+            View all {notifications.length} notifications
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -252,15 +331,16 @@ export const NotificationBell: React.FC = () => {
       placement="bottomRight"
       open={dropdownVisible}
       onOpenChange={setDropdownVisible}
+      overlayClassName="notification-dropdown"
     >
       <Button
         type="text"
         icon={
-          <Badge count={unreadCount} size="small" offset={[0, 0]}>
-            <BellOutlined className="text-lg" />
+          <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+            <BellOutlined className="text-xl" />
           </Badge>
         }
-        className="flex items-center justify-center"
+        className="flex items-center justify-center h-10 w-10 hover:bg-gray-100 rounded-full"
       />
     </Dropdown>
   );

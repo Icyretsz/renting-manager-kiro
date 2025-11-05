@@ -22,35 +22,23 @@ import BillingPage from '@/pages/BillingPage';
 import FinancialDashboardPage from '@/pages/FinancialDashboardPage';
 import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useEffect } from 'react';
 import { useAuthStore } from './stores';
-import { useSocketStore } from './stores/socketStore';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
 
 // Main app content that requires authentication
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
-  const { token, user: appUser } = useAuthStore()
-  const { connect, disconnect, isConnected } = useSocketStore();
+  const { user: appUser } = useAuthStore()
   
-  // Initialize WebSocket notifications
+  // Initialize WebSocket notifications (this handles the connection internally)
   useWebSocketNotifications();
 
   // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
-  useEffect(() => {
-        if (isAuthenticated && token) {
-            connect(token);
-        }
-        
-        return () => {
-            disconnect();
-        };
-    }, [connect, disconnect, isAuthenticated, token]);
 
-  useEffect(() => {
-    // console.log('Token:', token)
-    // console.log('App User:', appUser)
-  }, [token, appUser])
+  // useEffect(() => {
+  //   console.log('Token:', token)
+  //   console.log('App User:', appUser)
+  // }, [token, appUser])
   
   // Show loading while Auth0 is initializing
   if (isLoading) {

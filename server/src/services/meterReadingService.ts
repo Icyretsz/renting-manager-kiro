@@ -173,8 +173,8 @@ export const createMeterReading = async (data: CreateMeterReadingData): Promise<
 
   // Send notification to admins about new submission
   try {
-    // TODO: Implement notifyReadingSubmitted in notificationService
-    // await notificationService.notifyReadingSubmitted(reading.room.roomNumber, data.month, data.year);
+    const { notifyReadingSubmitted } = await import('./notificationService');
+    await notifyReadingSubmitted(reading.room.roomNumber, data.month, data.year);
   } catch (error) {
     console.error('Failed to send notification for reading submission:', error);
     // Don't throw error as the reading was created successfully

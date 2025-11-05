@@ -17,8 +17,19 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
     connect: (token: string) => {
         // Prevent multiple connections
-        if (get().socket?.connected) return;
+        const currentSocket = get().socket;
+        if (currentSocket?.connected) {
+            console.log('Socket already connected, skipping connection attempt');
+            return;
+        }
 
+        // Disconnect existing socket if it exists but not connected
+        if (currentSocket) {
+            currentSocket.disconnect();
+            currentSocket.removeAllListeners();
+        }
+
+        console.log('Creating new socket connection...');
         const socket = io(
             import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000',
             {
