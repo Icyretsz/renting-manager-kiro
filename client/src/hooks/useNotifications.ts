@@ -33,7 +33,6 @@ export const useNotificationsQuery = () => {
       return notifications;
     },
     enabled: isAuthenticated && !!token && !!user, // Only fetch when authenticated with token
-    refetchInterval: 30000, // Refetch every 30 seconds
   });
 };
 
@@ -49,7 +48,6 @@ export const useUnreadNotificationsQuery = () => {
       return response.data.data?.count || 0;
     },
     enabled: isAuthenticated && !!token && !!user, // Only fetch when authenticated with token
-    refetchInterval: 15000, // Refetch every 15 seconds
   });
 };
 

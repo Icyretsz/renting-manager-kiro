@@ -24,13 +24,22 @@ import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useAuthStore } from './stores';
+import { useSocketStore } from './stores/socketStore';
 
 // Main app content that requires authentication
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
   const { token, user: appUser } = useAuthStore()
+  const { connect, disconnect, isConnected } = useSocketStore();
 
   // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
+  useEffect(() => {
+        if (isAuthenticated) connect();
+        
+        return () => {
+            disconnect();
+        };
+    }, [connect, disconnect, isAuthenticated]);
 
   useEffect(() => {
     // console.log('Token:', token)

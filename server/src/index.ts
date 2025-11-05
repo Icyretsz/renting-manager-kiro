@@ -4,12 +4,14 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
+import { createServer } from 'http';
 
 // Import middleware and utilities
 import { errorHandler } from './middleware/errorHandler';
 import { NotFoundError } from './utils/errors';
 import prisma from './config/database';
 import { initializeFirebase } from './config/firebase';
+import { initializeSocket } from './config/socket';
 
 // Load environment variables
 dotenv.config();
@@ -42,13 +44,16 @@ app.use(morgan(process.env['NODE_ENV'] === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// ⭐ CREATE SERVER AND INITIALIZE SOCKET.IO EARLY
+const server = createServer(app);
+initializeSocket(server);
+
 // Static file serving for uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check endpoint
 app.get('/health', async (_req, res) => {
   try {
-    // Test database connection
     await prisma.$queryRaw`SELECT 1`;
     
     res.status(200).json({
@@ -107,13 +112,18 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/user-management', userManagementRoutes);
 
-// 404 handler for API routes
+// 404 handler for API routes only
 app.use('/api/*', (req, _res, next) => {
   next(new NotFoundError(`API route ${req.originalUrl} not found`));
 });
 
-// 404 handler for all other routes
-app.use('*', (req, _res, next) => {
+// ⭐ IMPORTANT: Don't catch Socket.IO routes
+// Only catch non-socket.io routes
+app.use((req, _res, next) => {
+  // Ignore Socket.IO polling requests
+  if (req.path.startsWith('/socket.io/')) {
+    return next();
+  }
   next(new NotFoundError(`Route ${req.originalUrl} not found`));
 });
 
@@ -124,17 +134,25 @@ app.use(errorHandler);
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully');
   await prisma.$disconnect();
-  process.exit(0);
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully');
   await prisma.$disconnect();
-  process.exit(0);
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
 
-app.listen(PORT, async () => {
+// Start the server
+server.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔌 Socket.IO running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🌍 Environment: ${process.env['NODE_ENV'] || 'development'}`);
   console.log(`📁 Upload directory: ${process.env['UPLOAD_DIR'] || 'uploads'}`);
@@ -148,3 +166,5 @@ app.listen(PORT, async () => {
     console.error('Failed to initialize default settings:', error);
   }
 });
+
+export default app;
