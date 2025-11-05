@@ -13,7 +13,7 @@ const createTenantValidation = [
     .isLength({ min: 1, max: 255 })
     .withMessage('Name is required and must be less than 255 characters'),
   body('email')
-    .optional()
+    .optional({nullable: true})
     .isEmail()
     .normalizeEmail()
     .withMessage('Invalid email format'),
@@ -38,7 +38,7 @@ const updateTenantValidation = [
     .isLength({ min: 1, max: 255 })
     .withMessage('Name must be less than 255 characters'),
   body('email')
-    .optional()
+    .optional({nullable: true})
     .isEmail()
     .normalizeEmail()
     .withMessage('Invalid email format'),
@@ -56,7 +56,7 @@ const updateTenantValidation = [
     .isISO8601()
     .withMessage('Move-in date must be a valid date'),
   body('moveOutDate')
-    .optional()
+    .optional({nullable: true})
     .isISO8601()
     .withMessage('Move-out date must be a valid date'),
   body('isActive')
@@ -65,11 +65,11 @@ const updateTenantValidation = [
     .withMessage('isActive must be a boolean')
 ];
 
-const tenantIdValidation = [
-  param('id')
-    .isUUID()
-    .withMessage('Invalid tenant ID format')
-];
+// const tenantIdValidation = [
+//   param('id')
+//     .isUUID()
+//     .withMessage('Invalid tenant ID format')
+// ];
 
 const roomIdValidation = [
   param('roomId')
@@ -147,7 +147,7 @@ router.get('/',
 );
 
 router.get('/:id', 
-  tenantIdValidation,
+  //tenantIdValidation,
   validateRequest,
   tenantController.getTenantById
 );
@@ -159,28 +159,28 @@ router.post('/',
 );
 
 router.put('/:id', 
-  tenantIdValidation,
+  //tenantIdValidation,
   updateTenantValidation,
   validateRequest,
   tenantController.updateTenant
 );
 
 router.post('/:id/move-out', 
-  tenantIdValidation,
+  //tenantIdValidation,
   moveOutValidation,
   validateRequest,
   tenantController.moveTenantOut
 );
 
 router.post('/:id/move-in', 
-  tenantIdValidation,
+  //tenantIdValidation,
   moveInValidation,
   validateRequest,
   tenantController.moveTenantIn
 );
 
 router.delete('/:id', 
-  tenantIdValidation,
+  //tenantIdValidation,
   validateRequest,
   tenantController.deleteTenant
 );

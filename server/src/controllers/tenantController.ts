@@ -123,6 +123,7 @@ export const createTenant = async (req: AuthenticatedRequest, res: Response, nex
  */
 export const updateTenant = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    
     if (req.user?.role !== 'ADMIN') {
       throw new AppError('Admin access required', 403);
     }

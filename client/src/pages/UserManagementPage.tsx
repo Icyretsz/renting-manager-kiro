@@ -178,6 +178,8 @@ const UserManagementPage: React.FC = () => {
         moveOutDate: values.moveOutDate?.toDate()
       };
 
+      console.log(tenantData)
+
       if (selectedTenant) {
         await updateTenantMutation.mutateAsync({
           tenantId: selectedTenant.id,
