@@ -257,14 +257,13 @@ export const canSubmitReading = async (
       }
     }
 
-    // Check if reading already exists for this room/month/year
-    const existingReading = await prisma.meterReading.findUnique({
+    // Check if an approved reading already exists for this room/month/year
+    const existingReading = await prisma.meterReading.findFirst({
       where: {
-        roomId_month_year: {
-          roomId,
-          month,
-          year,
-        },
+        roomId,
+        month,
+        year,
+        status: 'APPROVED',
       },
       select: {
         id: true,

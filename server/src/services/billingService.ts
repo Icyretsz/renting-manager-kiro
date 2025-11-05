@@ -769,15 +769,14 @@ const getPreviousMonthReading = async (roomId: number, month: number, year: numb
       prevYear = year - 1;
     }
 
-    return await prisma.meterReading.findUnique({
+    return await prisma.meterReading.findFirst({
       where: {
-        roomId_month_year: {
-          roomId,
-          month: prevMonth,
-          year: prevYear
-        }
-    }
-  });
+        roomId,
+        month: prevMonth,
+        year: prevYear,
+        status: 'APPROVED'
+      }
+    });
 };
 
 /**

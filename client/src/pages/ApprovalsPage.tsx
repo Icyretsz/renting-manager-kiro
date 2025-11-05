@@ -262,6 +262,14 @@ export const ApprovalsPage: React.FC = () => {
                       <div className="text-xs text-gray-400">
                         Submitted: {new Date(reading.submittedAt).toLocaleDateString()}
                       </div>
+                      {reading.submitter && (
+                        <div className="text-xs text-gray-400">
+                          By: {reading.submitter.name} ({reading.submitter.role})
+                          {reading.submitter.tenant?.roomId && (
+                            <span> - Room {reading.submitter.tenant.roomId}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <Tag color={getStatusColor(reading.status)} className="ml-2">
                       {reading.status}
@@ -492,8 +500,8 @@ export const ApprovalsPage: React.FC = () => {
                 <Card size="small" title={<><HistoryOutlined /> Modification History</>}>
                   <Timeline
                     items={selectedReading.modifications.map((mod) => ({
-                      color: mod.modificationType === 'approve' ? 'green' : 
-                             mod.modificationType === 'reject' ? 'red' : 'blue',
+                      color: mod.modificationType.toLowerCase() === 'approve' ? 'green' : 
+                             mod.modificationType.toLowerCase() === 'reject' ? 'red' : 'blue',
                       children: (
                         <div>
                           <div className="font-medium">
@@ -506,7 +514,7 @@ export const ApprovalsPage: React.FC = () => {
                             </div>
                           )}
                           <div className="text-xs text-gray-500">
-                            By {mod.user?.name || 'Unknown'} on {new Date(mod.modifiedAt).toLocaleString()}
+                            By {mod.modifier?.tenant?.name || 'Unknown'} on {new Date(mod.modifiedAt).toLocaleString()}
                           </div>
                         </div>
                       ),

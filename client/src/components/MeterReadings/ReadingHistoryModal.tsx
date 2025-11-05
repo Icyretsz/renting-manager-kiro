@@ -267,7 +267,10 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                             </div>
                           )}
                           <div className="text-gray-500 mt-1">
-                            By {mod.user?.name || 'Unknown'}
+                            By {mod.modifier?.name || 'Unknown'} ({mod.modifier?.role || 'Unknown Role'})
+                            {mod.modifier?.tenant?.roomId && (
+                              <span className="text-xs"> - Room {mod.modifier.tenant.roomId}</span>
+                            )}
                           </div>
                         </div>
                       ))}

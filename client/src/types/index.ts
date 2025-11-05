@@ -59,6 +59,26 @@ export interface MeterReading {
   approvedBy?: string;
   approvedAt?: Date;
   modifications: ReadingModification[];
+  submitter?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    tenant?: {
+      roomId: number;
+      name: string;
+    } | null;
+  };
+  approver?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    tenant?: {
+      roomId: number;
+      name: string;
+    } | null;
+  } | null;
 }
 
 export interface ReadingModification {
@@ -70,7 +90,16 @@ export interface ReadingModification {
   oldValue?: string;
   newValue?: string;
   modificationType: 'create' | 'update' | 'approve' | 'reject';
-  user?: User;
+  modifier?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    tenant?: {
+      roomId: number;
+      name: string;
+    } | null;
+  };
 }
 
 // Billing
