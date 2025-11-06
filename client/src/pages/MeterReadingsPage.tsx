@@ -276,9 +276,9 @@ export const MeterReadingsPage: React.FC = () => {
 
 
 
-  if (readingLoading) {
-    return <LoadingSpinner message="Loading previous readings..." />;
-  }
+  // if (readingLoading) {
+  //   return <LoadingSpinner message="Loading previous readings..." />;
+  // }
 
   return (
     <PageErrorBoundary>
@@ -313,7 +313,7 @@ export const MeterReadingsPage: React.FC = () => {
           )}
         </Card>
 
-        {selectedRoomId && availableRooms && availableRooms.length > 0 && (
+        {selectedRoomId && availableRooms && availableRooms.length > 0 ? (
           <>
             {/* Current Month Reading Status */}
             {currentMonthReading && (
@@ -662,7 +662,7 @@ export const MeterReadingsPage: React.FC = () => {
               className="text-sm"
             />
           </>
-        )}
+        ) : <LoadingSpinner message="Loading previous readings..." />}
       </div>
     </PageErrorBoundary>
   );

@@ -4,10 +4,22 @@ import { emitNotificationToUser, emitNotificationUpdate } from '../config/socket
 
 const prisma = new PrismaClient();
 
+interface NotificationData {
+  type: string;
+  roomNumber?: string;
+  month?: string;
+  year?: string;
+  action?: string;
+  billId?: string;
+  tenantId?: string;
+  reason?: string;
+  amount?: string;
+}
+
 export interface NotificationTemplate {
   title: string;
   body: string;
-  data?: Record<string, string>;
+  data?: NotificationData;
 }
 
 export interface NotificationRecipient {

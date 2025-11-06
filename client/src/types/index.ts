@@ -183,14 +183,26 @@ export interface MonthlyFinancialReport {
 }
 
 // Notifications
+interface NotificationData {
+  type: string;
+  roomNumber: string;
+  month?: string;
+  year?: string;
+  action?: string;
+  billId?: string;
+  tenantId?: string;
+  reason?: string;
+  amount?: string;
+}
 export interface Notification {
   id: string;
   userId: string;
   title: string;
-  message: string;
+  body: string;
   type: string;
   readStatus: boolean;
   createdAt: Date;
+  data?: NotificationData;
 }
 
 // Settings
@@ -219,4 +231,10 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     total: number;
     totalPages: number;
   };
+}
+
+export interface NotificationTemplate {
+  title: string;
+  body: string;
+  data?: Record<string, string>;
 }

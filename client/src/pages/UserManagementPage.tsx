@@ -47,6 +47,7 @@ import {
 } from '@/hooks/useUserManagement';
 import { Tenant } from '@/types';
 import dayjs from 'dayjs';
+import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -522,7 +523,7 @@ const UserManagementPage: React.FC = () => {
 
             {usersLoading ? (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <Text type="secondary">Loading users...</Text>
+                <LoadingSpinner message='Loading users...'/>
               </div>
             ) : users.length > 0 ? (
               <>
@@ -680,7 +681,7 @@ const UserManagementPage: React.FC = () => {
 
             {tenantsLoading ? (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <Text type="secondary">Loading tenants...</Text>
+                <LoadingSpinner message='Loading tenants...'/>
               </div>
             ) : filteredTenants.length > 0 ? (
               <>

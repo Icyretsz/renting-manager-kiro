@@ -16,7 +16,7 @@ export const useAntNotification = (navigate: NavigateFunction) => {
 
     api.open({
       message: notificationData.title,
-      description: notificationData.message,
+      description: notificationData.body,
       icon: <IconComponent style={{ color: '#1890ff' }} />,
       placement: 'topRight',
       duration: 6,

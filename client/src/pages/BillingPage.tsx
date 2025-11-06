@@ -12,6 +12,7 @@ import {
 } from '@/hooks/useBilling';
 import { BillingRecord } from '@/types';
 import dayjs from 'dayjs';
+import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -369,7 +370,7 @@ const BillingPage: React.FC = () => {
         {billingLoading ? (
           <Card>
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <Spin size="large" />
+              <LoadingSpinner message='Loading billing records...'/>
               <div style={{ marginTop: '16px' }}>
                 <Text type="secondary">Loading billing records...</Text>
               </div>
@@ -552,7 +553,7 @@ const BillingPage: React.FC = () => {
             
             <div style={{ margin: '24px 0' }}>
               {qrLoading ? (
-                <Spin size="large" />
+                <LoadingSpinner message='Loading payment QR code...'/>
               ) : freshQRData && 'qrCode' in freshQRData ? (
                 <QRCode value={freshQRData.qrCode} size={200} />
               ) : (

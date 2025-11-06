@@ -1,7 +1,5 @@
 import { create } from 'zustand';
 import { io, Socket } from 'socket.io-client';
-import { useAuthStore } from './authStore';
-import { useNotificationStore } from './notificationStore';
 
 interface SocketStore {
     socket: Socket | null;
@@ -68,6 +66,5 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
             set({ socket: null, isConnected: false });
         }
     },
-
 
 }));
