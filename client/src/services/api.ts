@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/authStore';
 
 // Create axios instance
@@ -12,11 +12,18 @@ const api: AxiosInstance = axios.create({
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
+  async (config: InternalAxiosRequestConfig) => {
+    const { token, isAuthenticated } = useAuthStore.getState();
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (isAuthenticated) {
+      // If authenticated but no token, this is a problem
+      console.error('API request made without token despite being authenticated. Request may fail.');
+      // You could potentially reject the request here or try to get a token
+      // For now, let it proceed and let the server return 401
     }
+    
     return config;
   },
   (error) => {
@@ -29,14 +36,25 @@ api.interceptors.response.use(
   (response: AxiosResponse) => {
     return response;
   },
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      // console.log('401 error - Token expired or invalid, clearing auth state');
-      useAuthStore.getState().logout();
-      // Don't redirect here - let Auth0 handle it naturally
-      // The app will show LoginPage when isAuthenticated becomes false
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      const { isAuthenticated } = useAuthStore.getState();
+      
+      if (isAuthenticated) {
+        console.log('401 error but user is authenticated, might be missing token');
+        // Don't logout immediately, let the auth provider handle token recovery
+        // The token check interval should fix this
+        return Promise.reject(error);
+      } else {
+        console.log('401 error - Token expired or invalid, clearing auth state');
+        useAuthStore.getState().logout();
+      }
     }
+    
     return Promise.reject(error);
   }
 );

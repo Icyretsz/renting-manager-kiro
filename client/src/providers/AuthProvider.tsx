@@ -35,6 +35,18 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
           });
           console.log('Auth0Integration: Got access token:', token ? 'Token received' : 'No token');
           
+          if (!token) {
+            console.warn('Auth0Integration: No token received despite being authenticated');
+            // Try once more with cache off
+            const freshToken = await getAccessTokenSilently({ cacheMode: 'off' });
+            if (!freshToken) {
+              console.error('Auth0Integration: Still no token, logging out');
+              logout();
+              return;
+            }
+            console.log('Auth0Integration: Got fresh token on retry');
+          }
+          
           const appUser: User = {
             id: user.sub || '',
             auth0Id: user.sub || '',
@@ -71,6 +83,31 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
 
     syncAuthState();
   }, [isAuthenticated, user, getAccessTokenSilently, login, logout, isLoading]);
+
+  // Additional effect to ensure we always have a token when authenticated
+  useEffect(() => {
+    const ensureToken = async () => {
+      const { token, isAuthenticated: storeAuth } = useAuthStore.getState();
+      
+      if (isAuthenticated && storeAuth && !token && !isLoading) {
+        console.log('Auth0Integration: User authenticated but no token in store, fetching...');
+        try {
+          const freshToken = await getAccessTokenSilently({ cacheMode: 'off' });
+          if (freshToken) {
+            setToken(freshToken);
+            console.log('Auth0Integration: Token recovered and set');
+          }
+        } catch (error) {
+          console.error('Auth0Integration: Failed to recover token:', error);
+        }
+      }
+    };
+
+    // Check every 5 seconds if we're missing a token
+    const tokenCheckInterval = setInterval(ensureToken, 5000);
+    
+    return () => clearInterval(tokenCheckInterval);
+  }, [isAuthenticated, getAccessTokenSilently, setToken, isLoading]);
 
   // Periodic token refresh (every 45 minutes for mobile reliability)
   useEffect(() => {

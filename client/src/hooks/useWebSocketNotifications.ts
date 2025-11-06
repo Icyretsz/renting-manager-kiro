@@ -37,7 +37,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
               console.log('submitted')
               queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] })
               break
-            case 'reading_updated':
+            case 'reading_modified':
               console.log('updated')
               queryClient.invalidateQueries({ queryKey: [meterReadingKeys.byRoom(Number(notificationData.roomNumber))]})
               queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] })
