@@ -49,10 +49,11 @@ export const useBillingRecordQuery = (id: string) => {
   return useQuery({
     queryKey: billingKeys.byId(id),
     queryFn: async (): Promise<BillingRecord> => {
+      console.log('id', id)
       const response = await api.get<ApiResponse<BillingRecord>>(`/billing/${id}`);
       return response.data.data!;
     },
-    enabled: id !== '',
+    enabled: !!id,
   });
 };
 

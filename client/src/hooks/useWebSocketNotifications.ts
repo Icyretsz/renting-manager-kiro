@@ -22,6 +22,8 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
     // Listen for new notifications
     const handleNewNotification = (notification: Notification) => {
 
+      console.log('notification', notification)
+
       // Add to notification store
       addNotification(notification);
 

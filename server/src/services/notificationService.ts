@@ -320,7 +320,12 @@ const saveNotificationHistory = async (
         const auth0Id = user?.auth0Id;
         
         if (auth0Id) {
-          emitNotificationToUser(auth0Id, notification);
+          emitNotificationToUser(auth0Id, {
+            ...template,
+            userId: notification.userId,
+            readStatus: notification.readStatus,
+            createdAt: notification.createdAt
+          });
         } else {
           console.warn(`No Auth0 ID found for user ${notification.userId}`);
         }

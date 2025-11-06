@@ -16,7 +16,7 @@ export interface NavigationResult {
 }
 
 export const getNotificationNavigation = (notification: Notification): NavigationResult => {
-  const { type } = notification;
+  const type = notification.data?.type;
 
   switch (type) {
     // User notifications - navigate to user pages
