@@ -24,6 +24,7 @@ import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthStore } from './stores';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
+import { InvalidateQueriesButton } from '@/components/DevTools/InvalidateQueriesButton';
 import './styles/notifications.css';
 
 // Main app content that requires authentication
@@ -63,6 +64,7 @@ const AppContent = () => {
   return (
     <>
       {contextHolder}
+      <InvalidateQueriesButton />
       <Routes>
         {/* Public routes */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />

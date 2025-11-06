@@ -52,7 +52,7 @@ export const useBillingRecordQuery = (id: string) => {
       const response = await api.get<ApiResponse<BillingRecord>>(`/billing/${id}`);
       return response.data.data!;
     },
-    enabled: !!id,
+    enabled: id !== '',
   });
 };
 
