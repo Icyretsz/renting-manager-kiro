@@ -28,12 +28,10 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
 
       if (isAuthenticated && user) {
         try {
-          console.log('Auth0Integration: Syncing authenticated user to store');
           const token = await getAccessTokenSilently({
             // Use cache-first for better mobile performance
             cacheMode: 'on'
           });
-          console.log('Auth0Integration: Got access token:', token ? 'Token received' : 'No token');
           
           if (!token) {
             console.warn('Auth0Integration: No token received despite being authenticated');

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useAuthStore } from '@/stores/authStore';
+import { useUpdateFCMTokenMutation } from '@/hooks/useNotifications';
 import {
   initializePushNotifications,
   isNotificationSupported,
@@ -17,6 +18,8 @@ interface FirebaseMessagingState {
 export const useFirebaseMessaging = () => {
   const { isAuthenticated } = useAuth0();
   const { token, user } = useAuthStore();
+  const fcmTokenMutation = useUpdateFCMTokenMutation();
+  
   const [state, setState] = useState<FirebaseMessagingState>({
     isSupported: false,
     permission: 'default',
@@ -30,11 +33,15 @@ export const useFirebaseMessaging = () => {
       return;
     }
 
+    let isMounted = true;
+
     const initializeMessaging = async () => {
       try {
         // Check if notifications are supported
         const supported = isNotificationSupported();
         const permission = getNotificationPermission();
+
+        if (!isMounted) return;
 
         setState(prev => ({
           ...prev,
@@ -50,17 +57,23 @@ export const useFirebaseMessaging = () => {
           return;
         }
 
-        // Initialize push notifications
-        const initialized = await initializePushNotifications();
-        
-        setState(prev => ({
-          ...prev,
-          isInitialized: initialized,
-          permission: getNotificationPermission(),
-          error: initialized ? null : 'Failed to initialize push notifications',
-        }));
+        // Only initialize if permission is granted or default (to avoid unnecessary calls)
+        if (permission === 'granted' || permission === 'default') {
+          const initialized = await initializePushNotifications(fcmTokenMutation);
+          
+          if (!isMounted) return;
+
+          setState(prev => ({
+            ...prev,
+            isInitialized: initialized,
+            permission: getNotificationPermission(),
+            error: initialized ? null : 'Failed to initialize push notifications',
+          }));
+        }
       } catch (error) {
         console.error('Error initializing Firebase messaging:', error);
+        if (!isMounted) return;
+        
         setState(prev => ({
           ...prev,
           error: 'Failed to initialize push notifications',
@@ -69,7 +82,11 @@ export const useFirebaseMessaging = () => {
     };
 
     initializeMessaging();
-  }, [isAuthenticated, token, user]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, token, user]); // Removed fcmTokenMutation from deps to avoid re-init
 
   const requestPermission = async (): Promise<boolean> => {
     try {
@@ -78,7 +95,7 @@ export const useFirebaseMessaging = () => {
       
       if (permission === 'granted') {
         // Re-initialize if permission was just granted
-        const initialized = await initializePushNotifications();
+        const initialized = await initializePushNotifications(fcmTokenMutation);
         setState(prev => ({ ...prev, isInitialized: initialized }));
         return initialized;
       }

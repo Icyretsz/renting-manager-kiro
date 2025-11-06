@@ -138,11 +138,13 @@ export const sendToUsers = async (
         body: template.body,
       },
       data: template.data || {},
-      tokens: validRecipients.map(r => r.fcmToken!),
     };
 
     // Send via Firebase
-    const response = await admin.messaging().sendMulticast(message);
+    const response = await admin.messaging().sendEachForMulticast({
+      ...message,
+      tokens: validRecipients.map(r => r.fcmToken!)
+    })
     
     console.log(`Firebase notifications sent: ${response.successCount} success, ${response.failureCount} failures`);
 

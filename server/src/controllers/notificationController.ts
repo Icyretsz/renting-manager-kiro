@@ -161,6 +161,7 @@ export const updateFCMToken = async (req: Request, res: Response): Promise<void>
       }
 
       const { fcmToken } = req.body;
+      console.log(fcmToken)
       if (!fcmToken || typeof fcmToken !== 'string') {
         throw new AppError('Valid FCM token is required', 400);
       }

@@ -43,13 +43,18 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] });
             console.log('✅ Invalidated admin-all query');
             break;
+
+          case 'reading_updated':
+            console.log('🔄 Invalidating queries for reading updating, roomNumber:', notificationData.roomNumber);
+            if (notificationData.roomNumber) {
+              const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
+              queryClient.invalidateQueries({ queryKey: roomQueryKey });
+              console.log('✅ Invalidated room query:', roomQueryKey);
+            }
+            break;
             
           case 'reading_modified':
             console.log('🔄 Invalidating queries for reading modification, roomNumber:', notificationData.roomNumber);
-            // Invalidate all meter reading queries
-            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
-            console.log('✅ Invalidated meterReadingKeys.all:', meterReadingKeys.all);
-            // Specifically invalidate the room's readings if roomNumber is available
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
