@@ -205,6 +205,16 @@ export interface Notification {
   data?: NotificationData;
 }
 
+export interface NotificationDB {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  readStatus: boolean;
+  createdAt: Date;
+}
+
 // Settings
 export interface Setting {
   id: number;

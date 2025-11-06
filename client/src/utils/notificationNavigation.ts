@@ -1,4 +1,4 @@
-import { Notification } from '@/types';
+import { Notification, NotificationDB } from '@/types';
 import {
   FileTextOutlined,
   CheckCircleOutlined,
@@ -15,8 +15,8 @@ export interface NavigationResult {
   description: string;
 }
 
-export const getNotificationNavigation = (notification: Notification): NavigationResult => {
-  const type = notification.data?.type;
+export const getNotificationNavigation = (notification: NotificationDB): NavigationResult => {
+  const type = notification.type;
 
   switch (type) {
     // User notifications - navigate to user pages
@@ -84,7 +84,7 @@ export const getNotificationNavigation = (notification: Notification): Navigatio
   }
 };
 
-export const getNotificationActionText = (notification: Notification): string => {
+export const getNotificationActionText = (notification: NotificationDB): string => {
   const navigation = getNotificationNavigation(notification);
   
   if (!navigation.shouldNavigate) {

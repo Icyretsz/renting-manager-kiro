@@ -26,7 +26,7 @@ import {
   useDeleteNotificationMutation,
   useClearAllNotificationsMutation,
 } from '@/hooks/useNotifications';
-import { Notification } from '@/types';
+import { Notification, NotificationDB } from '@/types';
 import { 
   getNotificationNavigation, 
   getNotificationIcon 
@@ -52,6 +52,8 @@ export const NotificationBell: React.FC = () => {
       console.error('Failed to mark notification as read:', error);
     }
   };
+
+  console.log(notifications)
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -97,7 +99,7 @@ export const NotificationBell: React.FC = () => {
   };
 
   // Handle notification click to navigate to relevant page
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: NotificationDB) => {
     // Mark as read if not already read
     if (!notification.readStatus) {
       handleMarkAsRead(notification.id);
@@ -112,7 +114,7 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
-  const renderNotificationItem = (notification: Notification) => {
+  const renderNotificationItem = (notification: NotificationDB) => {
     const navigationInfo = getNotificationNavigation(notification);
     const isClickable = navigationInfo.shouldNavigate;
     const IconComponent = getNotificationIcon(notification.type);
@@ -172,7 +174,7 @@ export const NotificationBell: React.FC = () => {
                     overflow: 'hidden'
                   }}
                 >
-                  {notification.body}
+                  {notification.message}
                 </Text>
                 <div className="flex items-center justify-between mt-2">
                   <Text type="secondary" className="text-xs">
