@@ -27,6 +27,8 @@ import {
   HistoryOutlined,
   FilterOutlined,
   SearchOutlined,
+  DownOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -55,6 +57,8 @@ export const ApprovalsPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchText, setSearchText] = useState('');
   const [sortBy, setSortBy] = useState<string>('date');
+  const [collapsedRooms, setCollapsedRooms] = useState<Set<string>>(new Set());
+  const [collapsedStatuses, setCollapsedStatuses] = useState<Set<string>>(new Set());
 
   const { data: allReadings, isLoading } = useAllReadingsQuery();
   const approveMutation = useApproveReadingMutation();
@@ -72,34 +76,61 @@ export const ApprovalsPage: React.FC = () => {
     return <LoadingSpinner message="Loading readings..." />;
   }
 
-  // Filter and sort readings based on status and search
+  // Filter readings based on status and search
   const filteredReadings = allReadings?.filter((reading) => {
     const matchesStatus = filterStatus === 'all' || reading.status.toLowerCase() === filterStatus.toLowerCase();
-    const matchesSearch = searchText === '' || 
+    const matchesSearch = searchText === '' ||
       reading.room?.roomNumber.toString().includes(searchText) ||
       `${reading.month}/${reading.year}`.includes(searchText);
     return matchesStatus && matchesSearch;
-  }).sort((a, b) => {
-    switch (sortBy) {
-      case 'date':
-        return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
-      case 'room':
-        return (a.room?.roomNumber || 0) - (b.room?.roomNumber || 0);
-      case 'amount':
-        return toNumber(b.totalAmount || 0) - toNumber(a.totalAmount || 0);
-      case 'status':
-        return a.status.localeCompare(b.status);
-      default:
-        return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
-    }
   }) || [];
+
+  // Group readings by room, then by status within each room
+  const groupedReadings = filteredReadings.reduce((acc, reading) => {
+    const roomNumber = reading.room?.roomNumber || 'Unknown';
+    const status = reading.status.toLowerCase();
+
+    if (!acc[roomNumber]) {
+      acc[roomNumber] = {};
+    }
+
+    if (!acc[roomNumber][status]) {
+      acc[roomNumber][status] = [];
+    }
+
+    acc[roomNumber][status].push(reading);
+    return acc;
+  }, {} as Record<string, Record<string, MeterReading[]>>);
+
+  // Sort rooms by room number and sort readings within each status group
+  const sortedRoomNumbers = Object.keys(groupedReadings).sort((a, b) => {
+    const roomA = a === 'Unknown' ? Infinity : parseInt(a);
+    const roomB = b === 'Unknown' ? Infinity : parseInt(b);
+    return roomA - roomB;
+  });
+
+  // Sort readings within each status group
+  Object.keys(groupedReadings).forEach(roomNumber => {
+    Object.keys(groupedReadings[roomNumber]).forEach(status => {
+      groupedReadings[roomNumber][status].sort((a, b) => {
+        switch (sortBy) {
+          case 'date':
+            return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+          case 'amount':
+            return toNumber(b.totalAmount || 0) - toNumber(a.totalAmount || 0);
+          default:
+            return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+        }
+      });
+    });
+  });
 
   // Calculate statistics from all readings
   const pendingCount = allReadings?.filter(r => r.status.toLowerCase() === 'pending').length || 0;
   const totalCount = allReadings?.length || 0;
-  const approvedTodayCount = allReadings?.filter(r => 
-    r.status.toLowerCase() === 'approved' && 
-    r.approvedAt && 
+  const approvedTodayCount = allReadings?.filter(r =>
+    r.status.toLowerCase() === 'approved' &&
+    r.approvedAt &&
     new Date(r.approvedAt).toDateString() === new Date().toDateString()
   ).length || 0;
 
@@ -136,6 +167,27 @@ export const ApprovalsPage: React.FC = () => {
       case 'rejected': return 'red';
       default: return 'default';
     }
+  };
+
+  const toggleRoomCollapse = (roomNumber: string) => {
+    const newCollapsed = new Set(collapsedRooms);
+    if (newCollapsed.has(roomNumber)) {
+      newCollapsed.delete(roomNumber);
+    } else {
+      newCollapsed.add(roomNumber);
+    }
+    setCollapsedRooms(newCollapsed);
+  };
+
+  const toggleStatusCollapse = (roomNumber: string, status: string) => {
+    const key = `${roomNumber}-${status}`;
+    const newCollapsed = new Set(collapsedStatuses);
+    if (newCollapsed.has(key)) {
+      newCollapsed.delete(key);
+    } else {
+      newCollapsed.add(key);
+    }
+    setCollapsedStatuses(newCollapsed);
   };
 
   return (
@@ -186,13 +238,13 @@ export const ApprovalsPage: React.FC = () => {
         {/* Filters */}
         <Card size="small">
           <Row gutter={16} align="middle">
-            <Col xs={24} sm={8}>
+            <Col sm={12} md={8}>
               <Space className="w-full">
                 <FilterOutlined />
                 <Select
                   value={filterStatus}
                   onChange={setFilterStatus}
-                  style={{ width: 120 }}
+                  style={{ width: '100%' }}
                 >
                   <Option value="all">All Status</Option>
                   <Option value="PENDING">Pending</Option>
@@ -201,7 +253,7 @@ export const ApprovalsPage: React.FC = () => {
                 </Select>
               </Space>
             </Col>
-            <Col xs={24} sm={8} className="mt-2 sm:mt-0">
+            {/* <Col xs={24} sm={8} className="mt-2 sm:mt-0">
               <Search
                 placeholder="Search by room or period..."
                 value={searchText}
@@ -209,8 +261,8 @@ export const ApprovalsPage: React.FC = () => {
                 prefix={<SearchOutlined />}
                 allowClear
               />
-            </Col>
-            <Col xs={24} sm={8} className="mt-2 sm:mt-0">
+            </Col> */}
+            <Col sm={12} md={8}>
               <Select
                 value={sortBy}
                 onChange={setSortBy}
@@ -226,137 +278,230 @@ export const ApprovalsPage: React.FC = () => {
           </Row>
         </Card>
 
-        {/* Results Count */}
+        {/* Results Count and Controls */}
         {filteredReadings.length > 0 && (
-          <div className="text-sm text-gray-600 px-2">
-            Showing {filteredReadings.length} reading{filteredReadings.length !== 1 ? 's' : ''}
-            {filterStatus !== 'all' && ` (${filterStatus.toLowerCase()} only)`}
+          <div className="flex justify-between items-center px-2">
+            <div className="flex gap-2">
+              <Button
+                size="small"
+                type="text"
+                onClick={() => setCollapsedRooms(new Set())}
+                disabled={collapsedRooms.size === 0}
+              >
+                Expand All Rooms
+              </Button>
+              <Button
+                size="small"
+                type="text"
+                onClick={() => setCollapsedRooms(new Set(sortedRoomNumbers))}
+                disabled={collapsedRooms.size === sortedRoomNumbers.length}
+              >
+                Collapse All Rooms
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Readings List */}
-        <div className="space-y-3">
-          {filteredReadings.length === 0 ? (
+        {/* Grouped Readings List */}
+        <div className="space-y-6">
+          {sortedRoomNumbers.length === 0 ? (
             <Card>
               <Empty
                 description={
-                  filterStatus === 'all' 
-                    ? "No readings found" 
+                  filterStatus === 'all'
+                    ? "No readings found"
                     : `No ${filterStatus.toLowerCase()} readings found`
                 }
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             </Card>
           ) : (
-            filteredReadings.map((reading) => (
-              <Card key={reading.id} className="hover:shadow-md transition-shadow">
-                <div className="space-y-3">
-                  {/* Header Row */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-semibold text-lg">
-                        Room {reading.room?.roomNumber}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Floor {reading.room?.floor} • {reading.month}/{reading.year}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        Submitted: {new Date(reading.submittedAt).toLocaleDateString()}
-                      </div>
-                      {reading.submitter && (
-                        <div className="text-xs text-gray-400">
-                          By: {reading.submitter.name} ({reading.submitter.role})
-                          {reading.submitter.tenant?.roomId && (
-                            <span> - Room {reading.submitter.tenant.roomId}</span>
-                          )}
+            sortedRoomNumbers.map((roomNumber) => {
+              const roomReadings = groupedReadings[roomNumber];
+              const statusOrder = ['pending', 'approved', 'rejected'];
+              const sortedStatuses = Object.keys(roomReadings).sort((a, b) => {
+                const indexA = statusOrder.indexOf(a);
+                const indexB = statusOrder.indexOf(b);
+                return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+              });
+
+              const isRoomCollapsed = collapsedRooms.has(roomNumber);
+
+              return (
+                <div key={roomNumber} className="space-y-3">
+                  {/* Room Header */}
+                  <div
+                    className="bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => toggleRoomCollapse(roomNumber)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        {isRoomCollapsed ? (
+                          <RightOutlined className="text-gray-500 text-xs" />
+                        ) : (
+                          <DownOutlined className="text-gray-500 text-xs" />
+                        )}
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            Room {roomNumber}
+                          </h3>
+                          <div className="text-sm text-gray-600">
+                            {Object.values(roomReadings).flat().length} reading{Object.values(roomReadings).flat().length !== 1 ? 's' : ''}
+                            {sortedStatuses.length > 1 && (
+                              <span className="ml-2">
+                                ({sortedStatuses.map(status => `${roomReadings[status].length} ${status}`).join(', ')})
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      )}
+                      </div>
+                      <div className="flex gap-2">
+                        {sortedStatuses.map(status => (
+                          <Tag key={status} color={getStatusColor(status)} className="text-xs">
+                            {roomReadings[status].length} {status.toUpperCase()}
+                          </Tag>
+                        ))}
+                      </div>
                     </div>
-                    <Tag color={getStatusColor(reading.status)} className="ml-2">
-                      {reading.status}
-                    </Tag>
                   </div>
 
-                  {/* Readings Row */}
-                  <Row gutter={16}>
-                    <Col span={8}>
-                      <div className="text-center p-2 bg-blue-50 rounded">
-                        <div className="text-sm font-medium text-blue-600">
-                          ⚡ {toNumber(reading.electricityReading)}
-                        </div>
-                        <div className="text-xs text-gray-500">Electricity</div>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div className="text-center p-2 bg-cyan-50 rounded">
-                        <div className="text-sm font-medium text-cyan-600">
-                          💧 {toNumber(reading.waterReading)}
-                        </div>
-                        <div className="text-xs text-gray-500">Water</div>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div className="text-center p-2 bg-green-50 rounded">
-                        <div className="text-sm font-medium text-green-600">
-                          {toNumber(reading.totalAmount || 0).toLocaleString()}
-                        </div>
-                        <div className="text-xs text-gray-500">Total VNĐ</div>
-                      </div>
-                    </Col>
-                  </Row>
+                  {/* Status Groups */}
+                  {!isRoomCollapsed && sortedStatuses.map((status) => {
+                    const statusKey = `${roomNumber}-${status}`;
+                    const isStatusCollapsed = collapsedStatuses.has(statusKey);
+                    const hasMultipleReadings = roomReadings[status].length > 1;
 
-                  {/* Actions Row */}
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                    <Button
-                      type="primary"
-                      icon={<EyeOutlined />}
-                      size="small"
-                      onClick={() => handleReviewReading(reading)}
-                    >
-                      Review
-                    </Button>
-                    
-                    {reading.status.toLowerCase() === 'pending' && (
-                      <Space>
-                        <Popconfirm
-                          title="Approve this reading?"
-                          description="This action cannot be undone."
-                          onConfirm={() => handleApprove(reading.id)}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <Button
-                            type="primary"
-                            icon={<CheckCircleOutlined />}
-                            size="small"
-                            loading={approveMutation.isPending}
-                            className="bg-green-500 hover:bg-green-600 border-green-500"
+                    return (
+                      <div key={statusKey} className="ml-4 space-y-2">
+                        {hasMultipleReadings && (
+                          <div
+                            className="text-sm font-medium text-gray-600 capitalize px-2 cursor-pointer hover:bg-gray-50 rounded py-1 flex items-center gap-2"
+                            onClick={() => toggleStatusCollapse(roomNumber, status)}
                           >
-                            Approve
-                          </Button>
-                        </Popconfirm>
-                        {/* <Popconfirm
-                          title="Reject this reading?"
-                          description="The tenant will need to resubmit."
-                          onConfirm={() => handleReject(reading.id)}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <Button
-                            danger
-                            icon={<CloseCircleOutlined />}
-                            size="small"
-                            loading={rejectMutation.isPending}
-                          >
-                            Reject
-                          </Button>
-                        </Popconfirm> */}
-                      </Space>
-                    )}
-                  </div>
+                            {isStatusCollapsed ? (
+                              <RightOutlined className="text-gray-400 text-xs" />
+                            ) : (
+                              <DownOutlined className="text-gray-400 text-xs" />
+                            )}
+                            {status} ({roomReadings[status].length})
+                          </div>
+                        )}
+
+                        {(!hasMultipleReadings || !isStatusCollapsed) && roomReadings[status].map((reading) => (
+                          <Card key={reading.id} className="hover:shadow-md transition-shadow ml-2">
+                            <div className="space-y-3">
+                              {/* Header Row */}
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="font-medium text-base">
+                                    {reading.month}/{reading.year}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    Floor {reading.room?.floor}
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    Submitted: {new Date(reading.submittedAt).toLocaleDateString()}
+                                  </div>
+                                  {reading.submitter && (
+                                    <div className="text-xs text-gray-400">
+                                      By: {reading.submitter.name} ({reading.submitter.role})
+                                      {reading.submitter.tenant?.roomId && (
+                                        <span> - Room {reading.submitter.tenant.roomId}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <Tag color={getStatusColor(reading.status)} className="ml-2">
+                                  {reading.status}
+                                </Tag>
+                              </div>
+
+                              {/* Readings Row */}
+                              <Row gutter={16}>
+                                <Col span={8}>
+                                  <div className="text-center p-2 bg-blue-50 rounded">
+                                    <div className="text-sm font-medium text-blue-600">
+                                      ⚡ {toNumber(reading.electricityReading)}
+                                    </div>
+                                    <div className="text-xs text-gray-500">Electricity</div>
+                                  </div>
+                                </Col>
+                                <Col span={8}>
+                                  <div className="text-center p-2 bg-cyan-50 rounded">
+                                    <div className="text-sm font-medium text-cyan-600">
+                                      💧 {toNumber(reading.waterReading)}
+                                    </div>
+                                    <div className="text-xs text-gray-500">Water</div>
+                                  </div>
+                                </Col>
+                                <Col span={8}>
+                                  <div className="text-center p-2 bg-green-50 rounded">
+                                    <div className="text-sm font-medium text-green-600">
+                                      {toNumber(reading.totalAmount || 0).toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-gray-500">Total VNĐ</div>
+                                  </div>
+                                </Col>
+                              </Row>
+
+                              {/* Actions Row */}
+                              <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                <Button
+                                  type="primary"
+                                  icon={<EyeOutlined />}
+                                  size="small"
+                                  onClick={() => handleReviewReading(reading)}
+                                >
+                                  Review
+                                </Button>
+
+                                {reading.status.toLowerCase() === 'pending' && (
+                                  <Space>
+                                    <Popconfirm
+                                      title="Approve this reading?"
+                                      description="This action cannot be undone."
+                                      onConfirm={() => handleApprove(reading.id)}
+                                      okText="Yes"
+                                      cancelText="No"
+                                    >
+                                      <Button
+                                        type="primary"
+                                        icon={<CheckCircleOutlined />}
+                                        size="small"
+                                        loading={approveMutation.isPending}
+                                        className="bg-green-500 hover:bg-green-600 border-green-500"
+                                      >
+                                        Approve
+                                      </Button>
+                                    </Popconfirm>
+                                    {/* <Popconfirm
+                                    title="Reject this reading?"
+                                    description="The tenant will need to resubmit."
+                                    onConfirm={() => handleReject(reading.id)}
+                                    okText="Yes"
+                                    cancelText="No"
+                                  >
+                                    <Button
+                                      danger
+                                      icon={<CloseCircleOutlined />}
+                                      size="small"
+                                      loading={rejectMutation.isPending}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </Popconfirm> */}
+                                  </Space>
+                                )}
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
-              </Card>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -501,8 +646,8 @@ export const ApprovalsPage: React.FC = () => {
                 <Card size="small" title={<><HistoryOutlined /> Modification History</>}>
                   <Timeline
                     items={selectedReading.modifications.map((mod) => ({
-                      color: mod.modificationType.toLowerCase() === 'approve' ? 'green' : 
-                             mod.modificationType.toLowerCase() === 'reject' ? 'red' : 'blue',
+                      color: mod.modificationType.toLowerCase() === 'approve' ? 'green' :
+                        mod.modificationType.toLowerCase() === 'reject' ? 'red' : 'blue',
                       children: (
                         <div>
                           <div className="font-medium">
