@@ -5,13 +5,13 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compa
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyBCT9T1cYnPuZXsnwyLVSjW_7W_OB_ngn0",
-    authDomain: "phongtro-d674b.firebaseapp.com",
-    projectId: "phongtro-d674b",
-    storageBucket: "phongtro-d674b.firebasestorage.app",
-    messagingSenderId: "370635142111",
-    appId: "1:370635142111:web:8a3aa9ff7e77b0aa6b0a6a",
-    measurementId: "G-0M7N34PPLZ"
+    apiKey: import.meta.env.VITE_FIREBASE_APIKEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
