@@ -21,8 +21,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
     // Listen for new notifications
     const handleNewNotification = (notification: Notification) => {
-
-      console.log('notification', notification)
+      console.log('📨 New notification received:', notification);
 
       // Add to notification store
       addNotification(notification);
@@ -31,22 +30,65 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
       showNotification(notification);
 
       if (notification.data) {
-        const notificationData = notification.data
-          switch (notificationData.type) {
-            case 'reading_submitted':
-              console.log('submitted')
-              queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] })
-              break
-            case 'reading_modified':
-              console.log('updated')
-              queryClient.invalidateQueries({ queryKey: [meterReadingKeys.byRoom(Number(notificationData.roomNumber))]})
-              queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] })
-              break
-            case 'reading_approved':
-              queryClient.invalidateQueries({ queryKey: [meterReadingKeys.byRoom(Number(notificationData.roomNumber))]})
-              queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] })
-              break
-          }
+        const notificationData = notification.data;
+        console.log('Processing notification data:', notificationData);
+        
+        switch (notificationData.type) {
+          case 'reading_submitted':
+            console.log('🔄 Invalidating queries for reading submission');
+            // Invalidate all meter reading queries
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            console.log('✅ Invalidated meterReadingKeys.all:', meterReadingKeys.all);
+            // Specifically invalidate admin-all query
+            queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] });
+            console.log('✅ Invalidated admin-all query');
+            break;
+            
+          case 'reading_modified':
+            console.log('🔄 Invalidating queries for reading modification, roomNumber:', notificationData.roomNumber);
+            // Invalidate all meter reading queries
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            console.log('✅ Invalidated meterReadingKeys.all:', meterReadingKeys.all);
+            // Specifically invalidate the room's readings if roomNumber is available
+            if (notificationData.roomNumber) {
+              const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
+              queryClient.invalidateQueries({ queryKey: roomQueryKey });
+              console.log('✅ Invalidated room query:', roomQueryKey);
+            }
+            break;
+            
+          case 'reading_approved':
+            console.log('🔄 Invalidating queries for reading approval, roomNumber:', notificationData.roomNumber);
+            // Invalidate all meter reading queries
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            console.log('✅ Invalidated meterReadingKeys.all:', meterReadingKeys.all);
+            // Specifically invalidate the room's readings if roomNumber is available
+            if (notificationData.roomNumber) {
+              const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
+              queryClient.invalidateQueries({ queryKey: roomQueryKey });
+              console.log('✅ Invalidated room query:', roomQueryKey);
+            }
+            break;
+            
+          case 'reading_rejected':
+            console.log('Invalidating queries for reading rejection, roomNumber:', notificationData.roomNumber);
+            // Invalidate all meter reading queries
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            // Specifically invalidate the room's readings if roomNumber is available
+            if (notificationData.roomNumber) {
+              queryClient.invalidateQueries({ queryKey: meterReadingKeys.byRoom(Number(notificationData.roomNumber)) });
+            }
+            break;
+            
+          default:
+            console.log('Unknown notification type:', notificationData.type);
+            // Fallback: invalidate all meter reading queries for unknown types
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+        }
+      } else {
+        console.log('No notification data, invalidating all meter reading queries as fallback');
+        // Fallback: if no specific data, invalidate all meter reading queries
+        queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
       }
     };
 
