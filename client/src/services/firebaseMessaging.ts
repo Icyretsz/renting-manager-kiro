@@ -84,7 +84,7 @@ export const setupForegroundMessageListener = () => {
           id: Date.now().toString(), // Temporary ID
           userId: '', // Will be set by the server
           title: payload.notification.title || 'New Notification',
-          message: payload.notification.body || '',
+          body: payload.notification.body || '',
           type: payload.data?.type || 'system',
           readStatus: false,
           createdAt: new Date(),
@@ -95,7 +95,7 @@ export const setupForegroundMessageListener = () => {
         // Show browser notification if permission is granted
         if (Notification.permission === 'granted') {
           new Notification(notification.title, {
-            body: notification.message,
+            body: notification.body,
             icon: '/favicon.ico',
             badge: '/favicon.ico',
           });

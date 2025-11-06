@@ -14,7 +14,6 @@ import {
   Divider,
   Timeline,
   Select,
-  Input,
   message,
   Popconfirm,
   Empty,
@@ -26,7 +25,6 @@ import {
   EyeOutlined,
   HistoryOutlined,
   FilterOutlined,
-  SearchOutlined,
   DownOutlined,
   RightOutlined,
 } from '@ant-design/icons';
@@ -43,7 +41,6 @@ import getActorInfo from '@/utils/getActorInfo';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { Search } = Input;
 
 // Utility function to safely convert Prisma Decimal strings to numbers
 const toNumber = (value: string | number): number => {
@@ -55,7 +52,7 @@ export const ApprovalsPage: React.FC = () => {
   const [selectedReading, setSelectedReading] = useState<MeterReading | null>(null);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [searchText, setSearchText] = useState('');
+  const [searchText, _setSearchText] = useState('');
   const [sortBy, setSortBy] = useState<string>('date');
   const [collapsedRooms, setCollapsedRooms] = useState<Set<string>>(new Set());
   const [collapsedStatuses, setCollapsedStatuses] = useState<Set<string>>(new Set());

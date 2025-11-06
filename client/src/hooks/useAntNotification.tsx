@@ -1,6 +1,6 @@
 import { notification } from 'antd';
 import { useCallback } from 'react';
-import { NavigateFunction, useNavigate } from 'react-router-dom';
+import { NavigateFunction } from 'react-router-dom';
 import { 
   getNotificationNavigation, 
   getNotificationIcon 

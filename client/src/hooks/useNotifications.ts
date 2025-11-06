@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { Notification, ApiResponse } from '@/types';
@@ -59,7 +59,6 @@ export const useUnreadNotificationsQuery = () => {
 
 // Mark notification as read mutation
 export const useMarkNotificationReadMutation = () => {
-  const queryClient = useQueryClient();
   const { markAsRead } = useNotificationStore();
 
   return useMutation({
@@ -79,7 +78,6 @@ export const useMarkNotificationReadMutation = () => {
 
 // Mark all notifications as read mutation
 export const useMarkAllNotificationsReadMutation = () => {
-  const queryClient = useQueryClient();
   const { markAllAsRead } = useNotificationStore();
 
   return useMutation({
@@ -99,7 +97,6 @@ export const useMarkAllNotificationsReadMutation = () => {
 
 // Delete notification mutation
 export const useDeleteNotificationMutation = () => {
-  const queryClient = useQueryClient();
   const { removeNotification } = useNotificationStore();
 
   return useMutation({
@@ -119,7 +116,6 @@ export const useDeleteNotificationMutation = () => {
 
 // Clear all notifications mutation
 export const useClearAllNotificationsMutation = () => {
-  const queryClient = useQueryClient();
   const { clearAll } = useNotificationStore();
 
   return useMutation({

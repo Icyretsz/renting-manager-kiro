@@ -701,7 +701,6 @@ const UserManagementPage: React.FC = () => {
                         const roomData = groupedTenants[roomNumber];
                         const activeTenants = roomData.active;
                         const inactiveTenants = roomData.inactive;
-                        const totalTenants = activeTenants.length + inactiveTenants.length;
                         const floor = Math.ceil(roomNumber / 9);
                         
                         return (

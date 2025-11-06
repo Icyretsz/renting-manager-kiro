@@ -172,7 +172,7 @@ export const NotificationBell: React.FC = () => {
                     overflow: 'hidden'
                   }}
                 >
-                  {notification.message}
+                  {notification.body}
                 </Text>
                 <div className="flex items-center justify-between mt-2">
                   <Text type="secondary" className="text-xs">

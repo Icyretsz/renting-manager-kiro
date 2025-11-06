@@ -1,6 +1,5 @@
 import { Card, Typography, Row, Col, Statistic } from 'antd';
 import {
-  UserOutlined,
   HomeOutlined,
   FileTextOutlined,
   DollarOutlined
