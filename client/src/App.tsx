@@ -1,7 +1,7 @@
 import { ConfigProvider } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { queryClient } from '@/services/queryClient';
 import { AuthProvider } from '@/providers/AuthProvider';
@@ -24,14 +24,16 @@ import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthStore } from './stores';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
+import './styles/notifications.css';
 
 // Main app content that requires authentication
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
   const { user: appUser } = useAuthStore()
-  
+  const navigate = useNavigate()
+
   // Initialize WebSocket notifications (this handles the connection internally)
-  useWebSocketNotifications();
+  const { contextHolder } = useWebSocketNotifications(navigate);
 
   // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
 
@@ -39,7 +41,7 @@ const AppContent = () => {
   //   console.log('Token:', token)
   //   console.log('App User:', appUser)
   // }, [token, appUser])
-  
+
   // Show loading while Auth0 is initializing
   if (isLoading) {
     return <LoadingSpinner fullScreen message="Loading application..." />;
@@ -59,12 +61,13 @@ const AppContent = () => {
   const userRole = appUser.role;
 
   return (
-    <BrowserRouter>
+    <>
+      {contextHolder}
       <Routes>
         {/* Public routes */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="/unlinked-error" element={<UnlinkedErrorPage />} />
-        
+
         {/* Protected routes - require authentication and tenant link */}
         <Route
           path="/"
@@ -188,7 +191,7 @@ const AppContent = () => {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </>
   );
 };
 

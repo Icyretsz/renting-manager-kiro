@@ -3,6 +3,7 @@ import { MeterReading, ReadingModification, ReadingStatus, ModificationType } fr
 import { Prisma } from '@prisma/client';
 import { AppError, ValidationError } from '../utils/errors';
 import * as billingService from './billingService';
+import { notifyReadingApproved } from './notificationService';
 
 export interface MeterReadingWithDetails extends MeterReading {
   room: {
@@ -734,45 +735,9 @@ export const approveReading = async (id: string, approvedBy: string): Promise<Me
   // Send payment notification to room tenants
   try {
     if (billingRecordId) {
-      // Get all active tenants in the room with user accounts
-      const roomTenants = await prisma.tenant.findMany({
-        where: {
-          roomId: updatedReading.roomId,
-          isActive: true,
-          userId: { not: null }
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              fcmToken: true
-            }
-          }
-        }
-      });
 
       // Send "tap to see bill and pay" notification to each tenant
-      for (const tenant of roomTenants) {
-        if (tenant.user) {
-          const notification = await prisma.notification.create({
-            data: {
-              userId: tenant.user.id,
-              title: 'Bill Ready for Payment',
-              message: `Your bill for Room ${updatedReading.room.roomNumber} - ${getMonthName(updatedReading.month)} ${updatedReading.year} is ready. Tap to see bill details and pay.`,
-              type: 'bill_ready'
-            }
-          });
-
-          // Emit WebSocket notification
-          try {
-            const { emitNotificationToUser } = await import('../config/socket');
-            emitNotificationToUser(tenant.user.id, notification);
-          } catch (socketError) {
-            console.error('Failed to emit WebSocket notification:', socketError);
-          }
-        }
-      }
+      await notifyReadingApproved(updatedReading.roomId, updatedReading.room.roomNumber, updatedReading.month, updatedReading.year)
     }
   } catch (error) {
     console.error('Failed to send payment notification for reading approval:', error);
@@ -1354,10 +1319,10 @@ const checkUserReadingAccess = async (userId: string, roomId: number): Promise<b
 
  * Get month name from month number
  */
-const getMonthName = (month: number): string => {
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  return months[month - 1] || 'Unknown';
-};
+// const getMonthName = (month: number): string => {
+//   const months = [
+//     'January', 'February', 'March', 'April', 'May', 'June',
+//     'July', 'August', 'September', 'October', 'November', 'December'
+//   ];
+//   return months[month - 1] || 'Unknown';
+// };

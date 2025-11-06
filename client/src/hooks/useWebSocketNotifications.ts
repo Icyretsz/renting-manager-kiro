@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { useSocket } from './useSocket';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useAntNotification } from './useAntNotification';
+import { NavigateFunction } from 'react-router-dom';
 
-export const useWebSocketNotifications = () => {
+export const useWebSocketNotifications = (navigate: NavigateFunction) => {
   const { socket, isConnected } = useSocket();
   const { addNotification, markAsRead, markAllAsRead, updateNotification } = useNotificationStore();
+  const { showNotification, contextHolder } = useAntNotification(navigate);
 
   useEffect(() => {
     console.log('useWebSocketNotifications effect running:', { socket: !!socket, isConnected });
@@ -19,16 +22,12 @@ export const useWebSocketNotifications = () => {
     // Listen for new notifications
     const handleNewNotification = (notification: any) => {
       console.log('🔔 New notification received via WebSocket:', notification);
+      
+      // Add to notification store
       addNotification(notification);
       
-      // Show browser notification if permission is granted
-      if (Notification.permission === 'granted') {
-        new Notification(notification.title, {
-          body: notification.message,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
-        });
-      }
+      // Show Ant Design notification
+      showNotification(notification);
     };
 
     // Listen for notification updates
@@ -66,5 +65,6 @@ export const useWebSocketNotifications = () => {
 
   return {
     isConnected,
+    contextHolder, // This needs to be rendered in the component tree
   };
 };

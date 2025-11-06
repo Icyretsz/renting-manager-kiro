@@ -38,7 +38,7 @@ export const getNotificationNavigation = (notification: Notification): Navigatio
 
     case 'reading_approved':
       return {
-        path: '/meter-readings',
+        path: '/billing',
         shouldNavigate: true,
         description: 'View approved readings'
       };

@@ -1,0 +1,81 @@
+/* Ant Design Notification Customizations */
+
+/* Clickable notification styling */
+.notification-clickable {
+  transition: all 0.2s ease-in-out;
+}
+
+.notification-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-left-color: #40a9ff !important;
+}
+
+.notification-clickable:active {
+  transform: translateY(0);
+}
+
+/* Custom notification container */
+.ant-notification {
+  z-index: 9999;
+}
+
+/* Mobile responsive notifications */
+@media (max-width: 768px) {
+  .ant-notification {
+    margin: 8px;
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+  
+  .ant-notification-notice {
+    margin-bottom: 8px;
+    border-radius: 8px;
+  }
+  
+  .ant-notification-notice-message {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .ant-notification-notice-description {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
+/* Notification icon styling */
+.ant-notification-notice-icon {
+  font-size: 20px;
+  margin-top: 2px;
+}
+
+/* Custom notification types */
+.ant-notification-notice-with-icon .ant-notification-notice-message {
+  margin-left: 8px;
+}
+
+.ant-notification-notice-with-icon .ant-notification-notice-description {
+  margin-left: 8px;
+}
+
+/* Hover effect for clickable notifications */
+.notification-clickable .ant-notification-notice-content {
+  position: relative;
+}
+
+.notification-clickable .ant-notification-notice-content::after {
+  content: '→';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #1890ff;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.notification-clickable:hover .ant-notification-notice-content::after {
+  opacity: 1;
+}

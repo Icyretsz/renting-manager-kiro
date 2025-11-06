@@ -43,7 +43,7 @@ const templates = {
 
     READING_APPROVED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Approved',
-      body: `Your meter readings for Room ${roomNumber} (${month}/${year}) have been approved. Tap to view your readings.`,
+      body: `Your bill for Room ${roomNumber} - ${month} ${year} is ready. Tap to see bill details and pay.`,
       data: {
         type: 'reading_approved',
         roomNumber: roomNumber.toString(),
