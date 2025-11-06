@@ -11,7 +11,7 @@ interface AuthProviderProps {
 
 // Auth0 integration component to sync tokens
 const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, user, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, user, getAccessTokenSilently, isLoading } = useAuth0();
   const { login, logout, setToken } = useAuthStore();
   
   // Initialize Firebase messaging when user is authenticated
@@ -20,6 +20,12 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
   // Sync auth state on mount and when authentication changes
   useEffect(() => {
     const syncAuthState = async () => {
+      // Don't sync while Auth0 is still loading
+      if (isLoading) {
+        console.log('Auth0Integration: Auth0 still loading, waiting...');
+        return;
+      }
+
       if (isAuthenticated && user) {
         try {
           console.log('Auth0Integration: Syncing authenticated user to store');
@@ -42,41 +48,29 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
           login(token, appUser);
         } catch (error) {
           console.error('Error getting access token:', error);
-          // For permanent sessions, only logout on explicit auth revocation
-          // Don't logout on network errors or temporary issues
+          // Be more conservative - logout on token errors to avoid auth issues
           const errorMessage = error instanceof Error ? error.message : String(error);
           if (errorMessage.includes('login_required') || 
               errorMessage.includes('consent_required') ||
               errorMessage.includes('access_denied') ||
-              errorMessage.includes('unauthorized')) {
-            console.log('Auth revoked or consent withdrawn, logging out');
+              errorMessage.includes('unauthorized') ||
+              errorMessage.includes('invalid_grant')) {
+            console.log('Auth error, logging out:', errorMessage);
             logout();
           } else {
-            console.log('Temporary error getting token, keeping user logged in');
-            // Keep the persisted user data even if token fetch fails temporarily
-            const persistedUser = useAuthStore.getState().user;
-            if (persistedUser) {
-              console.log('Using persisted user data while token is unavailable');
-              // Don't call login() to avoid overwriting with null token
-            }
+            console.log('Network error getting token, will retry');
+            // For network errors, don't logout but don't login either
+            // Let the next sync attempt handle it
           }
         }
       } else if (!isAuthenticated) {
-        // Only clear store if we're sure the user isn't authenticated
-        // Check if we have persisted session that might be recoverable
-        const persistedUser = useAuthStore.getState().user;
-        if (!persistedUser) {
-          console.log('Auth0Integration: No persisted session, clearing store');
-          logout();
-        } else {
-          console.log('Auth0Integration: Have persisted session, attempting recovery');
-          // Auth0 might still be initializing, don't clear immediately
-        }
+        console.log('Auth0Integration: User not authenticated, clearing store');
+        logout();
       }
     };
 
     syncAuthState();
-  }, [isAuthenticated, user, getAccessTokenSilently, login, logout]);
+  }, [isAuthenticated, user, getAccessTokenSilently, login, logout, isLoading]);
 
   // Periodic token refresh (every 45 minutes for mobile reliability)
   useEffect(() => {

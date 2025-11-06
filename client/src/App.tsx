@@ -30,26 +30,21 @@ import './styles/notifications.css';
 // Main app content that requires authentication
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
-  const { user: appUser } = useAuthStore()
+  const { user: appUser, isAuthenticated: storeAuthenticated } = useAuthStore()
   const navigate = useNavigate()
 
   // Initialize WebSocket notifications (this handles the connection internally)
   const { contextHolder } = useWebSocketNotifications(navigate);
 
-  // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser });
-
-  // useEffect(() => {
-  //   console.log('Token:', token)
-  //   console.log('App User:', appUser)
-  // }, [token, appUser])
+  // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser, storeAuthenticated });
 
   // Show loading while Auth0 is initializing
   if (isLoading) {
     return <LoadingSpinner fullScreen message="Loading application..." />;
   }
 
-  // If not authenticated, show login page instead of redirecting
-  if (!isAuthenticated) {
+  // Check both Auth0 and store authentication state
+  if (!isAuthenticated || !storeAuthenticated) {
     return <LoginPage />;
   }
 
@@ -74,11 +69,19 @@ const AppContent = () => {
         <Route
           path="/"
           element={
-            <ProtectedRoute requireTenantLink={userRole !== 'ADMIN'}>
-              <MainLayout>
-                <DashboardPage />
-              </MainLayout>
-            </ProtectedRoute>
+            userRole === 'ADMIN' ? (
+              <ProtectedRoute requireTenantLink={userRole !== 'ADMIN'}>
+                <MainLayout>
+                  <DashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            ) : (
+              <ProtectedRoute requireTenantLink={true}>
+                <MainLayout>
+                  <DashboardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            )
           }
         />
         <Route

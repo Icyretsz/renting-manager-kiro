@@ -68,12 +68,11 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      // Only persist user and auth state, not the token (Auth0 handles token persistence)
+      // Persist user, auth state, and token for better session recovery
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        // Don't persist token - let Auth0 handle it via localStorage
-        // token: state.token, 
+        token: state.token, // Persist token as backup to Auth0's localStorage
       }),
     }
   )
