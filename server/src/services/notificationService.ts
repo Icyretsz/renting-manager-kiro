@@ -5,8 +5,7 @@ import { emitNotificationToUser, emitNotificationUpdate } from '../config/socket
 const prisma = new PrismaClient();
 
 interface NotificationData {
-  type: string;
-  roomNumber?: string;
+  roomNumber: string;
   month?: string;
   year?: string;
   action?: string;
@@ -19,6 +18,7 @@ interface NotificationData {
 export interface NotificationTemplate {
   title: string;
   message: string;
+  type: string;
   data?: NotificationData;
 }
 
@@ -32,8 +32,8 @@ const templates = {
     READING_SUBMITTED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'New Meter Reading Submitted',
       message: `Room ${roomNumber} has submitted meter readings for ${month}/${year}. Tap to review and approve.`,
+      type: 'reading_submitted',
       data: {
-        type: 'reading_submitted',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
@@ -44,8 +44,8 @@ const templates = {
     READING_UPDATED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Updated',
       message: `Room ${roomNumber} has updated their meter readings for ${month}/${year}. Tap to review changes.`,
+      type: 'reading_updated',
       data: {
-        type: 'reading_updated',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
@@ -56,8 +56,8 @@ const templates = {
     READING_APPROVED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Approved',
       message: `Your bill for Room ${roomNumber} - ${month} ${year} is ready. Tap to see bill details and pay.`,
+      type: 'reading_approved',
       data: {
-        type: 'reading_approved',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
@@ -68,8 +68,8 @@ const templates = {
     READING_REJECTED: (roomNumber: number, month: number, year: number, reason?: string): NotificationTemplate => ({
       title: 'Meter Reading Rejected',
       message: `Your meter readings for Room ${roomNumber} (${month}/${year}) have been rejected${reason ? `: ${reason}` : ''}`,
+      type: 'reading_rejected',
       data: {
-        type: 'reading_rejected',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
@@ -80,8 +80,8 @@ const templates = {
     READING_MODIFIED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Modified',
       message: `Meter readings for Room ${roomNumber} (${month}/${year}) have been modified by admin`,
+      type: 'reading_modified',
       data: {
-        type: 'reading_modified',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
@@ -91,8 +91,8 @@ const templates = {
     BILL_GENERATED: (roomNumber: number, month: number, year: number, amount: number): NotificationTemplate => ({
       title: 'Monthly Bill Generated',
       message: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: ₫${amount.toFixed(2)}. Tap to view and pay.`,
+      type: 'bill_generated',
       data: {
-        type: 'bill_generated',
         roomNumber: roomNumber.toString(),
         month: month.toString(),
         year: year.toString(),
@@ -299,7 +299,7 @@ const saveNotificationHistory = async (
         userId: recipient.userId,
         title: template.title,
         message: template.message,
-        type: template.data?.['type'] || 'general',
+        type: template.type || 'general',
         readStatus: false,
       }));
 

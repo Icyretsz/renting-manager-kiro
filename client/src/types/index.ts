@@ -184,7 +184,6 @@ export interface MonthlyFinancialReport {
 
 // Notifications
 interface NotificationData {
-  type: string;
   roomNumber: string;
   month?: string;
   year?: string;
@@ -194,6 +193,7 @@ interface NotificationData {
   reason?: string;
   amount?: string;
 }
+
 export interface Notification {
   id: string;
   userId: string;

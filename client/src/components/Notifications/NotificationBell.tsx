@@ -26,7 +26,7 @@ import {
   useDeleteNotificationMutation,
   useClearAllNotificationsMutation,
 } from '@/hooks/useNotifications';
-import { Notification, NotificationDB } from '@/types';
+import { NotificationDB } from '@/types';
 import { 
   getNotificationNavigation, 
   getNotificationIcon 

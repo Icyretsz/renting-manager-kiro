@@ -33,7 +33,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
         const notificationData = notification.data;
         console.log('Processing notification data:', notificationData);
         
-        switch (notificationData.type) {
+        switch (notification.type) {
           case 'reading_submitted':
             console.log('🔄 Invalidating queries for reading submission');
             // Invalidate all meter reading queries
@@ -86,7 +86,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             break;
             
           default:
-            console.log('Unknown notification type:', notificationData.type);
+            console.log('Unknown notification type:', notification.type);
             // Fallback: invalidate all meter reading queries for unknown types
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
         }
