@@ -276,9 +276,40 @@ export const MeterReadingsPage: React.FC = () => {
 
 
 
-  // if (readingLoading) {
-  //   return <LoadingSpinner message="Loading previous readings..." />;
-  // }
+  // Show loading spinner for users when their room is pre-selected and readings are loading
+  if (!isAdmin() && selectedRoomId && readingLoading) {
+    return (
+      <PageErrorBoundary>
+        <div className="space-y-4">
+          {/* Header */}
+          <div>
+            <Title level={3} className="mb-1">Meter Readings</Title>
+            <Text className="text-gray-600">
+              Submit monthly utility readings with photos
+            </Text>
+          </div>
+
+          {/* Room Selection - Show selected room */}
+          <Card title="Your Room" size="small">
+            <Select
+              className="w-full"
+              value={selectedRoomId}
+              disabled={true}
+            >
+              {availableRooms?.map((room) => (
+                <Option key={room.id} value={room.id}>
+                  Room {room.roomNumber} - Floor {room.floor}
+                </Option>
+              ))}
+            </Select>
+          </Card>
+
+          {/* Loading Spinner */}
+          <LoadingSpinner message="Loading previous readings..." />
+        </div>
+      </PageErrorBoundary>
+    );
+  }
 
   return (
     <PageErrorBoundary>
@@ -299,6 +330,7 @@ export const MeterReadingsPage: React.FC = () => {
             value={selectedRoomId}
             onChange={handleRoomChange}
             disabled={!isAdmin()}
+            loading={!isAdmin() && !selectedRoomId && !userRoomId} // Show loading for users without room assignment
           >
             {availableRooms?.map((room) => (
               <Option key={room.id} value={room.id}>
@@ -313,8 +345,27 @@ export const MeterReadingsPage: React.FC = () => {
           )}
         </Card>
 
-        {selectedRoomId && availableRooms && availableRooms.length > 0 ? (
+        {/* Admin: Show message when no room is selected */}
+        {isAdmin() && !selectedRoomId && (
+          <Card size="small">
+            <div className="text-center py-8 text-gray-500">
+              <CalculatorOutlined className="text-4xl mb-4" />
+              <div className="text-lg mb-2">Select a Room</div>
+              <div className="text-sm">Choose a room from the dropdown above to view and manage meter readings.</div>
+            </div>
+          </Card>
+        )}
+
+        {/* Show content when room is selected and data is loaded */}
+        {selectedRoomId && availableRooms && availableRooms.length > 0 && (
           <>
+            {/* Show loading spinner when readings are being fetched */}
+            {readingLoading ? (
+              <Card size="small">
+                <LoadingSpinner message="Loading meter readings..." />
+              </Card>
+            ) : (
+              <>
             {/* Current Month Reading Status */}
             {currentMonthReading && (
               <Card 
@@ -653,16 +704,18 @@ export const MeterReadingsPage: React.FC = () => {
               </Form>
             </Card>
 
-            {/* Info Alert */}
-            <Alert
-              message="Reading Submission Guidelines"
-              description="Please ensure photos are clear and show the complete meter display. Readings cannot be less than the previous month's values."
-              type="info"
-              showIcon
-              className="text-sm"
-            />
+                {/* Info Alert */}
+                <Alert
+                  message="Reading Submission Guidelines"
+                  description="Please ensure photos are clear and show the complete meter display. Readings cannot be less than the previous month's values."
+                  type="info"
+                  showIcon
+                  className="text-sm"
+                />
+              </>
+            )}
           </>
-        ) : (!isAdmin && <LoadingSpinner message="Loading previous readings..." />)}
+        )}
       </div>
     </PageErrorBoundary>
   );

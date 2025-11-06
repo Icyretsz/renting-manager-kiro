@@ -72,10 +72,6 @@ export const ApprovalsPage: React.FC = () => {
     );
   }
 
-  if (isLoading) {
-    return <LoadingSpinner message="Loading readings..." />;
-  }
-
   // Filter readings based on status and search
   const filteredReadings = allReadings?.filter((reading) => {
     const matchesStatus = filterStatus === 'all' || reading.status.toLowerCase() === filterStatus.toLowerCase();
@@ -201,6 +197,8 @@ export const ApprovalsPage: React.FC = () => {
           </Text>
         </div>
 
+        {isLoading ? (<LoadingSpinner message="Loading readings..." />) :
+        <>
         {/* Statistics */}
         <Row gutter={16}>
           <Col span={8}>
@@ -504,6 +502,7 @@ export const ApprovalsPage: React.FC = () => {
             })
           )}
         </div>
+        </>}
 
         {/* Review Modal */}
         <Modal
