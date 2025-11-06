@@ -198,7 +198,7 @@ export interface Notification {
   id: string;
   userId: string;
   title: string;
-  body: string;
+  message: string;
   type: string;
   readStatus: boolean;
   createdAt: Date;
@@ -241,10 +241,4 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     total: number;
     totalPages: number;
   };
-}
-
-export interface NotificationTemplate {
-  title: string;
-  body: string;
-  data?: Record<string, string>;
 }

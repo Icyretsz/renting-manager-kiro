@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, MessagePayload } from 'firebase/messaging';
 import { useNotificationStore } from '@/stores/notificationStore';
-import type { ApiResponse, Notification } from '@/types';
+import type { ApiResponse, Notification, NotificationDB } from '@/types';
 import { UseMutationResult } from '@tanstack/react-query';
 
 // Firebase configuration (these should be environment variables)
@@ -112,11 +112,11 @@ export const setupForegroundMessageListener = () => {
       const { addNotification } = useNotificationStore.getState();
       
       if (payload.notification) {
-        const notification: Notification = {
+        const notification: NotificationDB = {
           id: Date.now().toString(), // Temporary ID
           userId: '', // Will be set by the server
           title: payload.notification.title || 'New Notification',
-          body: payload.notification.body || '',
+          message: payload.notification.body || '',
           type: payload.data?.type || 'system',
           readStatus: false,
           createdAt: new Date(),
@@ -127,7 +127,7 @@ export const setupForegroundMessageListener = () => {
         // Show browser notification if permission is granted
         if (Notification.permission === 'granted') {
           new Notification(notification.title, {
-            body: notification.body,
+            body: notification.message,
             icon: '/favicon.ico',
             badge: '/favicon.ico',
           });

@@ -18,7 +18,7 @@ interface NotificationData {
 
 export interface NotificationTemplate {
   title: string;
-  body: string;
+  message: string;
   data?: NotificationData;
 }
 
@@ -31,7 +31,7 @@ export interface NotificationRecipient {
 const templates = {
     READING_SUBMITTED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'New Meter Reading Submitted',
-      body: `Room ${roomNumber} has submitted meter readings for ${month}/${year}. Tap to review and approve.`,
+      message: `Room ${roomNumber} has submitted meter readings for ${month}/${year}. Tap to review and approve.`,
       data: {
         type: 'reading_submitted',
         roomNumber: roomNumber.toString(),
@@ -43,7 +43,7 @@ const templates = {
 
     READING_UPDATED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Updated',
-      body: `Room ${roomNumber} has updated their meter readings for ${month}/${year}. Tap to review changes.`,
+      message: `Room ${roomNumber} has updated their meter readings for ${month}/${year}. Tap to review changes.`,
       data: {
         type: 'reading_updated',
         roomNumber: roomNumber.toString(),
@@ -55,7 +55,7 @@ const templates = {
 
     READING_APPROVED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Approved',
-      body: `Your bill for Room ${roomNumber} - ${month} ${year} is ready. Tap to see bill details and pay.`,
+      message: `Your bill for Room ${roomNumber} - ${month} ${year} is ready. Tap to see bill details and pay.`,
       data: {
         type: 'reading_approved',
         roomNumber: roomNumber.toString(),
@@ -67,7 +67,7 @@ const templates = {
 
     READING_REJECTED: (roomNumber: number, month: number, year: number, reason?: string): NotificationTemplate => ({
       title: 'Meter Reading Rejected',
-      body: `Your meter readings for Room ${roomNumber} (${month}/${year}) have been rejected${reason ? `: ${reason}` : ''}`,
+      message: `Your meter readings for Room ${roomNumber} (${month}/${year}) have been rejected${reason ? `: ${reason}` : ''}`,
       data: {
         type: 'reading_rejected',
         roomNumber: roomNumber.toString(),
@@ -79,7 +79,7 @@ const templates = {
 
     READING_MODIFIED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
       title: 'Meter Reading Modified',
-      body: `Meter readings for Room ${roomNumber} (${month}/${year}) have been modified by admin`,
+      message: `Meter readings for Room ${roomNumber} (${month}/${year}) have been modified by admin`,
       data: {
         type: 'reading_modified',
         roomNumber: roomNumber.toString(),
@@ -90,7 +90,7 @@ const templates = {
 
     BILL_GENERATED: (roomNumber: number, month: number, year: number, amount: number): NotificationTemplate => ({
       title: 'Monthly Bill Generated',
-      body: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: ₫${amount.toFixed(2)}. Tap to view and pay.`,
+      message: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: ₫${amount.toFixed(2)}. Tap to view and pay.`,
       data: {
         type: 'bill_generated',
         roomNumber: roomNumber.toString(),
@@ -135,7 +135,7 @@ export const sendToUsers = async (
     const message = {
       notification: {
         title: template.title,
-        body: template.body,
+        body: template.message,
       },
       data: template.data || {},
     };
@@ -298,7 +298,7 @@ const saveNotificationHistory = async (
       const notifications = recipients.map(recipient => ({
         userId: recipient.userId,
         title: template.title,
-        message: template.body,
+        message: template.message,
         type: template.data?.['type'] || 'general',
         readStatus: false,
       }));
