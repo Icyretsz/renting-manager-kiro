@@ -8,6 +8,7 @@ interface AuthStore {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  manualLogout: () => void; // Explicit user logout
   updateUser: (user: Partial<User>) => void;
   setToken: (token: string) => void;
 }
@@ -32,13 +33,24 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: () => {
-        // Clear user email from localStorage
+        // Internal logout - only clear app state, keep Auth0 session
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+        });
+      },
+
+      manualLogout: () => {
+        // Explicit user logout - clear everything including Auth0 session
         localStorage.removeItem('userEmail');
         set({
           user: null,
           token: null,
           isAuthenticated: false,
         });
+        // Clear Auth0 cache as well
+        localStorage.removeItem(`@@auth0spajs@@::${import.meta.env.VITE_AUTH0_CLIENT_ID}::${import.meta.env.VITE_AUTH0_AUDIENCE}::openid profile email`);
       },
 
       updateUser: (userData: Partial<User>) => {
@@ -56,10 +68,12 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
+      // Only persist user and auth state, not the token (Auth0 handles token persistence)
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
+        // Don't persist token - let Auth0 handle it via localStorage
+        // token: state.token, 
       }),
     }
   )

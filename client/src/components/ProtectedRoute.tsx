@@ -39,7 +39,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (requireTenantLink) {
     // Show loading while checking tenant status
     if (tenantLoading) {
-      return <LoadingSpinner />;
+      return <LoadingSpinner fullScreen />;
     }
 
     // If there's an error checking tenant status, log it and show error details

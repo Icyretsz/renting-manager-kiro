@@ -662,7 +662,7 @@ export const MeterReadingsPage: React.FC = () => {
               className="text-sm"
             />
           </>
-        ) : <LoadingSpinner message="Loading previous readings..." />}
+        ) : (!isAdmin && <LoadingSpinner message="Loading previous readings..." />)}
       </div>
     </PageErrorBoundary>
   );
