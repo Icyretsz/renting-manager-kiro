@@ -7,9 +7,9 @@ let io: Server;
 export const initializeSocket = (httpServer: HTTPServer) => {
     io = new Server(httpServer, {
         cors: {
-            origin: process.env['NODE_ENV'] === 'production' 
-                ? process.env['CLIENT_URL']
-                : ['http://localhost:3000', 'http://localhost:5173'],
+            origin: process.env['NODE_ENV'] === 'production'
+                ? process.env['CLIENT_URL_PROD']
+                : process.env['CLIENT_URL_DEV'],
             methods: ["GET", "POST"],
             credentials: true,
         },
@@ -18,7 +18,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     // Authentication middleware for Socket.IO
     io.use(async (socket, next) => {
         const token = socket.handshake.auth['token'];
-        
+
         if (!token) {
             return next(new Error('Authentication error: No token provided'));
         }
@@ -35,12 +35,12 @@ export const initializeSocket = (httpServer: HTTPServer) => {
 
     io.on("connection", (socket) => {
         console.log(`🔌 User connected: ${socket.id} (userId: ${socket.userId}, role: ${socket.userRole})`);
-        
+
         // Join user to their personal room for targeted notifications
         const userRoom = `user:${socket.userId}`;
         socket.join(userRoom);
         console.log(`👤 User ${socket.userId} joined room: ${userRoom}`);
-        
+
         // Join admin users to admin room
         if (socket.userRole === 'ADMIN') {
             socket.join('admins');
@@ -75,7 +75,7 @@ export const emitNotificationToUser = (userId: string, notification: any) => {
         const socketsInRoom = io.sockets.adapter.rooms.get(userRoom);
         console.log(`📤 Emitting notification to room: ${userRoom}`);
         console.log(`👥 Sockets in room: ${socketsInRoom ? socketsInRoom.size : 0}`);
-        
+
         io.to(userRoom).emit('notification:new', notification);
         console.log(`✅ Notification sent to user ${userId}:`, notification.title);
     } else {

@@ -29,9 +29,9 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: process.env['NODE_ENV'] === 'production' 
-    ? process.env['CLIENT_URL'] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+  origin: process.env['NODE_ENV'] === 'production'
+    ? process.env['CLIENT_URL_PROD']
+    : process.env['CLIENT_URL_DEV'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -55,7 +55,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.get('/health', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    
+
     res.status(200).json({
       status: 'OK',
       message: 'Rental Management Server is running',
@@ -156,7 +156,7 @@ server.listen(PORT, async () => {
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🌍 Environment: ${process.env['NODE_ENV'] || 'development'}`);
   console.log(`📁 Upload directory: ${process.env['UPLOAD_DIR'] || 'uploads'}`);
-  
+
   // Initialize default settings
   try {
     const { initializeDefaultSettings } = await import('./services/settingsService');

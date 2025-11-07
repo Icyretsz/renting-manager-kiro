@@ -97,7 +97,7 @@ export const saveMeterPhoto = async (upload: MeterPhotoUpload): Promise<FileInfo
   );
 
   const filePath = path.join(meterPhotosDir, filename);
-    const baseUrl = process.env['SERVER_BASE_URL'] || 'http://localhost:5000';
+    const baseUrl = process.env['NODE_ENV'] === 'development' ? process.env['SERVER_BASE_URL_DEV'] : process.env['SERVER_BASE_URL_PROD'];
     const fileUrl = `${baseUrl}/uploads/meter-photos/${filename}`;
 
     // Move file to final location

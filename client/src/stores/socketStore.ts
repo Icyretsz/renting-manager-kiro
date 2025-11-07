@@ -13,6 +13,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
     isConnected: false,
 
     connect: (token: string) => {
+        const socketURL = import.meta.env.MODE === 'development' ? import.meta.env.VITE_SOCKET_URL_DEV : import.meta.env.VITE_SOCKET_URL_PROD
         // Prevent multiple connections
         const currentSocket = get().socket;
         if (currentSocket?.connected) {
@@ -28,7 +29,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
         console.log('Creating new socket connection...');
         const socket = io(
-            import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000',
+            socketURL,
             {
                 auth: {
                     token: token

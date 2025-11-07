@@ -68,6 +68,9 @@ export interface PaymentWebhookData {
  * Generate PayOS payment link for a billing record
  */
 export const generatePaymentLink = async (billingRecordId: string): Promise<PaymentResponse> => {
+  const clientURL = process.env['NODE_ENV'] === 'production' 
+    ? process.env['CLIENT_URL_PROD'] 
+    : process.env['CLIENT_URL_DEV']
   try {
     // Get billing record with details
     const billingRecord = await prisma.billingRecord.findUnique({
@@ -104,8 +107,8 @@ export const generatePaymentLink = async (billingRecordId: string): Promise<Paym
       orderCode,
       amount: Math.round(billingRecord.totalAmount.toNumber()),
       description: `Room ${billingRecord.room.roomNumber} - ${getMonthName(billingRecord.month)} ${billingRecord.year} Bill`,
-      returnUrl: `${process.env['CLIENT_URL']}/billing/success?orderCode=${orderCode}`,
-      cancelUrl: `${process.env['CLIENT_URL']}/billing/cancel?orderCode=${orderCode}`,
+      returnUrl: `${clientURL}/billing/success?orderCode=${orderCode}`,
+      cancelUrl: `${clientURL}/billing/cancel?orderCode=${orderCode}`,
       items: [
         {
           name: `Water Usage (${billingRecord.waterUsage.toNumber()} units)`,
