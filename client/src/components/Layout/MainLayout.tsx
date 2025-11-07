@@ -1,8 +1,10 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { Layout } from 'antd';
 import { MobileNavigation } from './MobileNavigation';
 import { MobileHeader } from './Header';
 import { MobileDrawer } from './Sidebar';
+import { NotificationPrompt } from '@/components/Notifications/NotificationPrompt';
+import { FirebaseDebugButton } from '@/components/DevTools/FirebaseDebugButton';
 
 const { Content } = Layout;
 
@@ -11,11 +13,17 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
+
   return (
     <Layout className="min-h-screen bg-gray-50">
       <MobileHeader />
       <Content className="pb-16">
         <div className="px-4 py-4">
+          <FirebaseDebugButton />
+          {showNotificationPrompt && (
+            <NotificationPrompt onDismiss={() => setShowNotificationPrompt(false)} />
+          )}
           {children}
         </div>
       </Content>

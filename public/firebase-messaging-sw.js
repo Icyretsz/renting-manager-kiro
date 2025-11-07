@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Firebase configuration
+// Firebase configuration - should match your .env file
 const firebaseConfig = {
   apiKey: "AIzaSyBCT9T1cYnPuZXsnwyLVSjW_7W_OB_ngn0",
   authDomain: "phongtro-d674b.firebaseapp.com",
@@ -12,6 +12,8 @@ const firebaseConfig = {
   appId: "1:370635142111:web:8a3aa9ff7e77b0aa6b0a6a",
   measurementId: "G-0M7N34PPLZ"
 };
+
+console.log('🔧 Service Worker Firebase Config:', firebaseConfig);
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);

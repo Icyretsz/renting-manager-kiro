@@ -57,8 +57,9 @@ export const useFirebaseMessaging = () => {
           return;
         }
 
-        // Only initialize if permission is granted or default (to avoid unnecessary calls)
-        if (permission === 'granted' || permission === 'default') {
+        // Handle different permission states
+        if (permission === 'granted') {
+          // Permission already granted, initialize immediately
           const initialized = await initializePushNotifications(fcmTokenMutation);
           
           if (!isMounted) return;
@@ -69,6 +70,9 @@ export const useFirebaseMessaging = () => {
             permission: getNotificationPermission(),
             error: initialized ? null : 'Failed to initialize push notifications',
           }));
+        } else if (permission === 'default') {
+          // Permission not yet requested - don't auto-request, wait for user action
+          console.log('📋 Notification permission not requested yet. Waiting for user action.');
         }
       } catch (error) {
         console.error('Error initializing Firebase messaging:', error);

@@ -18,6 +18,19 @@ const firebaseConfig = {
 // VAPID key for web push notifications
 const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
+// Debug Firebase configuration
+console.log('🔧 Firebase Config Check:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasProjectId: !!firebaseConfig.projectId,
+  hasVapidKey: !!vapidKey,
+  vapidKeyLength: vapidKey?.length || 0
+});
+
+// Check if VAPID key is configured
+if (!vapidKey) {
+  console.warn('⚠️ VITE_FIREBASE_VAPID_KEY not configured. Push notifications will not work.');
+}
+
 let app: any = null;
 let messaging: any = null;
 
@@ -154,6 +167,12 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
       return false;
     }
 
+    // Check if VAPID key is configured
+    if (!vapidKey) {
+      console.error('❌ VAPID key not configured. Cannot initialize push notifications.');
+      return false;
+    }
+
     // Initialize Firebase
     const { messaging } = initializeFirebase();
     if (!messaging) {
@@ -161,16 +180,30 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
       return false;
     }
 
-    // Only proceed if permission is granted
+    // Check permission status - only proceed if already granted
     if (Notification.permission !== 'granted') {
       console.log('Notification permission not granted, skipping token registration');
       return false;
     }
 
-    // Get FCM token
-    const token = await getToken(messaging, { vapidKey });
-    if (!token) {
-      console.warn('Failed to get FCM token');
+    // Get FCM token with better error handling
+    let token;
+    try {
+      token = await getToken(messaging, { vapidKey });
+      if (!token) {
+        console.warn('Failed to get FCM token - no token returned');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error getting FCM token:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('messaging/unsupported-browser')) {
+        console.error('Browser does not support Firebase messaging');
+      } else if (errorMessage.includes('messaging/permission-blocked')) {
+        console.error('Notification permission blocked');
+      } else if (errorMessage.includes('messaging/vapid-key-required')) {
+        console.error('VAPID key is required but not provided');
+      }
       return false;
     }
 
@@ -178,10 +211,12 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
     
     // Send token to server with retry logic
     try {
+      console.log('🔄 Sending FCM token to server...');
       await fcmTokenMutation.mutateAsync(token);
       console.log('✅ FCM token registered successfully');
     } catch (error) {
-      console.error('❌ Failed to register FCM token:', error);
+      console.error('❌ Failed to register FCM token with server:', error);
+      console.error('Token that failed:', token.substring(0, 20) + '...');
       // Don't return false here - we still want to set up the listener
     }
 
