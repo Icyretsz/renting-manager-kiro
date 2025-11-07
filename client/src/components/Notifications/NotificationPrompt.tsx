@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Alert, Typography } from 'antd';
+import { Card, Button, Typography } from 'antd';
 import { BellOutlined, CloseOutlined } from '@ant-design/icons';
 import { useFirebaseMessaging } from '@/hooks/useFirebaseMessaging';
 

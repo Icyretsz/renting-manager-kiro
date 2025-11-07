@@ -1,4 +1,4 @@
-import { Notification, NotificationDB } from '@/types';
+import { NotificationDB } from '@/types';
 import {
   FileTextOutlined,
   CheckCircleOutlined,
