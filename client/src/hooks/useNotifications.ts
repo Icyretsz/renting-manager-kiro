@@ -137,17 +137,13 @@ export const useClearAllNotificationsMutation = () => {
 export const useUpdateFCMTokenMutation = () => {
   return useMutation({
     mutationFn: async (fcmToken: string) => {
-      console.log('🔄 Updating FCM token:', fcmToken.substring(0, 20) + '...');
       const response = await api.patch<ApiResponse<void>>('/notifications/fcm-token', { 
         fcmToken 
       });
       return response.data;
     },
-    onSuccess: () => {
-      console.log('✅ FCM token updated successfully');
-    },
     onError: (error) => {
-      console.error('❌ Failed to update FCM token:', error);
+      console.error('Failed to update FCM token:', error);
     },
   });
 };

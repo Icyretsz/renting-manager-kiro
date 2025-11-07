@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Firebase configuration - should match your .env file
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBCT9T1cYnPuZXsnwyLVSjW_7W_OB_ngn0",
   authDomain: "phongtro-d674b.firebaseapp.com",
@@ -13,8 +13,6 @@ const firebaseConfig = {
   measurementId: "G-0M7N34PPLZ"
 };
 
-console.log('🔧 Service Worker Firebase Config:', firebaseConfig);
-
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
@@ -23,7 +21,6 @@ const messaging = firebase.messaging();
 
 // Handle background messages (when app is not in focus)
 messaging.onBackgroundMessage((payload) => {
-  console.log('Background message received:', payload);
   
   const notificationTitle = payload.notification?.title || 'New Notification';
   const notificationOptions = {
@@ -50,7 +47,6 @@ messaging.onBackgroundMessage((payload) => {
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event);
   
   event.notification.close();
   

@@ -13,16 +13,12 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
   const { showNotification, contextHolder } = useAntNotification(navigate);
 
   useEffect(() => {
-
     if (!socket || !isConnected) {
-      console.log('Socket not ready, skipping listener setup');
       return;
     }
 
     // Listen for new notifications
     const handleNewNotification = (notification: Notification) => {
-      console.log('📨 New notification received:', notification);
-
       // Add to notification store
       addNotification(notification);
 
@@ -31,52 +27,40 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
       if (notification.data) {
         const notificationData = notification.data;
-        console.log('Processing notification data:', notificationData);
         
         switch (notification.type) {
           case 'reading_submitted':
-            console.log('🔄 Invalidating queries for reading submission');
             // Invalidate all meter reading queries
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
-            console.log('✅ Invalidated meterReadingKeys.all:', meterReadingKeys.all);
             // Specifically invalidate admin-all query
             queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] });
-            console.log('✅ Invalidated admin-all query');
             break;
 
           case 'reading_updated':
-            console.log('🔄 Invalidating queries for reading updating, roomNumber:', notificationData.roomNumber);
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
-              console.log('✅ Invalidated room query:', roomQueryKey);
             }
             break;
             
           case 'reading_modified':
-            console.log('🔄 Invalidating queries for reading modification, roomNumber:', notificationData.roomNumber);
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
-              console.log('✅ Invalidated room query:', roomQueryKey);
             }
             break;
             
           case 'reading_approved':
-            console.log('🔄 Invalidating queries for reading approval, roomNumber:', notificationData.roomNumber);
             // Invalidate all meter reading queries
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
-            console.log('✅ Invalidated meterReadingKeys.all:', meterReadingKeys.all);
             // Specifically invalidate the room's readings if roomNumber is available
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
-              console.log('✅ Invalidated room query:', roomQueryKey);
             }
             break;
             
           case 'reading_rejected':
-            console.log('Invalidating queries for reading rejection, roomNumber:', notificationData.roomNumber);
             // Invalidate all meter reading queries
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
             // Specifically invalidate the room's readings if roomNumber is available
@@ -86,12 +70,10 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             break;
             
           default:
-            console.log('Unknown notification type:', notification.type);
             // Fallback: invalidate all meter reading queries for unknown types
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
         }
       } else {
-        console.log('No notification data, invalidating all meter reading queries as fallback');
         // Fallback: if no specific data, invalidate all meter reading queries
         queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
       }
@@ -99,7 +81,6 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
     // Listen for notification updates
     const handleNotificationUpdate = (update: any) => {
-      console.log('Notification update received via WebSocket:', update);
       if (update.type === 'read') {
         markAsRead(update.notificationId);
       }
@@ -107,7 +88,6 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
     // Listen for bulk notification updates
     const handleBulkUpdate = (update: any) => {
-      console.log('Bulk notification update received via WebSocket:', update);
       if (update.type === 'mark_all_read') {
         markAllAsRead();
       }
@@ -118,11 +98,8 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
     socket.on('notification:update', handleNotificationUpdate);
     socket.on('notification:bulk_update', handleBulkUpdate);
 
-    console.log('✅ WebSocket notification listeners registered successfully');
-
     // Cleanup listeners on unmount or socket change
     return () => {
-      console.log('🧹 Cleaning up WebSocket notification listeners');
       socket.off('notification:new', handleNewNotification);
       socket.off('notification:update', handleNotificationUpdate);
       socket.off('notification:bulk_update', handleBulkUpdate);

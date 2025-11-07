@@ -53,8 +53,6 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
-  console.log(notifications)
-
   const handleMarkAllAsRead = async () => {
     try {
       await markAllReadMutation.mutateAsync();

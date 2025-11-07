@@ -4,7 +4,6 @@ import { MobileNavigation } from './MobileNavigation';
 import { MobileHeader } from './Header';
 import { MobileDrawer } from './Sidebar';
 import { NotificationPrompt } from '@/components/Notifications/NotificationPrompt';
-import { FirebaseDebugButton } from '@/components/DevTools/FirebaseDebugButton';
 
 const { Content } = Layout;
 
@@ -20,7 +19,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <MobileHeader />
       <Content className="pb-16">
         <div className="px-4 py-4">
-          <FirebaseDebugButton />
           {showNotificationPrompt && (
             <NotificationPrompt onDismiss={() => setShowNotificationPrompt(false)} />
           )}

@@ -71,8 +71,7 @@ export const useFirebaseMessaging = () => {
             error: initialized ? null : 'Failed to initialize push notifications',
           }));
         } else if (permission === 'default') {
-          // Permission not yet requested - don't auto-request, wait for user action
-          console.log('📋 Notification permission not requested yet. Waiting for user action.');
+          // Permission not yet requested - wait for user action
         }
       } catch (error) {
         console.error('Error initializing Firebase messaging:', error);

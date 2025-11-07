@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, MessagePayload } from 'firebase/messaging';
 import { useNotificationStore } from '@/stores/notificationStore';
-import type { ApiResponse, Notification, NotificationDB } from '@/types';
+import type { ApiResponse, NotificationDB } from '@/types';
 import { UseMutationResult } from '@tanstack/react-query';
 
 // Firebase configuration (these should be environment variables)
@@ -17,14 +17,6 @@ const firebaseConfig = {
 
 // VAPID key for web push notifications
 const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-
-// Debug Firebase configuration
-console.log('🔧 Firebase Config Check:', {
-  hasApiKey: !!firebaseConfig.apiKey,
-  hasProjectId: !!firebaseConfig.projectId,
-  hasVapidKey: !!vapidKey,
-  vapidKeyLength: vapidKey?.length || 0
-});
 
 // Check if VAPID key is configured
 if (!vapidKey) {
@@ -44,11 +36,8 @@ export const initializeFirebase = () => {
       // Register service worker for background notifications
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/firebase-messaging-sw.js')
-          .then((registration) => {
-            console.log('✅ Service Worker registered:', registration);
-          })
           .catch((error) => {
-            console.error('❌ Service Worker registration failed:', error);
+            console.error('Service Worker registration failed:', error);
           });
       }
     }
@@ -77,7 +66,6 @@ export const requestNotificationPermission = async (): Promise<string | null> =>
     // Get FCM token
     const token = await getToken(messaging, { vapidKey });
     if (token) {
-      console.log('🔑 FCM Token obtained:', token.substring(0, 20) + '...');
       return token;
     } else {
       console.warn('No registration token available');
@@ -169,7 +157,7 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
 
     // Check if VAPID key is configured
     if (!vapidKey) {
-      console.error('❌ VAPID key not configured. Cannot initialize push notifications.');
+      console.error('VAPID key not configured. Cannot initialize push notifications.');
       return false;
     }
 
@@ -209,14 +197,11 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
 
     console.log('🔄 Registering FCM token with server...');
     
-    // Send token to server with retry logic
+    // Send token to server
     try {
-      console.log('🔄 Sending FCM token to server...');
       await fcmTokenMutation.mutateAsync(token);
-      console.log('✅ FCM token registered successfully');
     } catch (error) {
-      console.error('❌ Failed to register FCM token with server:', error);
-      console.error('Token that failed:', token.substring(0, 20) + '...');
+      console.error('Failed to register FCM token with server:', error);
       // Don't return false here - we still want to set up the listener
     }
 
@@ -226,10 +211,10 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
     // Set up token refresh listener (returns cleanup function)
     //const cleanupTokenListener = setupTokenRefreshListener(fcmTokenMutation);
 
-    console.log('✅ Push notifications initialized successfully');
+    // Push notifications initialized successfully
     return true;
   } catch (error) {
-    console.error('❌ Error initializing push notifications:', error);
+    console.error('Error initializing push notifications:', error);
     return false;
   }
 };
