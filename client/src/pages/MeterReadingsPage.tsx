@@ -568,7 +568,7 @@ export const MeterReadingsPage: React.FC = () => {
                 <Form.Item label="Water Meter Photo">
                   <Upload
                     accept="image/*"
-                    showUploadList={false}
+                    showUploadList={true}
                     beforeUpload={(file) => handlePhotoUpload(file, 'water')}
                     disabled={uploadMutation.isPending || !selectedRoomId || (!canEditCurrentReading && !canAdminOverride && !canCreateNewReading)}
                   >

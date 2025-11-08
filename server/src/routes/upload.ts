@@ -5,6 +5,7 @@ import { ValidationError, AppError } from '../utils/errors';
 import { authenticateToken } from '../middleware/auth';
 import * as fileStorageService from '../services/fileStorageService';
 import prisma from '../config/database';
+import { validateRequired } from '@/middleware/validation';
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.post('/meter-photos', uploadMeterPhotos, asyncHandler(async (req: Authent
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   console.log('files', files)
   const { roomId } = req.body;
-  
+
   if (!files || Object.keys(files).length === 0) {
     throw new ValidationError('No files uploaded');
   }
@@ -144,11 +145,11 @@ router.get('/file/:filename', asyncHandler(async (req: AuthenticatedRequest, res
   }
 
   const { filename } = req.params;
-  
+
   if (!filename) {
     throw new ValidationError('Filename is required');
   }
-  
+
   // Basic security check - prevent directory traversal
   if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
     throw new ValidationError('Invalid filename');
@@ -162,7 +163,7 @@ router.get('/file/:filename', asyncHandler(async (req: AuthenticatedRequest, res
   // For regular users, check if they have access to the room associated with this photo
   if (req.user.role === 'USER') {
     const fileUrl = `/uploads/meter-photos/${filename}`;
-    
+
     // Find the meter reading that uses this photo
     const reading = await prisma.meterReading.findFirst({
       where: {
@@ -199,13 +200,13 @@ router.get('/info/:filename', asyncHandler(async (req: AuthenticatedRequest, res
   }
 
   const { filename } = req.params;
-  
+
   if (!filename) {
     throw new ValidationError('Filename is required');
   }
 
   const fileInfo = fileStorageService.getFileInfo(filename);
-  
+
   if (!fileInfo) {
     throw new AppError('File not found', 404);
   }
@@ -213,7 +214,7 @@ router.get('/info/:filename', asyncHandler(async (req: AuthenticatedRequest, res
   // For regular users, check access permissions
   if (req.user.role === 'USER') {
     const fileUrl = `/uploads/meter-photos/${filename}`;
-    
+
     const reading = await prisma.meterReading.findFirst({
       where: {
         OR: [
@@ -251,7 +252,7 @@ router.delete('/file/:filename', asyncHandler(async (req: AuthenticatedRequest, 
   }
 
   const { filename } = req.params;
-  
+
   if (!filename) {
     throw new ValidationError('Filename is required');
   }
@@ -286,3 +287,32 @@ router.get('/stats', asyncHandler(async (req: AuthenticatedRequest, res: Respons
 }));
 
 export default router;
+
+/**
+ * get AWS S3 presigned URL
+ * GET /api/upload/get-presigned
+ */
+router.get('/get-presigned',
+  validateRequired(['roomNumber']),
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    const { operation, roomNumber, contentType } = req.body
+    if (Number.isInteger(roomNumber)) {
+      throw new AppError('Room number is not an integer', 400);
+    }
+
+    const url = await fileStorageService.createPresignedUrlWithClient(operation, roomNumber, contentType)
+
+    if (url) {
+      res.json({
+        success: true,
+        data: url
+      });
+    } else {
+      throw new AppError('Error getting presigned URL', 500)
+    }
+  })
+)

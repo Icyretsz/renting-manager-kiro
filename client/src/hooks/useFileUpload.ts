@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
 import { ApiResponse } from '@/types';
 
@@ -30,3 +30,25 @@ export const useUploadMeterPhotoMutation = () => {
     },
   });
 };
+
+//Get presigned url
+export const useGetPresignedURL = (
+  operation: 'get' | 'put',
+  roomNumber: string,
+  contentType?: string
+) => {
+  return useQuery({
+    queryKey: ['presigned-url', operation, roomNumber, contentType],
+    queryFn: async (): Promise<string> => {
+      const params: Record<string, string> = { operation, roomNumber }
+      if (contentType) params.contentType = contentType
+
+      const response = await api.get<ApiResponse<string>>(
+        '/upload/get-presigned',
+        { params }
+      )
+      return response.data.data ? response.data.data : ''
+    },
+    enabled: !!roomNumber && !!operation,
+  })
+}
