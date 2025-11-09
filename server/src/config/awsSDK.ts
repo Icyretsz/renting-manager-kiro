@@ -5,7 +5,7 @@ const SDKClientConfig: any = {
 };
 
 // Only use manual credentials in dev
-if (process.env["NODE_ENV"] === "development") {
+if (process.env["NODE_ENV"] !== "production") {
   SDKClientConfig.credentials = {
     accessKeyId: process.env["AWS_ACCESS_KEY"]!,
     secretAccessKey: process.env["AWS_SECRET_ACCESS_KEY"]!,

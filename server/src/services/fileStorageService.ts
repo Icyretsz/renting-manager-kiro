@@ -2,9 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { AppError, ValidationError } from '../utils/errors';
 import prisma from '../config/database';
-import { s3Client } from '@/config/awsSDK'
+import { s3Client } from '../config/awsSDK'
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
+import { MeterType, Operation } from '@/types';
 
 export interface FileInfo {
   filename: string;
@@ -294,26 +295,32 @@ export const getStorageStats = async (): Promise<{
  * Get AWS S3 presigned URL
  */
 export const createPresignedUrlWithClient = async (
-  operation: 'get' | 'put',
+  operation: Operation,
   roomNumber: string,
-  contentType?: string
+  contentType: string,
+  meterType: MeterType,
+  fileName: string
 ) => {
   const bucket = process.env['AWS_BUCKET_NAME']
-  const key = `${process.env['AWS_BUCKET_BASE_DIRECTORY']}/${roomNumber}`
 
   let command
 
   try {
-    if (operation === 'get') {
-      command = new GetObjectCommand({
-        Bucket: bucket,
-        Key: key,
-      })
-    } else {
+    if (operation === 'put') {
+      const filename = generateMeterPhotoFilename(
+        Number(roomNumber),
+        meterType,
+        fileName
+      );
       command = new PutObjectCommand({
         Bucket: bucket,
-        Key: key,
+        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}${roomNumber}/${filename}`,
         ContentType: contentType || 'image/jpeg', // default type
+      })
+    } else {
+      command = new GetObjectCommand({
+        Bucket: bucket,
+        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}/${roomNumber}`,
       })
     }
 
