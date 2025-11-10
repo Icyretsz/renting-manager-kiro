@@ -1,6 +1,5 @@
 import { ConfigProvider } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { queryClient } from '@/services/queryClient';
@@ -24,7 +23,6 @@ import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuthStore } from './stores';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
-import { InvalidateQueriesButton } from '@/components/DevTools/InvalidateQueriesButton';
 import './styles/notifications.css';
 import { SettingsPage } from './pages/SettingsPage';
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import api from '@/services/api';
 import { ApiResponse } from '@/types';
 type PresignedURLOperation = 'get' | 'put'

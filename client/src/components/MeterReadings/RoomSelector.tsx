@@ -19,7 +19,6 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({
   onRoomChange,
   isAdmin,
   userRoomId,
-  loading
 }) => {
   return (
     <Card title={isAdmin ? "Select Room" : "Your Room"} size="small">
