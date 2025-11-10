@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Card, Button, Tag, Modal, QRCode, Alert, Select, DatePicker, Typography, Statistic, Row, Col, Divider, Avatar, Pagination } from 'antd';
-import { EyeOutlined, QrcodeOutlined, DownloadOutlined, DollarOutlined, HomeOutlined, CalendarOutlined, DropboxOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Card, Button, Modal, QRCode, Alert, Typography, Row, Col, Divider, Pagination, Tag } from 'antd';
+import { QrcodeOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   useBillingRecordsQuery, 
@@ -13,9 +13,13 @@ import {
 import { BillingRecord } from '@/types';
 import dayjs from 'dayjs';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import {
+  FinancialSummaryCard,
+  BillingFilters,
+  BillingRecordCard
+} from '@/components/Billing';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 const BillingPage: React.FC = () => {
   const { user } = useAuth();
@@ -94,7 +98,7 @@ const BillingPage: React.FC = () => {
   };
 
   // Get payment status color
-  const getPaymentStatusColor = (status: string) => {
+  const getPaymentStatusColor = (status: string): "success" | "error" | "warning" | "default" => {
     switch (status) {
       case 'PAID': return 'success';
       case 'OVERDUE': return 'error';
@@ -121,114 +125,6 @@ const BillingPage: React.FC = () => {
     return months[month - 1];
   };
 
-  // Render billing card for mobile-friendly view
-  const renderBillingCard = (record: BillingRecord) => (
-    <Card
-      key={record.id}
-      style={{ marginBottom: '16px' }}
-      hoverable
-      actions={[
-        <Button
-          type="text"
-          icon={<EyeOutlined />}
-          onClick={() => handleViewDetails(record)}
-          size="small"
-        >
-          Details
-        </Button>,
-        record.paymentStatus === 'UNPAID' ? (
-          <Button
-            type="text"
-            icon={<QrcodeOutlined />}
-            onClick={() => handleGenerateQRCode(record)}
-            size="small"
-            style={{ color: '#1890ff' }}
-          >
-            Pay Now
-          </Button>
-        ) : (
-          <Button type="text" disabled size="small">
-            Paid
-          </Button>
-        ),
-      ]}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar
-            icon={<HomeOutlined />}
-            style={{ backgroundColor: '#1890ff', marginRight: '12px' }}
-          />
-          <div>
-            <Text strong style={{ fontSize: '16px' }}>
-              Room {record.room?.roomNumber}
-            </Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              Floor {record.room?.floor}
-            </Text>
-          </div>
-        </div>
-        <Tag color={getPaymentStatusColor(record.paymentStatus)} style={{ margin: 0 }}>
-          {record.paymentStatus}
-        </Tag>
-      </div>
-
-      <Row gutter={16} style={{ marginBottom: '12px' }}>
-        <Col span={12}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <CalendarOutlined style={{ marginRight: '8px', color: '#666' }} />
-            <Text style={{ fontSize: '14px' }}>
-              {getMonthName(record.month)} {record.year}
-            </Text>
-          </div>
-        </Col>
-        <Col span={12}>
-          <div style={{ textAlign: 'right' }}>
-            <Text strong style={{ fontSize: '18px', color: '#1890ff' }}>
-              {formatCurrency(record.totalAmount)}
-            </Text>
-          </div>
-        </Col>
-      </Row>
-
-      <Row gutter={8} style={{ marginBottom: '12px' }}>
-        <Col span={12}>
-          <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-            <DropboxOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
-            <Text style={{ fontSize: '12px' }}>
-              {parseFloat(record.waterUsage.toString()).toFixed(1)} units
-            </Text>
-          </div>
-        </Col>
-        <Col span={12}>
-          <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
-            <ThunderboltOutlined style={{ marginRight: '6px', color: '#faad14' }} />
-            <Text style={{ fontSize: '12px' }}>
-              {parseFloat(record.electricityUsage.toString()).toFixed(1)} units
-            </Text>
-          </div>
-        </Col>
-      </Row>
-
-      {record.paymentDate && (
-        <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f6ffed', borderRadius: '4px' }}>
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            Paid on {dayjs(record.paymentDate).format('MMM DD, YYYY')}
-          </Text>
-        </div>
-      )}
-
-      {isAdmin && (
-        <div style={{ marginTop: '8px', borderTop: '1px solid #f0f0f0', paddingTop: '8px' }}>
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            Created: {dayjs(record.createdAt).format('MMM DD, YYYY')}
-          </Text>
-        </div>
-      )}
-    </Card>
-  );
-
   return (
     <div style={{ padding: '16px' }}>
       <div style={{ marginBottom: '24px' }}>
@@ -245,125 +141,35 @@ const BillingPage: React.FC = () => {
 
       {/* Financial Summary (Admin only) */}
       {isAdmin && financialSummary && (
-        <Card style={{ marginBottom: '24px' }}>
-          <Title level={4}>Financial Overview</Title>
-          <Row gutter={[16, 16]}>
-            <Col xs={12} sm={12} md={6}>
-              <Statistic
-                title="Total Income"
-                value={financialSummary.totalIncome}
-                formatter={(value) => formatCurrency(value as number)}
-                prefix={<DollarOutlined />}
-              />
-            </Col>
-            <Col xs={12} sm={12} md={6}>
-              <Statistic
-                title="Total Paid"
-                value={financialSummary.totalPaid}
-                formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#3f8600' }}
-              />
-            </Col>
-            <Col xs={12} sm={12} md={6}>
-              <Statistic
-                title="Total Unpaid"
-                value={financialSummary.totalUnpaid}
-                formatter={(value) => formatCurrency(value as number)}
-                valueStyle={{ color: '#cf1322' }}
-              />
-            </Col>
-            <Col xs={12} sm={12} md={6}>
-              <Statistic
-                title="Occupied Rooms"
-                value={financialSummary.occupiedRooms}
-                suffix={`/ ${financialSummary.roomCount}`}
-              />
-            </Col>
-          </Row>
-        </Card>
+        <FinancialSummaryCard
+          summary={financialSummary}
+          formatCurrency={formatCurrency}
+        />
       )}
 
       {/* Filters */}
-      <Card style={{ marginBottom: '24px' }}>
-        <Row gutter={[8, 8]}>
-          <Col xs={24} sm={12} md={6}>
-            <Select
-              placeholder="Payment Status"
-              style={{ width: '100%' }}
-              allowClear
-              onChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value }))}
-            >
-              <Option value="UNPAID">Unpaid</Option>
-              <Option value="PAID">Paid</Option>
-              <Option value="OVERDUE">Overdue</Option>
-            </Select>
-          </Col>
-          
-          {isAdmin && (
-            <>
-              <Col xs={12} sm={6} md={4}>
-                <Select
-                  placeholder="Room"
-                  style={{ width: '100%' }}
-                  allowClear
-                  onChange={(value) => setFilters(prev => ({ ...prev, roomId: value }))}
-                >
-                  {Array.from({ length: 18 }, (_, i) => i + 1).map(roomNum => (
-                    <Option key={roomNum} value={roomNum}>Room {roomNum}</Option>
-                  ))}
-                </Select>
-              </Col>
-              
-              <Col xs={12} sm={6} md={4}>
-                <Select
-                  placeholder="Floor"
-                  style={{ width: '100%' }}
-                  allowClear
-                  onChange={(value) => setFilters(prev => ({ ...prev, floor: value }))}
-                >
-                  <Option value={1}>Floor 1</Option>
-                  <Option value={2}>Floor 2</Option>
-                </Select>
-              </Col>
-            </>
-          )}
-          
-          <Col xs={24} sm={12} md={6}>
-            <DatePicker
-              picker="month"
-              placeholder="Select Month"
-              style={{ width: '100%' }}
-              onChange={(date) => {
-                if (date) {
-                  setFilters(prev => ({ 
-                    ...prev, 
-                    month: date.month() + 1, 
-                    year: date.year() 
-                  }));
-                } else {
-                  setFilters(prev => {
-                    const { month, year, ...rest } = prev;
-                    return rest;
-                  });
-                }
-              }}
-            />
-          </Col>
-          
-          {isAdmin && (
-            <Col xs={24} sm={12} md={4}>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={handleExportData}
-                loading={exportDataMutation.isPending}
-                style={{ width: '100%' }}
-              >
-                Export CSV
-              </Button>
-            </Col>
-          )}
-        </Row>
-      </Card>
+      <BillingFilters
+        isAdmin={isAdmin}
+        onStatusChange={(value) => setFilters(prev => ({ ...prev, paymentStatus: value }))}
+        onRoomChange={(value) => setFilters(prev => ({ ...prev, roomId: value }))}
+        onFloorChange={(value) => setFilters(prev => ({ ...prev, floor: value }))}
+        onMonthChange={(date) => {
+          if (date) {
+            setFilters(prev => ({ 
+              ...prev, 
+              month: date.month() + 1, 
+              year: date.year() 
+            }));
+          } else {
+            setFilters(prev => {
+              const { month, year, ...rest } = prev;
+              return rest;
+            });
+          }
+        }}
+        onExport={handleExportData}
+        exportLoading={exportDataMutation.isPending}
+      />
 
       {/* Billing Records Cards */}
       <div>
@@ -384,7 +190,18 @@ const BillingPage: React.FC = () => {
               </Text>
             </div>
             
-            {billingData.data.map(renderBillingCard)}
+            {billingData.data.map(record => (
+              <BillingRecordCard
+                key={record.id}
+                record={record}
+                isAdmin={isAdmin}
+                onViewDetails={handleViewDetails}
+                onGenerateQRCode={handleGenerateQRCode}
+                getPaymentStatusColor={getPaymentStatusColor}
+                formatCurrency={formatCurrency}
+                getMonthName={getMonthName}
+              />
+            ))}
             
             <div style={{ textAlign: 'center', marginTop: '24px' }}>
               <Pagination

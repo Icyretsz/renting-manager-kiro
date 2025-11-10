@@ -1,59 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Form,
-  InputNumber,
-  Button,
-  Typography,
-  Row,
-  Col,
-  Upload,
-  Image,
-  Statistic,
-  Divider,
-  Alert,
-  Select,
-  UploadFile,
-  Modal
-} from 'antd';
-import {
-  CameraOutlined,
-  CalculatorOutlined,
-  HistoryOutlined,
-  SaveOutlined,
-  PlusOutlined
-} from '@ant-design/icons';
+import { Card, Form, Button, Typography, Alert } from 'antd';
+import { HistoryOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery, useRoomQuery } from '@/hooks/useRooms';
 import { useMeterReadingsQuery, useSubmitMeterReadingMutation, useUpdateMeterReadingMutation } from '@/hooks/useMeterReadings';
 import { useSettingValue } from '@/hooks/useSettings';
-import { useGetPresignedURLMutation, useUploadMeterPhotoMutation, useUploadToS3Mutation } from '@/hooks/useFileUpload';
+import { useGetPresignedURLMutation, useUploadToS3Mutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
-import { ReadingHistoryModal } from '@/components/MeterReadings';
-import getBase64 from '@/utils/getBase64';
-
+import {
+  ReadingHistoryModal,
+  RoomSelector,
+  CurrentMonthReadingCard,
+  PreviousReadingCard,
+  MeterReadingForm
+} from '@/components/MeterReadings';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
-interface ReadingFormData {
-  roomId: number;
-  waterReading: number;
-  electricityReading: number;
-  waterPhoto?: File;
-  electricityPhoto?: File;
-}
-
-interface CalculatedBill {
-  totalBill: number,
-  electricityUsage: number,
-  waterUsage: number,
-  electricityBill: number,
-  waterBill: number
-}
-
-// Utility function to safely convert Prisma Decimal strings to numbers
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
 };
@@ -63,84 +27,60 @@ export const MeterReadingsPage: React.FC = () => {
   const { data: rooms } = useRoomsQuery();
   const [form] = Form.useForm();
 
-  // Get settings values
   const waterRate = useSettingValue('water_rate', 22000);
   const electricityRate = useSettingValue('electricity_rate', 3500);
   const trashFee = useSettingValue('trash_fee', 52000);
 
-  // For regular users, default to their tenant room; for admins, no default selection
   const userRoomId = user?.tenant?.roomId;
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(
     !isAdmin() && userRoomId ? userRoomId : null
   );
   const [waterPhotoUrl, setWaterPhotoUrl] = useState<string>('');
   const [electricityPhotoUrl, setElectricityPhotoUrl] = useState<string>('');
-  const [calculatedBill, setCalculatedBill] = useState<CalculatedBill>({
+  const [calculatedBill, setCalculatedBill] = useState({
     totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
   });
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+
   const { data: readings, isLoading: readingLoading } = useMeterReadingsQuery(selectedRoomId || 0);
-
-  //Image preview states
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState('');
-  const [previewTitle, setPreviewTitle] = useState('');
-
-  // Get room details for the selected room
   const { data: currentRoom } = useRoomQuery(selectedRoomId || 0);
 
-  // Get the most recent approved reading as previous reading for billing calculations
   const previousReading = readings?.find(r => r.status === 'APPROVED') || null;
 
-  // Get current month's readings (there can be multiple now)
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
   const currentMonthReadings = readings?.filter(r => r.month === currentMonth && r.year === currentYear) || [];
 
-  // Get the most relevant reading for the current month:
-  // 1. APPROVED reading (if exists)
-  // 2. PENDING reading (if exists and user can edit it)
-  // 3. Most recent REJECTED reading (for display purposes)
   const currentMonthReading = currentMonthReadings.find(r => r.status === 'APPROVED') ||
     currentMonthReadings.find(r => r.status === 'PENDING' && (!isAdmin() ? r.submittedBy === user?.id : true)) ||
     currentMonthReadings.filter(r => r.status === 'REJECTED').sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0];
 
-  // Determine if user can edit current month's reading
   const canEditCurrentReading = currentMonthReading &&
     currentMonthReading.status === 'PENDING' &&
     (!isAdmin() ? currentMonthReading.submittedBy === user?.id : true);
 
-  // For admin, they can always edit APPROVED readings (override)
   const canAdminOverride = isAdmin() && currentMonthReading && currentMonthReading.status === 'APPROVED';
 
-  // Check if we should allow creating a new reading
-  // - No readings exist for current month
-  // - Only REJECTED readings exist (user can resubmit)
-  // - User has REJECTED reading and wants to resubmit
   const hasApprovedReading = currentMonthReadings.some(r => r.status === 'APPROVED');
   const hasPendingReading = currentMonthReadings.some(r => r.status === 'PENDING' && (!isAdmin() ? r.submittedBy === user?.id : true));
   const canCreateNewReading = !hasApprovedReading && !hasPendingReading;
 
-  // console.log(previousReading)
+  const getPresignedURL = useGetPresignedURLMutation();
+  const uploadToS3 = useUploadToS3Mutation();
+  const submitMutation = useSubmitMeterReadingMutation();
+  const updateMutation = useUpdateMeterReadingMutation();
 
-  const uploadMutation = useUploadMeterPhotoMutation();
-  const getPresignedURL = useGetPresignedURLMutation()
-  const uploadToS3 = useUploadToS3Mutation()
-
-  // Get available rooms for the user
   const availableRooms = isAdmin()
     ? rooms
     : (userRoomId && rooms ? rooms.filter(room => room.id === userRoomId) : []);
 
-  // Auto-select room for regular users when user data loads
   useEffect(() => {
     if (!isAdmin() && userRoomId && !selectedRoomId) {
       setSelectedRoomId(userRoomId);
     }
   }, [isAdmin, userRoomId, selectedRoomId]);
 
-  // Pre-fill form with current month reading if it exists and is editable
   useEffect(() => {
     if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
       form.setFieldsValue({
@@ -150,7 +90,6 @@ export const MeterReadingsPage: React.FC = () => {
       setWaterPhotoUrl(currentMonthReading.waterPhotoUrl || '');
       setElectricityPhotoUrl(currentMonthReading.electricityPhotoUrl || '');
 
-      // Calculate bill with existing values
       if (previousReading && currentRoom) {
         calculateBill(
           toNumber(currentMonthReading.waterReading),
@@ -158,7 +97,6 @@ export const MeterReadingsPage: React.FC = () => {
         );
       }
     } else if (canCreateNewReading) {
-      // Clear form when user can create new reading (no editable reading exists)
       form.resetFields();
       setWaterPhotoUrl('');
       setElectricityPhotoUrl('');
@@ -188,10 +126,9 @@ export const MeterReadingsPage: React.FC = () => {
   const calculateBill = (waterReading: number, electricityReading: number) => {
     if (!previousReading || !currentRoom) return;
 
-    // Convert string values to numbers for calculations
     const prevWaterReading = toNumber(previousReading.waterReading);
     const prevElectricityReading = toNumber(previousReading.electricityReading);
-    const baseRent = toNumber(currentRoom.baseRent); // Use current room's base rent
+    const baseRent = toNumber(currentRoom.baseRent);
 
     const waterUsage = Math.max(0, waterReading - prevWaterReading);
     const electricityUsage = Math.max(0, electricityReading - prevElectricityReading);
@@ -199,10 +136,7 @@ export const MeterReadingsPage: React.FC = () => {
     const waterCost = waterUsage * waterRate;
     const electricityCost = electricityUsage * electricityRate;
 
-    // console.log('Calculation:', { waterCost, electricityCost, baseRent, trashFee });
-
     const total = waterCost + electricityCost + baseRent + trashFee;
-    // console.log('Total:', total);
     setCalculatedBill({
       totalBill: total,
       electricityUsage: electricityUsage,
@@ -225,45 +159,21 @@ export const MeterReadingsPage: React.FC = () => {
         contentType: file.type,
         meterType: type,
         fileName: file.name
-      })
+      });
       if (presignedURL) {
         await uploadToS3.mutateAsync({
           presignedUrl: presignedURL,
           file: file
-        })
+        });
       }
-      // const uploadedUrl = await uploadMutation.mutateAsync({
-      //   file,
-      //   roomId: selectedRoomId,
-      //   meterType: type
-      // });
-      // if (type === 'water') {
-      //   setWaterPhotoUrl(uploadedUrl);
-      // } else {
-      //   setElectricityPhotoUrl(uploadedUrl);
-      // }
-      return false; // Prevent default upload behavior
+      return false;
     } catch (error) {
       console.error('Photo upload failed:', error);
       return false;
     }
   };
 
-  const handlePreview = async (file: UploadFile) => {
-    if (!file.url && !file.preview) {
-      file.preview = await getBase64(file.originFileObj as File);
-    }
-
-    setPreviewImage(file.url || (file.preview as string));
-    setPreviewOpen(true);
-    setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
-  };
-
-  const submitMutation = useSubmitMeterReadingMutation();
-
-  const updateMutation = useUpdateMeterReadingMutation();
-
-  const handleSubmit = async (values: ReadingFormData) => {
+  const handleSubmit = async (values: any) => {
     if (!selectedRoomId) {
       console.error('No room selected');
       return;
@@ -281,20 +191,17 @@ export const MeterReadingsPage: React.FC = () => {
       };
 
       if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
-        // Update existing reading (PENDING or admin override on APPROVED)
         await updateMutation.mutateAsync({
           readingId: currentMonthReading.id,
           data: submissionData
         });
       } else if (canCreateNewReading) {
-        // Create new reading (no editable reading exists)
         await submitMutation.mutateAsync(submissionData);
       } else {
         console.error('Cannot submit: no valid action available');
         return;
       }
 
-      // Reset form after successful submission only if creating new reading
       if (canCreateNewReading && !currentMonthReading) {
         form.resetFields();
         setWaterPhotoUrl('');
@@ -308,37 +215,23 @@ export const MeterReadingsPage: React.FC = () => {
     }
   };
 
-
-
-  // Show loading spinner for users when their room is pre-selected and readings are loading
   if (!isAdmin() && selectedRoomId && readingLoading) {
     return (
       <PageErrorBoundary>
         <div className="space-y-4">
-          {/* Header */}
           <div>
             <Title level={3} className="mb-1">Meter Readings</Title>
             <Text className="text-gray-600">
               Submit monthly utility readings with photos
             </Text>
           </div>
-
-          {/* Room Selection - Show selected room */}
-          <Card title="Your Room" size="small">
-            <Select
-              className="w-full"
-              value={selectedRoomId}
-              disabled={true}
-            >
-              {availableRooms?.map((room) => (
-                <Option key={room.id} value={room.id}>
-                  Room {room.roomNumber} - Floor {room.floor}
-                </Option>
-              ))}
-            </Select>
-          </Card>
-
-          {/* Loading Spinner */}
+          <RoomSelector
+            rooms={availableRooms}
+            selectedRoomId={selectedRoomId}
+            onRoomChange={handleRoomChange}
+            isAdmin={isAdmin()}
+            userRoomId={userRoomId}
+          />
           <LoadingSpinner message="Loading previous readings..." />
         </div>
       </PageErrorBoundary>
@@ -348,7 +241,6 @@ export const MeterReadingsPage: React.FC = () => {
   return (
     <PageErrorBoundary>
       <div className="space-y-4">
-        {/* Header */}
         <div>
           <Title level={3} className="mb-1">Meter Readings</Title>
           <Text className="text-gray-600">
@@ -356,165 +248,47 @@ export const MeterReadingsPage: React.FC = () => {
           </Text>
         </div>
 
-        {/* Room Selection */}
-        <Card title={isAdmin() ? "Select Room" : "Your Room"} size="small">
-          <Select
-            placeholder={isAdmin() ? "Choose a room" : "Your assigned room"}
-            className="w-full"
-            value={selectedRoomId}
-            onChange={handleRoomChange}
-            disabled={!isAdmin()}
-            loading={!isAdmin() && !selectedRoomId && !userRoomId} // Show loading for users without room assignment
-          >
-            {availableRooms?.map((room) => (
-              <Option key={room.id} value={room.id}>
-                Room {room.roomNumber} - Floor {room.floor}
-              </Option>
-            ))}
-          </Select>
-          {!isAdmin() && !userRoomId && (
-            <div className="mt-2 text-sm text-gray-500">
-              You are not assigned to any room as a tenant. Contact your administrator.
-            </div>
-          )}
-        </Card>
+        <RoomSelector
+          rooms={availableRooms}
+          selectedRoomId={selectedRoomId}
+          onRoomChange={handleRoomChange}
+          isAdmin={isAdmin()}
+          userRoomId={userRoomId}
+        />
 
-        {/* Admin: Show message when no room is selected */}
         {isAdmin() && !selectedRoomId && (
           <Card size="small">
             <div className="text-center py-8 text-gray-500">
-              <CalculatorOutlined className="text-4xl mb-4" />
               <div className="text-lg mb-2">Select a Room</div>
               <div className="text-sm">Choose a room from the dropdown above to view and manage meter readings.</div>
             </div>
           </Card>
         )}
 
-        {/* Show content when room is selected and data is loaded */}
         {selectedRoomId && availableRooms && availableRooms.length > 0 && (
           <>
-            {/* Show loading spinner when readings are being fetched */}
             {readingLoading ? (
               <Card size="small">
                 <LoadingSpinner message="Loading meter readings..." />
               </Card>
             ) : (
               <>
-                {/* Current Month Reading Status */}
                 {currentMonthReading && (
-                  <Card
-                    title={`Current Month Reading (${currentMonth}/${currentYear})`}
-                    size="small"
-                    className={
-                      currentMonthReading.status === 'APPROVED' ? 'border-green-200 bg-green-50' :
-                        currentMonthReading.status === 'REJECTED' ? 'border-red-200 bg-red-50' :
-                          'border-orange-200 bg-orange-50'
-                    }
-                    extra={
-                      currentMonthReadings.length > 1 && (
-                        <span className="text-xs text-gray-500">
-                          {currentMonthReadings.length} submissions
-                        </span>
-                      )
-                    }
-                  >
-                    <Row gutter={16}>
-                      <Col span={8}>
-                        <Statistic
-                          title="Water"
-                          value={toNumber(currentMonthReading.waterReading)}
-                          precision={1}
-                          suffix="units"
-                        />
-                      </Col>
-                      <Col span={8}>
-                        <Statistic
-                          title="Electricity"
-                          value={toNumber(currentMonthReading.electricityReading)}
-                          precision={1}
-                          suffix="units"
-                        />
-                      </Col>
-                      <Col span={8}>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-500 mb-1">Status</div>
-                          <div className={`font-bold ${currentMonthReading.status === 'APPROVED' ? 'text-green-500' : currentMonthReading.status === 'REJECTED' ? 'text-red-500' : 'text-orange-500'}`}>
-                            {currentMonthReading.status.toUpperCase()}
-                          </div>
-                        </div>
-                      </Col>
-                    </Row>
-
-                    {currentMonthReading.status === 'APPROVED' && !isAdmin() && (
-                      <Alert
-                        message="Reading Approved"
-                        description="This reading has been approved and cannot be modified. Contact admin if changes are needed."
-                        type="success"
-                        showIcon
-                        className="mt-3"
-                      />
-                    )}
-
-                    {currentMonthReading.status === 'REJECTED' && (
-                      <Alert
-                        message="Reading Rejected"
-                        description={`This reading was rejected. ${canCreateNewReading ? 'You can submit a new reading below.' : 'Please wait for admin review of other submissions.'}`}
-                        type="error"
-                        showIcon
-                        className="mt-3"
-                      />
-                    )}
-
-                    {currentMonthReading.status === 'PENDING' && (
-                      <Alert
-                        message="Pending Approval"
-                        description="This reading is waiting for admin approval. You can still modify it until it's approved."
-                        type="warning"
-                        showIcon
-                        className="mt-3"
-                      />
-                    )}
-
-                    {canAdminOverride && (
-                      <Alert
-                        message="Admin Override Available"
-                        description="As an admin, you can modify this approved reading. Changes will be logged in the modification history."
-                        type="info"
-                        showIcon
-                        className="mt-3"
-                      />
-                    )}
-                  </Card>
+                  <CurrentMonthReadingCard
+                    reading={currentMonthReading}
+                    currentMonth={currentMonth}
+                    currentYear={currentYear}
+                    submissionCount={currentMonthReadings.length}
+                    isAdmin={isAdmin()}
+                    canAdminOverride={canAdminOverride}
+                    canCreateNewReading={canCreateNewReading}
+                  />
                 )}
 
-                {/* Previous Reading Info */}
                 {previousReading && previousReading.id !== currentMonthReading?.id && (
-                  <Card title="Previous Reading" size="small">
-                    <Row gutter={16}>
-                      <Col span={12}>
-                        <Statistic
-                          title="Water"
-                          value={toNumber(previousReading.waterReading)}
-                          precision={1}
-                          suffix="units"
-                        />
-                      </Col>
-                      <Col span={12}>
-                        <Statistic
-                          title="Electricity"
-                          value={toNumber(previousReading.electricityReading)}
-                          precision={1}
-                          suffix="units"
-                        />
-                      </Col>
-                    </Row>
-                    <div className="mt-2 text-xs text-gray-500">
-                      From: {new Date(previousReading.submittedAt).toLocaleDateString()}
-                    </div>
-                  </Card>
+                  <PreviousReadingCard reading={previousReading} />
                 )}
 
-                {/* Reading History Button */}
                 <Card size="small">
                   <Button
                     icon={<HistoryOutlined />}
@@ -526,7 +300,6 @@ export const MeterReadingsPage: React.FC = () => {
                   </Button>
                 </Card>
 
-                {/* Reading History Modal */}
                 <ReadingHistoryModal
                   visible={showHistoryModal}
                   onClose={() => setShowHistoryModal(false)}
@@ -535,195 +308,29 @@ export const MeterReadingsPage: React.FC = () => {
                   roomNumber={currentRoom?.roomNumber}
                 />
 
-                {/* Reading Input Form */}
-                <Card
-                  title={
-                    canAdminOverride
-                      ? "Current Month Reading (Admin Override)"
-                      : canEditCurrentReading
-                        ? "Edit Current Month Reading"
-                        : canCreateNewReading
-                          ? "Submit New Reading"
-                          : "Current Month Reading"
-                  }
-                  size="small"
-                >
-                  {hasApprovedReading && !canAdminOverride ? (
-                    <Alert
-                      message="Reading Already Approved"
-                      description="An approved reading exists for this month and cannot be modified."
-                      type="success"
-                      showIcon
-                      className="mb-4"
-                    />
-                  ) : hasPendingReading && !canEditCurrentReading && !canCreateNewReading ? (
-                    <Alert
-                      message="Reading Pending Review"
-                      description="A reading is currently pending admin approval. You cannot submit another until it's reviewed."
-                      type="warning"
-                      showIcon
-                      className="mb-4"
-                    />
-                  ) : null}
+                <MeterReadingForm
+                  form={form}
+                  previousReading={previousReading}
+                  currentRoom={currentRoom || null}
+                  waterPhotoUrl={waterPhotoUrl}
+                  electricityPhotoUrl={electricityPhotoUrl}
+                  calculatedBill={calculatedBill}
+                  waterRate={waterRate}
+                  electricityRate={electricityRate}
+                  trashFee={trashFee}
+                  canEdit={!!canEditCurrentReading}
+                  canAdminOverride={canAdminOverride}
+                  canCreateNew={canCreateNewReading}
+                  hasApprovedReading={hasApprovedReading}
+                  hasPendingReading={hasPendingReading}
+                  selectedRoomId={selectedRoomId}
+                  uploadLoading={uploadToS3.isPending || getPresignedURL.isPending}
+                  submitLoading={submitMutation.isPending || updateMutation.isPending}
+                  onPhotoUpload={handlePhotoUpload}
+                  onSubmit={handleSubmit}
+                  onValuesChange={handleReadingChange}
+                />
 
-                  <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                    onValuesChange={handleReadingChange}
-                    disabled={!canEditCurrentReading && !canAdminOverride && !canCreateNewReading}
-                  >
-                    {/* Water Reading */}
-                    <Form.Item
-                      name="waterReading"
-                      label="Water Meter Reading"
-                      rules={[
-                        { required: true, message: 'Please enter water reading' },
-                        {
-                          validator: (_, value) => {
-                            if (previousReading && value < toNumber(previousReading.waterReading)) {
-                              return Promise.reject('Reading cannot be less than previous month');
-                            }
-                            return Promise.resolve();
-                          }
-                        }
-                      ]}
-                    >
-                      <InputNumber
-                        className="w-full"
-                        placeholder="Enter water reading"
-                        precision={1}
-                        min={0}
-                        step={0.1}
-                      />
-                    </Form.Item>
-
-                    {/* Water Photo Upload */}
-                    <Form.Item label="Water Meter Photo">
-                      <Upload
-                        accept="image/*"
-                        beforeUpload={(file) => handlePhotoUpload(file, 'water')}
-                        listType='picture-card'
-                        onPreview={handlePreview}
-                        disabled={uploadToS3.isPending || getPresignedURL.isPending || uploadMutation.isPending || !selectedRoomId}
-                      >
-                        <Button
-                          icon={<div className='flex flex-col justify-center items-center'>
-                            <PlusOutlined />
-                            Upload
-                          </div>}
-                          type='text'
-                          loading={uploadToS3.isPending || getPresignedURL.isPending}
-                          disabled={!selectedRoomId}
-                        >
-                        </Button>
-                      </Upload>
-                    </Form.Item>
-
-                    <Divider />
-
-                    {/* Electricity Reading */}
-                    <Form.Item
-                      name="electricityReading"
-                      label="Electricity Meter Reading"
-                      rules={[
-                        { required: true, message: 'Please enter electricity reading' },
-                        {
-                          validator: (_, value) => {
-                            if (previousReading && value < toNumber(previousReading.electricityReading)) {
-                              return Promise.reject('Reading cannot be less than previous month');
-                            }
-                            return Promise.resolve();
-                          }
-                        }
-                      ]}
-                    >
-                      <InputNumber
-                        className="w-full"
-                        placeholder="Enter electricity reading"
-                        precision={1}
-                        min={0}
-                        step={0.1}
-                      />
-                    </Form.Item>
-
-                    {/* Electricity Photo Upload */}
-                    <Form.Item label="Electricity Meter Photo">
-                      <Upload
-                        accept="image/*"
-                        beforeUpload={(file) => handlePhotoUpload(file, 'electricity')}
-                        listType='picture-card'
-                        onPreview={handlePreview}
-                        showUploadList={{previewIcon: true}}
-                        disabled={uploadToS3.isPending || getPresignedURL.isPending || uploadMutation.isPending || !selectedRoomId}
-                      >
-                        <Button
-                          icon={<div className='flex flex-col justify-center items-center'>
-                            <PlusOutlined />
-                            Upload
-                          </div>}
-                          type='text'
-                          loading={uploadToS3.isPending || getPresignedURL.isPending}
-                          disabled={!selectedRoomId}
-                        >
-                        </Button>
-                      </Upload>
-                    </Form.Item>
-
-                    {/* Bill Calculation */}
-                    {calculatedBill.totalBill > 0 && (
-                      <Card className="bg-blue-50 border-blue-200" size="small">
-                        <div className="text-center">
-                          <CalculatorOutlined className="text-2xl text-blue-500 mb-2" />
-                          <Statistic
-                            title="Calculated Monthly Bill"
-                            value={calculatedBill.totalBill}
-                            precision={0}
-                            suffix="VNĐ"
-                            valueStyle={{ color: '#1890ff', fontSize: '24px' }}
-                          />
-                          <div>Electricity: {calculatedBill.electricityUsage} kWh x {electricityRate.toLocaleString()} = {calculatedBill.electricityBill.toLocaleString()} VNĐ</div>
-                          <div>Water: {calculatedBill.waterUsage} m³ x {waterRate.toLocaleString()} = {calculatedBill.waterBill.toLocaleString()} VNĐ</div>
-                          <div>Trash fee: {trashFee.toLocaleString()} VNĐ</div>
-                          <div>Base rent: {currentRoom ? Number(currentRoom.baseRent).toLocaleString() : 'Loading...'} VNĐ</div>
-                          <div className="text-xs text-gray-600 mt-2">
-                            Including base rent, utilities, and trash fee
-                          </div>
-                        </div>
-                      </Card>
-                    )}
-
-                    {/* Submit Button */}
-                    <Form.Item className="mt-6">
-                      <Button
-                        type="primary"
-                        htmlType="submit"
-                        icon={<SaveOutlined />}
-                        className="w-full"
-                        size="large"
-                        loading={submitMutation.isPending || updateMutation.isPending}
-                        disabled={
-                          (!canEditCurrentReading && !canAdminOverride && !canCreateNewReading) ||
-                          !waterPhotoUrl || uploadToS3.isPending || getPresignedURL.isPending ||
-                          !electricityPhotoUrl ||
-                          submitMutation.isPending ||
-                          updateMutation.isPending
-                        }
-                      >
-                        {canAdminOverride
-                          ? 'Update Reading (Admin Override)'
-                          : canEditCurrentReading
-                            ? 'Update Reading'
-                            : canCreateNewReading
-                              ? 'Submit New Reading'
-                              : 'Cannot Submit'
-                        }
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                </Card>
-
-                {/* Info Alert */}
                 <Alert
                   message="Reading Submission Guidelines"
                   description="Please ensure photos are clear and show the complete meter display. Readings cannot be less than the previous month's values."
@@ -735,16 +342,6 @@ export const MeterReadingsPage: React.FC = () => {
             )}
           </>
         )}
-
-        <Modal
-          open={previewOpen}
-          title={previewTitle}
-          footer={null}
-          onCancel={() => setPreviewOpen(false)}
-        >
-          <Image alt="preview" style={{ width: '100%' }} src={previewImage} />
-        </Modal>
-
       </div>
     </PageErrorBoundary>
   );
