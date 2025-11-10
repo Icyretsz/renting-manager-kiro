@@ -23,6 +23,9 @@ import {
   HistoryOutlined
 } from '@ant-design/icons';
 import { MeterReading } from '@/types';
+import { getS3ImageFromFileName } from '@/utils/getS3ImageFromFileName';
+import { useGetPresignedURLMutation } from '@/hooks/useFileUpload';
+import { LoadingSpinner } from '../Loading';
 
 const { Text } = Typography;
 
@@ -49,7 +52,7 @@ const getActorInfo = (mod: any, reading: MeterReading) => {
         role: reading.approver.role,
         roomId: reading.approver.tenant?.roomId
       } : { name: 'Unknown', role: 'Unknown', roomId: null };
-    
+
     case 'reject':
       // For reject actions, use the modifier information
       return mod.modifier ? {
@@ -57,7 +60,7 @@ const getActorInfo = (mod: any, reading: MeterReading) => {
         role: mod.modifier.role,
         roomId: mod.modifier.tenant?.roomId
       } : { name: 'Unknown', role: 'Unknown', roomId: null };
-    
+
     case 'create':
       // For create actions, use the submitter information
       return reading.submitter ? {
@@ -65,7 +68,7 @@ const getActorInfo = (mod: any, reading: MeterReading) => {
         role: reading.submitter.role,
         roomId: reading.submitter.tenant?.roomId
       } : { name: 'Unknown', role: 'Unknown', roomId: null };
-    
+
     default:
       // For update and other actions, use the modifier information
       return mod.modifier ? {
@@ -143,8 +146,30 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
   const endIndex = startIndex + pageSize;
   const paginatedReadings = readingsWithUsage.slice(startIndex, endIndex);
 
-  const ReadingCard: React.FC<{ reading: MeterReading & { waterUsage: number; electricityUsage: number; isFirstReading: boolean } }> = ({ reading }) => (
-    <Card 
+  const ReadingCard: React.FC<{ reading: MeterReading & { waterUsage: number; electricityUsage: number; isFirstReading: boolean } }> = ({ reading }) => {
+    const [waterPhotoURL, setWaterPhotoURL] = useState<string>('');
+    const [electricityPhotoURL, setElectricityPhotoURL] = useState<string>('');
+    const {mutateAsync: getPresignedURL, isPending} = useGetPresignedURLMutation()
+
+    React.useEffect(() => {
+      const loadImages = async () => {
+        if (waterPhotoURL !== '' || electricityPhotoURL !== '') return
+        if (reading.waterPhotoUrl) {
+          const waterUrl = await getPresignedURL({operation: 'get', roomNumber: reading.roomId.toString(), contentType: undefined, meterType: 'water', fileName: reading.waterPhotoUrl});
+          setWaterPhotoURL(waterUrl.url || '');
+          console.log(waterUrl)
+        }
+        if (reading.electricityPhotoUrl) {
+          const electricityUrl = await getPresignedURL({operation: 'get', roomNumber: reading.roomId.toString(), contentType: undefined, meterType: 'electricity', fileName: reading.electricityPhotoUrl});
+          setElectricityPhotoURL(electricityUrl.url || '');
+          console.log(electricityUrl)
+        }
+        
+      };
+      loadImages();
+    }, [reading.roomId, reading.waterPhotoUrl, reading.electricityPhotoUrl]);
+
+    return (<Card
       className="mb-4 shadow-sm hover:shadow-md transition-shadow"
       size="small"
     >
@@ -196,10 +221,10 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
         <Col xs={12} sm={6}>
           <div className="text-center p-2 bg-red-50 flex flex-col gap-2 rounded">
             <Space size="small" className="flex justify-center">
-              {reading.waterPhotoUrl && (
+              {!isPending ? (
                 <Tooltip title="Water meter photo">
                   <Image
-                    src={reading.waterPhotoUrl}
+                    src={waterPhotoURL}
                     alt="Water meter"
                     width={24}
                     height={24}
@@ -209,11 +234,11 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     }}
                   />
                 </Tooltip>
-              )}
-              {reading.electricityPhotoUrl && (
+              ) : <LoadingSpinner />}
+              {!isPending ? (
                 <Tooltip title="Electricity meter photo">
                   <Image
-                    src={reading.electricityPhotoUrl}
+                    src={electricityPhotoURL}
                     alt="Electricity meter"
                     width={24}
                     height={24}
@@ -223,7 +248,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     }}
                   />
                 </Tooltip>
-              )}
+              ) : <LoadingSpinner />}
             </Space>
             <Text type="secondary" className="text-xs block">Photos</Text>
           </div>
@@ -274,7 +299,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     )}
                   </Col>
                 </Row>
-                
+
                 {/* Modification History */}
                 {reading.modifications && reading.modifications.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
@@ -314,7 +339,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     </div>
                   </div>
                 )}
-                
+
                 {reading.approvedAt && (
                   <div className="mt-2 text-xs text-gray-500">
                     Approved on: {new Date(reading.approvedAt).toLocaleDateString()}
@@ -326,7 +351,8 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
         ]}
       />
     </Card>
-  );
+    )
+  };
 
   return (
     <Modal
@@ -356,7 +382,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
             <Text type="secondary">Loading reading history...</Text>
           </div>
         ) : readingsWithUsage.length === 0 ? (
-          <Empty 
+          <Empty
             description="No reading history found"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
@@ -365,7 +391,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
             {paginatedReadings.map((reading) => (
               <ReadingCard key={reading.id} reading={reading} />
             ))}
-            
+
             {readingsWithUsage.length > pageSize && (
               <div className="text-center mt-4">
                 <Pagination
@@ -374,7 +400,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                   pageSize={pageSize}
                   onChange={setCurrentPage}
                   showSizeChanger={false}
-                  showTotal={(total, range) => 
+                  showTotal={(total, range) =>
                     `${range[0]}-${range[1]} of ${total} readings`
                   }
                   size="small"
