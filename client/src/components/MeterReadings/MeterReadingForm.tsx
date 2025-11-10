@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import React, { useState } from 'react';
 import { Card, Form, InputNumber, Button, Upload, Divider, Alert, Modal, Image, UploadFile } from 'antd';
 import { SaveOutlined, PlusOutlined } from '@ant-design/icons';
 import { MeterReading, MeterType, Room } from '@/types';
@@ -13,8 +13,6 @@ interface MeterReadingFormProps {
   form: any;
   previousReading: MeterReading | null;
   currentRoom: Room | null;
-  waterPhotoUrl: string;
-  electricityPhotoUrl: string;
   calculatedBill: {
     totalBill: number;
     electricityUsage: number;
@@ -36,18 +34,16 @@ interface MeterReadingFormProps {
   onPhotoUpload: (file: File, type: MeterType) => Promise<boolean>;
   onSubmit: (values: any) => Promise<void>;
   onValuesChange: () => void;
-  waterPhotoList: string[],
-  electricityPhotoList: string[]
-  setWaterPhotoList: Dispatch<SetStateAction<string[]>>,
-  setElectricityPhotoList: Dispatch<SetStateAction<string[]>>,
+  waterPhotoList: UploadFile[];
+  setWaterPhotoList: (waterPhotoList: React.SetStateAction<UploadFile[]>) => void;
+  electricityPhotoList: UploadFile[];
+  setElectricityPhotoList: (electricityPhotoList: React.SetStateAction<UploadFile[]>) => void;
 }
 
 export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   form,
   previousReading,
   currentRoom,
-  waterPhotoUrl,
-  electricityPhotoUrl,
   calculatedBill,
   waterRate,
   electricityRate,
@@ -64,8 +60,8 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   onSubmit,
   onValuesChange,
   waterPhotoList,
-  electricityPhotoList,
   setWaterPhotoList,
+  electricityPhotoList,
   setElectricityPhotoList
 }) => {
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -82,20 +78,20 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
     setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
   };
 
+  const handleWaterChange = ({ fileList }: { fileList: UploadFile[] }) => {
+    setWaterPhotoList(fileList);
+  };
+
+  const handleElectricityChange = ({ fileList }: { fileList: UploadFile[] }) => {
+    setElectricityPhotoList(fileList);
+  };
+
   const getTitle = () => {
     if (canAdminOverride) return "Current Month Reading (Admin Override)";
     if (canEdit) return "Edit Current Month Reading";
     if (canCreateNew) return "Submit New Reading";
     return "Current Month Reading";
   };
-
-  const handleOnRemove = (type : MeterType)  => {
-    if (type === 'water' && waterPhotoList.length > 0) {
-      setWaterPhotoList([])
-    } else if (type === 'electricity' && electricityPhotoList.length > 0) {
-      setElectricityPhotoList([])
-    }
-  }
 
   return (
     <>
@@ -155,20 +151,26 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
             <Upload
               accept="image/*"
               beforeUpload={(file) => onPhotoUpload(file, 'water')}
-              listType='picture-card'
+              listType="picture"
+              fileList={waterPhotoList}
+              onChange={handleWaterChange}
               onPreview={handlePreview}
-              onRemove={() => handleOnRemove('water')}
-              disabled={uploadLoading || !selectedRoomId || waterPhotoList.length === 1}
+              disabled={uploadLoading || !selectedRoomId}
+              maxCount={1}
             >
-              <Button
-                icon={<div className='flex flex-col justify-center items-center'>
-                  <PlusOutlined />
-                  Upload
-                </div>}
-                type='text'
-                loading={uploadLoading}
-                disabled={uploadLoading || !selectedRoomId || waterPhotoList.length === 1}
-              />
+              {waterPhotoList.length === 0 && (
+                <Button
+                  type="dashed"
+                  className="h-[50px] w-full"
+                  loading={uploadLoading}
+                  disabled={uploadLoading || !selectedRoomId}
+                >
+                  <div className="flex flex-col justify-center items-center">
+                    <PlusOutlined />
+                    Upload
+                  </div>
+                </Button>
+              )}
             </Upload>
           </Form.Item>
 
@@ -204,20 +206,26 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
             <Upload
               accept="image/*"
               beforeUpload={(file) => onPhotoUpload(file, 'electricity')}
-              listType='picture-card'
+              listType="picture"
+              fileList={electricityPhotoList}
+              onChange={handleElectricityChange}
               onPreview={handlePreview}
-              showUploadList={{ previewIcon: true }}
               disabled={uploadLoading || !selectedRoomId}
+              maxCount={1}
             >
-              <Button
-                icon={<div className='flex flex-col justify-center items-center'>
-                  <PlusOutlined />
-                  Upload
-                </div>}
-                type='text'
-                loading={uploadLoading}
-                disabled={!selectedRoomId}
-              />
+              {electricityPhotoList.length === 0 && (
+                <Button
+                  type="dashed"
+                  className="h-[50px] w-full"
+                  loading={uploadLoading}
+                  disabled={uploadLoading || !selectedRoomId}
+                >
+                  <div className="flex flex-col justify-center items-center">
+                    <PlusOutlined />
+                    Upload
+                  </div>
+                </Button>
+              )}
             </Upload>
           </Form.Item>
 
@@ -243,9 +251,9 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
               loading={submitLoading}
               disabled={
                 (!canEdit && !canAdminOverride && !canCreateNew) ||
-                !waterPhotoUrl ||
+                waterPhotoList.length === 0 ||
+                electricityPhotoList.length === 0 ||
                 uploadLoading ||
-                !electricityPhotoUrl ||
                 submitLoading
               }
             >

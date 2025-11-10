@@ -245,7 +245,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 
 export interface ImageUploadPresignedURLType {
   url: string,
-  filename: string
+  fileName: string
 }
   
 export type MeterType = 'water' | 'electricity'

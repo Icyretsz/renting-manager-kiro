@@ -24,7 +24,7 @@ export const createReading = async (req: AuthenticatedRequest, res: Response, ne
       }
 
       const { roomId, month, year, waterReading, electricityReading, waterPhotoUrl, electricityPhotoUrl } = req.body;
-
+      console.log('body', req.body)
       const reading = await meterReadingService.createMeterReading({
         roomId: parseInt(roomId),
         month: parseInt(month),

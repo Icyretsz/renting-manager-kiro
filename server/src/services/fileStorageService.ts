@@ -323,7 +323,7 @@ export const createPresignedUrlWithClient = async (
     } else {
       command = new GetObjectCommand({
         Bucket: bucket,
-        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}/${roomNumber}/${fileName}`,
+        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}${roomNumber}/${fileName}`,
       })
       const expiresIn = 1800
       const url = await getSignedUrl(s3Client, command, { expiresIn })

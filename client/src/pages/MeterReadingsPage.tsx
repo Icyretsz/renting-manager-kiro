@@ -15,6 +15,7 @@ import {
   PreviousReadingCard,
   MeterReadingForm
 } from '@/components/MeterReadings';
+import { UploadFile } from 'antd/es/upload';
 
 const { Title, Text } = Typography;
 
@@ -35,15 +36,19 @@ export const MeterReadingsPage: React.FC = () => {
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(
     !isAdmin() && userRoomId ? userRoomId : null
   );
-  const [waterPhotoUrl, setWaterPhotoUrl] = useState<string>('');
-  const [electricityPhotoUrl, setElectricityPhotoUrl] = useState<string>('');
+  
+  // Store filenames only (what goes to DB)
+  const [waterPhotoName, setWaterPhotoName] = useState<string>('');
+  const [electricityPhotoName, setElectricityPhotoName] = useState<string>('');
+  
+  // Store file lists for Ant Design Upload component
+  const [waterPhotoList, setWaterPhotoList] = useState<UploadFile[]>([]);
+  const [electricityPhotoList, setElectricityPhotoList] = useState<UploadFile[]>([]);
+  
   const [calculatedBill, setCalculatedBill] = useState({
     totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
   });
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-
-  const [waterPhotoList, setWaterPhotoList] = useState<string[]>([])
-  const [electricityPhotoList, setElectricityPhotoList] = useState<string[]>([])
 
   const { data: readings, isLoading: readingLoading } = useMeterReadingsQuery(selectedRoomId || 0);
   const { data: currentRoom } = useRoomQuery(selectedRoomId || 0);
@@ -78,6 +83,32 @@ export const MeterReadingsPage: React.FC = () => {
     ? rooms
     : (userRoomId && rooms ? rooms.filter(room => room.id === userRoomId) : []);
 
+  // Helper function to create UploadFile from filename (for fetching existing photos)
+  const createUploadFileFromName = async (fileName: string, type: 'water' | 'electricity'): Promise<UploadFile | null> => {
+    if (!fileName || !selectedRoomId) return null;
+    
+    try {
+      // Fetch presigned GET URL to display the existing photo
+      const presignedURL = await getPresignedURL.mutateAsync({
+        operation: 'get',
+        roomNumber: selectedRoomId.toString(),
+        contentType: undefined, // Not needed for GET operations
+        meterType: type,
+        fileName: fileName
+      });
+      
+      return {
+        uid: fileName,
+        name: fileName,
+        status: 'done',
+        url: presignedURL.url,
+      };
+    } catch (error) {
+      console.error('Failed to fetch presigned GET URL:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!isAdmin() && userRoomId && !selectedRoomId) {
       setSelectedRoomId(userRoomId);
@@ -85,35 +116,55 @@ export const MeterReadingsPage: React.FC = () => {
   }, [isAdmin, userRoomId, selectedRoomId]);
 
   useEffect(() => {
-    if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
-      form.setFieldsValue({
-        waterReading: toNumber(currentMonthReading.waterReading),
-        electricityReading: toNumber(currentMonthReading.electricityReading),
-      });
-      setWaterPhotoUrl(currentMonthReading.waterPhotoUrl || '');
-      setElectricityPhotoUrl(currentMonthReading.electricityPhotoUrl || '');
+    const loadExistingPhotos = async () => {
+      if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
+        form.setFieldsValue({
+          waterReading: toNumber(currentMonthReading.waterReading),
+          electricityReading: toNumber(currentMonthReading.electricityReading),
+        });
+        
+        // Set filenames from DB
+        const waterFileName = currentMonthReading.waterPhotoUrl || ''; // Will be waterPhotoName after DB migration
+        const electricityFileName = currentMonthReading.electricityPhotoUrl || ''; // Will be electricityPhotoName after DB migration
+        
+        setWaterPhotoName(waterFileName);
+        setElectricityPhotoName(electricityFileName);
+        
+        // Create file lists for Upload component (fetch presigned GET URLs)
+        const waterFile = await createUploadFileFromName(waterFileName, 'water');
+        const electricityFile = await createUploadFileFromName(electricityFileName, 'electricity');
+        
+        setWaterPhotoList(waterFile ? [waterFile] : []);
+        setElectricityPhotoList(electricityFile ? [electricityFile] : []);
 
-      if (previousReading && currentRoom) {
-        calculateBill(
-          toNumber(currentMonthReading.waterReading),
-          toNumber(currentMonthReading.electricityReading)
-        );
+        if (previousReading && currentRoom) {
+          calculateBill(
+            toNumber(currentMonthReading.waterReading),
+            toNumber(currentMonthReading.electricityReading)
+          );
+        }
+      } else if (canCreateNewReading) {
+        form.resetFields();
+        setWaterPhotoName('');
+        setElectricityPhotoName('');
+        setWaterPhotoList([]);
+        setElectricityPhotoList([]);
+        setCalculatedBill({
+          totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+        });
       }
-    } else if (canCreateNewReading) {
-      form.resetFields();
-      setWaterPhotoUrl('');
-      setElectricityPhotoUrl('');
-      setCalculatedBill({
-        totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
-      });
-    }
+    };
+    
+    loadExistingPhotos();
   }, [currentMonthReading, canEditCurrentReading, canAdminOverride, canCreateNewReading, form, previousReading, currentRoom]);
 
   const handleRoomChange = (roomId: number) => {
     setSelectedRoomId(roomId);
     form.resetFields(['waterReading', 'electricityReading']);
-    setWaterPhotoUrl('');
-    setElectricityPhotoUrl('');
+    setWaterPhotoName('');
+    setElectricityPhotoName('');
+    setWaterPhotoList([]);
+    setElectricityPhotoList([]);
     setCalculatedBill({
       totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
     });
@@ -149,13 +200,14 @@ export const MeterReadingsPage: React.FC = () => {
     });
   };
 
-  const handlePhotoUpload = async (file: File, type: 'water' | 'electricity') => {
+  const handlePhotoUpload = async (file: File, type: 'water' | 'electricity'): Promise<boolean> => {
     if (!selectedRoomId) {
       console.error('No room selected');
       return false;
     }
 
     try {
+      // Get presigned URL for upload
       const presignedURL = await getPresignedURL.mutateAsync({
         operation: 'put',
         roomNumber: selectedRoomId.toString(),
@@ -163,18 +215,37 @@ export const MeterReadingsPage: React.FC = () => {
         meterType: type,
         fileName: file.name
       });
+      
       if (presignedURL) {
+        // Upload to S3
         await uploadToS3.mutateAsync({
           presignedUrl: presignedURL.url,
           file: file
         });
+        
+        // Store the filename from the presigned URL response
+        const fileName = presignedURL.fileName;
+        
         if (type === 'water') {
-          setWaterPhotoList([presignedURL.filename])
+          setWaterPhotoName(fileName);
+          setWaterPhotoList([{
+            uid: fileName,
+            name: file.name, // Display original filename
+            status: 'done',
+            url: presignedURL.url.split('?')[0], // Remove query params to get clean URL
+          }]);
         } else {
-          setElectricityPhotoList([presignedURL.filename])
+          setElectricityPhotoName(fileName);
+          setElectricityPhotoList([{
+            uid: fileName,
+            name: file.name, // Display original filename
+            status: 'done',
+            url: presignedURL.url.split('?')[0],
+          }]);
         }
       }
-      return false;
+      
+      return false; // Return false to prevent Upload component from auto-uploading
     } catch (error) {
       console.error('Photo upload failed:', error);
       return false;
@@ -194,8 +265,8 @@ export const MeterReadingsPage: React.FC = () => {
         year: currentYear,
         waterReading: values.waterReading,
         electricityReading: values.electricityReading,
-        waterPhotoUrl,
-        electricityPhotoUrl,
+        waterPhotoUrl: waterPhotoName, // Will be waterPhotoName after DB migration
+        electricityPhotoUrl: electricityPhotoName, // Will be electricityPhotoName after DB migration
       };
 
       if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
@@ -212,8 +283,10 @@ export const MeterReadingsPage: React.FC = () => {
 
       if (canCreateNewReading && !currentMonthReading) {
         form.resetFields();
-        setWaterPhotoUrl('');
-        setElectricityPhotoUrl('');
+        setWaterPhotoName('');
+        setElectricityPhotoName('');
+        setWaterPhotoList([]);
+        setElectricityPhotoList([]);
         setCalculatedBill({
           totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
         });
@@ -320,8 +393,6 @@ export const MeterReadingsPage: React.FC = () => {
                   form={form}
                   previousReading={previousReading}
                   currentRoom={currentRoom || null}
-                  waterPhotoUrl={waterPhotoUrl}
-                  electricityPhotoUrl={electricityPhotoUrl}
                   calculatedBill={calculatedBill}
                   waterRate={waterRate}
                   electricityRate={electricityRate}
@@ -338,8 +409,8 @@ export const MeterReadingsPage: React.FC = () => {
                   onSubmit={handleSubmit}
                   onValuesChange={handleReadingChange}
                   waterPhotoList={waterPhotoList}
-                  electricityPhotoList={electricityPhotoList}
                   setWaterPhotoList={setWaterPhotoList}
+                  electricityPhotoList={electricityPhotoList}
                   setElectricityPhotoList={setElectricityPhotoList}
                 />
 
