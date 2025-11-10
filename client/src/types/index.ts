@@ -242,3 +242,10 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
     totalPages: number;
   };
 }
+
+export interface ImageUploadPresignedURLType {
+  url: string,
+  filename: string
+}
+  
+export type MeterType = 'water' | 'electricity'

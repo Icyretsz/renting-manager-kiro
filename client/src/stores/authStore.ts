@@ -8,7 +8,7 @@ interface AuthStore {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
-  manualLogout: () => void; // Explicit user logout
+  manualLogout: () => void;
   updateUser: (user: Partial<User>) => void;
   setToken: (token: string) => void;
 }
@@ -21,7 +21,6 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
 
       login: (token: string, user: User) => {
-        // Store user email in localStorage for unlinked error page
         if (user.email) {
           localStorage.setItem('userEmail', user.email);
         }
@@ -33,7 +32,6 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: () => {
-        // Internal logout - only clear app state, keep Auth0 session
         set({
           user: null,
           token: null,
@@ -42,15 +40,15 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       manualLogout: () => {
-        // Explicit user logout - clear everything including Auth0 session
         localStorage.removeItem('userEmail');
         set({
           user: null,
           token: null,
           isAuthenticated: false,
         });
-        // Clear Auth0 cache as well
-        localStorage.removeItem(`@@auth0spajs@@::${import.meta.env.VITE_AUTH0_CLIENT_ID}::${import.meta.env.VITE_AUTH0_AUDIENCE}::openid profile email`);
+        // Clear Auth0 cache
+        const auth0Key = `@@auth0spajs@@::${import.meta.env.VITE_AUTH0_CLIENT_ID}::${import.meta.env.VITE_AUTH0_AUDIENCE}::openid profile email`;
+        localStorage.removeItem(auth0Key);
       },
 
       updateUser: (userData: Partial<User>) => {
@@ -68,11 +66,12 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      // Persist user, auth state, and token for better session recovery
+      // CRITICAL FIX: Don't persist token - let Auth0 manage it
+      // This prevents stale token issues
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        token: state.token, // Persist token as backup to Auth0's localStorage
+        // token: state.token, // REMOVED - don't persist token
       }),
     }
   )

@@ -42,6 +42,9 @@ export const MeterReadingsPage: React.FC = () => {
   });
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
+  const [waterPhotoList, setWaterPhotoList] = useState<string[]>([])
+  const [electricityPhotoList, setElectricityPhotoList] = useState<string[]>([])
+
   const { data: readings, isLoading: readingLoading } = useMeterReadingsQuery(selectedRoomId || 0);
   const { data: currentRoom } = useRoomQuery(selectedRoomId || 0);
 
@@ -162,9 +165,14 @@ export const MeterReadingsPage: React.FC = () => {
       });
       if (presignedURL) {
         await uploadToS3.mutateAsync({
-          presignedUrl: presignedURL,
+          presignedUrl: presignedURL.url,
           file: file
         });
+        if (type === 'water') {
+          setWaterPhotoList([presignedURL.filename])
+        } else {
+          setElectricityPhotoList([presignedURL.filename])
+        }
       }
       return false;
     } catch (error) {
@@ -329,6 +337,10 @@ export const MeterReadingsPage: React.FC = () => {
                   onPhotoUpload={handlePhotoUpload}
                   onSubmit={handleSubmit}
                   onValuesChange={handleReadingChange}
+                  waterPhotoList={waterPhotoList}
+                  electricityPhotoList={electricityPhotoList}
+                  setWaterPhotoList={setWaterPhotoList}
+                  setElectricityPhotoList={setElectricityPhotoList}
                 />
 
                 <Alert

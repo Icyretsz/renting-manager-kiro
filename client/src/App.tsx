@@ -1,9 +1,6 @@
 import { ConfigProvider } from 'antd';
-import { QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
-import { queryClient } from '@/services/queryClient';
-import { AuthProvider } from '@/providers/AuthProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { MainLayout } from '@/components/Layout';
@@ -35,7 +32,7 @@ const AppContent = () => {
   // Initialize WebSocket notifications (this handles the connection internally)
   const { contextHolder } = useWebSocketNotifications(navigate);
 
-  // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser, storeAuthenticated });
+  // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser, storeAuthenticated, token});
 
   // Show loading while Auth0 is initializing
   if (isLoading) {
@@ -216,7 +213,6 @@ const AppContent = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
         <ConfigProvider
           theme={{
             token: {
@@ -225,12 +221,8 @@ function App() {
             },
           }}
         >
-          <AuthProvider>
             <AppContent />
-          </AuthProvider>
         </ConfigProvider>
-        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
-      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

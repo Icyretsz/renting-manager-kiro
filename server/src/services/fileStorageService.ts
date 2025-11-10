@@ -46,7 +46,7 @@ ensureDirectoriesExist();
 /**
  * Generate secure filename for meter photos
  */
-export const generateMeterPhotoFilename = (roomId: number, meterType: 'water' | 'electricity', originalName: string): string => {
+export const generateMeterPhotoFilename = (roomId: number, meterType: MeterType, originalName: string): string => {
   const timestamp = Date.now();
   const ext = path.extname(originalName).toLowerCase();
   const randomSuffix = Math.random().toString(36).substring(2, 8);
@@ -297,35 +297,38 @@ export const getStorageStats = async (): Promise<{
 export const createPresignedUrlWithClient = async (
   operation: Operation,
   roomNumber: string,
-  contentType: string,
-  meterType: MeterType,
-  fileName: string
-) => {
+  fileName: string,
+  contentType?: string,
+  meterType?: MeterType,
+): Promise<{ url: string, fileName: string } | null> => {
   const bucket = process.env['AWS_BUCKET_NAME']
 
   let command
 
   try {
-    if (operation === 'put') {
-      const filename = generateMeterPhotoFilename(
+    if (operation === 'put' && meterType) {
+      const generatedFilename = generateMeterPhotoFilename(
         Number(roomNumber),
         meterType,
         fileName
       );
       command = new PutObjectCommand({
         Bucket: bucket,
-        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}${roomNumber}/${filename}`,
+        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}${roomNumber}/${generatedFilename}`,
         ContentType: contentType || 'image/jpeg', // default type
       })
+      const expiresIn = 120
+      const url = await getSignedUrl(s3Client, command, { expiresIn })
+      return { url, fileName: generatedFilename }
     } else {
       command = new GetObjectCommand({
         Bucket: bucket,
-        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}/${roomNumber}`,
+        Key: `${process.env['AWS_BUCKET_BASE_DIRECTORY']}/${roomNumber}/${fileName}`,
       })
+      const expiresIn = 1800
+      const url = await getSignedUrl(s3Client, command, { expiresIn })
+      return { url, fileName }
     }
-
-    const expiresIn = operation === 'put' ? 120 : 1800
-    return getSignedUrl(s3Client, command, { expiresIn })
   } catch (error) {
     console.log('Error getting presigned-url: ', error)
     return null

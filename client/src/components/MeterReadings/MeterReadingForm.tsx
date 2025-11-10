@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { Dispatch, SetStateAction, useState } from 'react';
 import { Card, Form, InputNumber, Button, Upload, Divider, Alert, Modal, Image, UploadFile } from 'antd';
 import { SaveOutlined, PlusOutlined } from '@ant-design/icons';
-import { MeterReading, Room } from '@/types';
+import { MeterReading, MeterType, Room } from '@/types';
 import { BillCalculationCard } from './BillCalculationCard';
 import getBase64 from '@/utils/getBase64';
 
@@ -33,9 +33,13 @@ interface MeterReadingFormProps {
   selectedRoomId: number | null;
   uploadLoading: boolean;
   submitLoading: boolean;
-  onPhotoUpload: (file: File, type: 'water' | 'electricity') => Promise<boolean>;
+  onPhotoUpload: (file: File, type: MeterType) => Promise<boolean>;
   onSubmit: (values: any) => Promise<void>;
   onValuesChange: () => void;
+  waterPhotoList: string[],
+  electricityPhotoList: string[]
+  setWaterPhotoList: Dispatch<SetStateAction<string[]>>,
+  setElectricityPhotoList: Dispatch<SetStateAction<string[]>>,
 }
 
 export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
@@ -58,7 +62,11 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   submitLoading,
   onPhotoUpload,
   onSubmit,
-  onValuesChange
+  onValuesChange,
+  waterPhotoList,
+  electricityPhotoList,
+  setWaterPhotoList,
+  setElectricityPhotoList
 }) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
@@ -80,6 +88,14 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
     if (canCreateNew) return "Submit New Reading";
     return "Current Month Reading";
   };
+
+  const handleOnRemove = (type : MeterType)  => {
+    if (type === 'water' && waterPhotoList.length > 0) {
+      setWaterPhotoList([])
+    } else if (type === 'electricity' && electricityPhotoList.length > 0) {
+      setElectricityPhotoList([])
+    }
+  }
 
   return (
     <>
@@ -141,7 +157,8 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
               beforeUpload={(file) => onPhotoUpload(file, 'water')}
               listType='picture-card'
               onPreview={handlePreview}
-              disabled={uploadLoading || !selectedRoomId}
+              onRemove={() => handleOnRemove('water')}
+              disabled={uploadLoading || !selectedRoomId || waterPhotoList.length === 1}
             >
               <Button
                 icon={<div className='flex flex-col justify-center items-center'>
@@ -150,7 +167,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                 </div>}
                 type='text'
                 loading={uploadLoading}
-                disabled={!selectedRoomId}
+                disabled={uploadLoading || !selectedRoomId || waterPhotoList.length === 1}
               />
             </Upload>
           </Form.Item>

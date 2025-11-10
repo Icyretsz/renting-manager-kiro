@@ -113,7 +113,7 @@ router.post('/photo', uploadSinglePhoto, asyncHandler(async (req: AuthenticatedR
 
   const fileInfo = await fileStorageService.saveMeterPhoto({
     roomId: parseInt(roomId),
-    meterType: meterType as 'water' | 'electricity',
+    meterType: meterType as MeterType,
     file: req.file,
     uploadedBy: req.user.id
   });
@@ -308,12 +308,12 @@ router.get('/get-presigned',
       throw new AppError('Missing parameters', 400);
     }
 
-    const url = await fileStorageService.createPresignedUrlWithClient(operation as Operation, roomNumber as string, contentType as string, meterType as MeterType, fileName as string)
+    const result = await fileStorageService.createPresignedUrlWithClient(operation as Operation, roomNumber as string, fileName as string, contentType as string | undefined, meterType as MeterType | undefined)
 
-    if (url) {
+    if (result) {
       res.json({
         success: true,
-        data: url
+        data: result
       });
     } else {
       throw new AppError('Error getting presigned URL', 500)

@@ -1,19 +1,24 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
-import { ApiResponse } from '@/types';
+import { ApiResponse, ImageUploadPresignedURLType } from '@/types';
 type PresignedURLOperation = 'get' | 'put'
 
 interface PresignedURLParams {
   operation: PresignedURLOperation
   roomNumber: string
-  contentType: string,
-  meterType: string,
+  contentType?: string,
+  meterType?: string,
   fileName: string
 }
 
 interface UploadToS3Params {
   presignedUrl: string
   file: File
+}
+
+const fileUploadKeys = {
+  all: ['fileUpload'] as const,
+  getByFilename: (filename: string) => [...fileUploadKeys.all, 'get', filename] as const,
 }
 
 // Upload meter photo mutation
@@ -54,17 +59,17 @@ export const useGetPresignedURLMutation = () => {
       contentType,
       meterType,
       fileName,
-    }: PresignedURLParams): Promise<string> => {
+    }: PresignedURLParams): Promise<ImageUploadPresignedURLType> => {
       // Build query params safely
-      const params: Record<string, string> = { operation, roomNumber, contentType, meterType, fileName }
+      const params: Record<string, string | undefined> = { operation, roomNumber, contentType, meterType, fileName }
 
-      const response = await api.get<ApiResponse<string>>(
+      const response = await api.get<ApiResponse<ImageUploadPresignedURLType>>(
         '/upload/get-presigned',
         { params }
       )
 
       if (response.data.data) {
-        if (response.data.data === '') {
+        if (!response.data.data.url) {
           throw new Error('Error getting presigned URL')
         } else {
           return response.data.data
