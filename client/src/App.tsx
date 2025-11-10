@@ -26,6 +26,7 @@ import { useAuthStore } from './stores';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
 import { InvalidateQueriesButton } from '@/components/DevTools/InvalidateQueriesButton';
 import './styles/notifications.css';
+import { SettingsPage } from './pages/SettingsPage';
 
 // Main app content that requires authentication
 const AppContent = () => {
@@ -59,7 +60,7 @@ const AppContent = () => {
   return (
     <>
       {contextHolder}
-      <InvalidateQueriesButton />
+      {/* <InvalidateQueriesButton /> */}
       <Routes>
         {/* Public routes */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -194,6 +195,20 @@ const AppContent = () => {
             )
           }
         />
+        <Route
+          path="/settings"
+          element={
+            userRole === 'ADMIN' ? (
+              <ProtectedRoute requireTenantLink={false}>
+                <MainLayout>
+                  <SettingsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/unauthorized" replace />
+            )
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
@@ -216,7 +231,7 @@ function App() {
             <AppContent />
           </AuthProvider>
         </ConfigProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </QueryClientProvider>
     </ErrorBoundary>
   );

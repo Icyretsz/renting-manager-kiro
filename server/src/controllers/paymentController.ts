@@ -103,13 +103,8 @@ export const getPaymentInfo = async (req: Request, res: Response, next: NextFunc
 export const handlePaymentWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Create webhook object from request body (PayOS sends the full webhook structure)
-    const webhook = {
-      code: req.body.code,
-      desc: req.body.desc,
-      success: req.body.success,
-      data: req.body.data,
-      signature: req.headers['x-payos-signature'] as string
-    };
+    console.log(req.body)
+    const webhook = req.body
 
     // Verify webhook signature and process payment
     const isValid = await payosService.verifyWebhookSignature(webhook);
