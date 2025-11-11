@@ -31,30 +31,30 @@ router.post('/mark-overdue', requireAdmin, billingController.markOverduePayments
 /**
  * @route GET /api/billing/summary
  * @desc Get financial summary
- * @access Authenticated users (filtered by access)
+ * @access Admin only
  */
-router.get('/summary', billingController.getFinancialSummary);
+router.get('/summary', requireAdmin, billingController.getFinancialSummary);
 
 /**
  * @route GET /api/billing/monthly
  * @desc Get monthly financial report
  * @access Authenticated users (filtered by access)
  */
-router.get('/monthly', billingController.getMonthlyFinancialReport);
+router.get('/monthly', requireAdmin, billingController.getMonthlyFinancialReport);
 
 /**
  * @route GET /api/billing/yearly
  * @desc Get yearly financial report
  * @access Authenticated users (filtered by access)
  */
-router.get('/yearly', billingController.getYearlyFinancialReport);
+router.get('/yearly', requireAdmin, billingController.getYearlyFinancialReport);
 
 /**
  * @route GET /api/billing/yearly-trend
  * @desc Get yearly trend data for financial dashboard
  * @access Authenticated users (filtered by access)
  */
-router.get('/yearly-trend', billingController.getYearlyTrendData);
+router.get('/yearly-trend', requireAdmin, billingController.getYearlyTrendData);
 
 /**
  * @route GET /api/billing/export

@@ -273,7 +273,7 @@ export const getFinancialSummary = async (req: Request, res: Response, next: Nex
 /**
  * Get monthly financial report
  */
-export const getMonthlyFinancialReport = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+export const getMonthlyFinancialReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       console.log('hello')
     try {
       const userRole = req.user?.role || 'USER';
