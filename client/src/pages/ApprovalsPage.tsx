@@ -15,9 +15,11 @@ import {
   useAllReadingsQuery,
   useApproveReadingMutation,
   useRejectReadingMutation,
+  meterReadingKeys,
 } from '@/hooks/useMeterReadings';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { RefreshButton } from '@/components/Common/RefreshButton';
 import { MeterReading } from '@/types';
 import {
   StatisticsCards,
@@ -170,11 +172,17 @@ export const ApprovalsPage: React.FC = () => {
     <PageErrorBoundary>
       <div className="space-y-4">
         {/* Header */}
-        <div>
-          <Title level={3} className="mb-1">Reading Approvals</Title>
-          <Text className="text-gray-600">
-            Review and approve meter reading submissions
-          </Text>
+        <div className="flex justify-between items-start">
+          <div>
+            <Title level={3} className="mb-1">Reading Approvals</Title>
+            <Text className="text-gray-600">
+              Review and approve meter reading submissions
+            </Text>
+          </div>
+          <RefreshButton
+            queryKeys={[meterReadingKeys.all]}
+            tooltip="Refresh meter readings"
+          />
         </div>
 
         {isLoading ? (<LoadingSpinner message="Loading readings..." />) :

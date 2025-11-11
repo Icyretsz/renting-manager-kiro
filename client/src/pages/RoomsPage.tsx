@@ -7,9 +7,10 @@ import {
   EyeOutlined 
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
-import { useRoomsQuery } from '@/hooks/useRooms';
+import { useRoomsQuery, roomKeys } from '@/hooks/useRooms';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { RefreshButton } from '@/components/Common/RefreshButton';
 import { EditRoomModal } from '@/components/Rooms';
 import { Room } from '@/types';
 
@@ -163,11 +164,17 @@ export const RoomsPage: React.FC = () => {
     <PageErrorBoundary>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <Title level={3} className="mb-1">Rooms</Title>
-          <Text className="text-gray-600">
-            Manage building rooms and occupancy
-          </Text>
+        <div className="flex justify-between items-start">
+          <div>
+            <Title level={3} className="mb-1">Rooms</Title>
+            <Text className="text-gray-600">
+              Manage building rooms and occupancy
+            </Text>
+          </div>
+          <RefreshButton
+            queryKeys={[roomKeys.all]}
+            tooltip="Refresh rooms data"
+          />
         </div>
 
         {/* Floor 1 */}

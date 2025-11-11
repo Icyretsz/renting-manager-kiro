@@ -8,6 +8,7 @@ import { useSettingValue } from '@/hooks/useSettings';
 import { useGetPresignedURLMutation, useGetPresignedURLQuery, useUploadToS3Mutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { RefreshButton } from '@/components/Common/RefreshButton';
 import {
   ReadingHistoryModal,
   RoomSelector,
@@ -16,6 +17,8 @@ import {
   MeterReadingForm
 } from '@/components/MeterReadings';
 import { UploadFile } from 'antd/es/upload';
+import { meterReadingKeys } from '@/hooks/useMeterReadings';
+import { roomKeys } from '@/hooks/useRooms';
 
 const { Title, Text } = Typography;
 
@@ -324,11 +327,20 @@ export const MeterReadingsPage: React.FC = () => {
   return (
     <PageErrorBoundary>
       <div className="space-y-4">
-        <div>
-          <Title level={3} className="mb-1">Meter Readings</Title>
-          <Text className="text-gray-600">
-            Submit monthly utility readings with photos
-          </Text>
+        <div className="flex justify-between items-start">
+          <div>
+            <Title level={3} className="mb-1">Meter Readings</Title>
+            <Text className="text-gray-600">
+              Submit monthly utility readings with photos
+            </Text>
+          </div>
+          <RefreshButton
+            queryKeys={[
+              meterReadingKeys.all,
+              roomKeys.all,
+            ]}
+            tooltip="Refresh meter readings and room data"
+          />
         </div>
 
         <RoomSelector

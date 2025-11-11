@@ -7,12 +7,14 @@ import {
   useBillingRecordQuery, 
   useFreshQRCodeQuery,
   useFinancialSummaryQuery,
-  useExportFinancialDataMutation 
+  useExportFinancialDataMutation,
+  billingKeys
 } from '@/hooks/useBilling';
 import { useBillingStatusPolling } from '@/hooks/useBillingStatusPolling';
 import { BillingRecord } from '@/types';
 import dayjs from 'dayjs';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { RefreshButton } from '@/components/Common/RefreshButton';
 import {
   FinancialSummaryCard,
   BillingFilters,
@@ -131,16 +133,22 @@ const BillingPage: React.FC = () => {
 
   return (
     <div style={{ padding: '16px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={2}>
-          {isAdmin ? 'Billing Management' : 'My Bills'}
-        </Title>
-        <Text type="secondary">
-          {isAdmin 
-            ? 'Manage billing records and payment status across all rooms' 
-            : 'View your billing history and make payments'
-          }
-        </Text>
+      <div style={{ marginBottom: '24px' }} className="flex justify-between items-start">
+        <div>
+          <Title level={2}>
+            {isAdmin ? 'Billing Management' : 'My Bills'}
+          </Title>
+          <Text type="secondary">
+            {isAdmin 
+              ? 'Manage billing records and payment status across all rooms' 
+              : 'View your billing history and make payments'
+            }
+          </Text>
+        </div>
+        <RefreshButton
+          queryKeys={[billingKeys.all]}
+          tooltip="Refresh billing data"
+        />
       </div>
 
       {/* Financial Summary (Admin only) */}

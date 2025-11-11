@@ -2,10 +2,11 @@ import React from 'react';
 import { Card, Row, Col, Typography, Empty } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
-import { useRoomsQuery, useRoomQuery } from '@/hooks/useRooms';
+import { useRoomsQuery, useRoomQuery, roomKeys } from '@/hooks/useRooms';
 import { useSettingValue } from '@/hooks/useSettings';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { RefreshButton } from '@/components/Common/RefreshButton';
 import { RoomCard, RoomDetailsView } from '@/components/UserRooms';
 
 const { Title, Text } = Typography;
@@ -52,9 +53,15 @@ export const UserRoomsPage: React.FC = () => {
       <PageErrorBoundary>
         <div className="space-y-4">
           {/* Header */}
-          <div>
-            <Title level={3} className="mb-1">All Rooms</Title>
-            <Text className="text-gray-600">Overview of all building rooms</Text>
+          <div className="flex justify-between items-start">
+            <div>
+              <Title level={3} className="mb-1">All Rooms</Title>
+              <Text className="text-gray-600">Overview of all building rooms</Text>
+            </div>
+            <RefreshButton
+              queryKeys={[roomKeys.all]}
+              tooltip="Refresh rooms data"
+            />
           </div>
 
           {/* Rooms Grid */}
@@ -93,9 +100,15 @@ export const UserRoomsPage: React.FC = () => {
     <PageErrorBoundary>
       <div className="space-y-4">
         {/* Header */}
-        <div>
-          <Title level={3} className="mb-1">My Room</Title>
-          <Text className="text-gray-600">Your assigned room as a tenant</Text>
+        <div className="flex justify-between items-start">
+          <div>
+            <Title level={3} className="mb-1">My Room</Title>
+            <Text className="text-gray-600">Your assigned room as a tenant</Text>
+          </div>
+          <RefreshButton
+            queryKeys={[roomKeys.all]}
+            tooltip="Refresh room data"
+          />
         </div>
 
         {/* Single room detailed view */}

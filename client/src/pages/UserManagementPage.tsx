@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, message, Tabs, Typography, Pagination, TabsProps } from 'antd';
-import { useTenantsQuery, useCreateTenantMutation, useUpdateTenantMutation, useDeleteTenantMutation } from '@/hooks/useTenants';
-import { useRoomsQuery } from '@/hooks/useRooms';
+import { useTenantsQuery, useCreateTenantMutation, useUpdateTenantMutation, useDeleteTenantMutation, tenantKeys } from '@/hooks/useTenants';
+import { useRoomsQuery, roomKeys } from '@/hooks/useRooms';
 import {
   useUsersQuery,
   useCreateUserMutation,
@@ -9,11 +9,13 @@ import {
   useDeleteUserMutation,
   useLinkUserToTenantMutation,
   useUnlinkUserFromTenantMutation,
-  UserWithTenant
+  UserWithTenant,
+  userManagementKeys,
 } from '@/hooks/useUserManagement';
 import { Tenant } from '@/types';
 import dayjs from 'dayjs';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
+import { RefreshButton } from '@/components/Common/RefreshButton';
 import {
   UserFilters,
   TenantFilters,
@@ -332,11 +334,21 @@ const UserManagementPage: React.FC = () => {
 
   return (
     <div style={{ padding: '16px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={2}>User & Tenant Management</Title>
-        <Text type="secondary">
-          Manage user accounts, tenant information, and their relationships
-        </Text>
+      <div style={{ marginBottom: '24px' }} className="flex justify-between items-start">
+        <div>
+          <Title level={2}>User & Tenant Management</Title>
+          <Text type="secondary">
+            Manage user accounts, tenant information, and their relationships
+          </Text>
+        </div>
+        <RefreshButton
+          queryKeys={[
+            userManagementKeys.all,
+            tenantKeys.all,
+            roomKeys.all,
+          ]}
+          tooltip="Refresh users, tenants, and rooms data"
+        />
       </div>
 
       <Tabs items={items} defaultActiveKey={activeTab} onChange={setActiveTab} />
