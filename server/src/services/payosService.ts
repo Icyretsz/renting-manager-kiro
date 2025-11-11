@@ -3,8 +3,10 @@ import { CreatePaymentLinkRequest } from '@payos/node/lib/resources/v2/payment-r
 import { Webhook } from '@payos/node/lib/resources/webhooks/index'
 import { prisma } from '../config/database';
 import { AppError, ValidationError } from '../utils/errors';
+import { emitNotificationToUser } from '../config/socket';
 
 import { PaymentStatus } from '@prisma/client';
+import { notifyBillPayed } from './notificationService';
 
 // PayOS configuration
 const payOS = new PayOS({
@@ -68,8 +70,8 @@ export interface PaymentWebhookData {
  * Generate PayOS payment link for a billing record
  */
 export const generatePaymentLink = async (billingRecordId: string): Promise<PaymentResponse> => {
-  const clientURL = process.env['NODE_ENV'] === 'production' 
-    ? process.env['CLIENT_URL_PROD'] 
+  const clientURL = process.env['NODE_ENV'] === 'production'
+    ? process.env['CLIENT_URL_PROD']
     : process.env['CLIENT_URL_DEV']
   try {
     // Get billing record with details
@@ -289,7 +291,7 @@ const sendPaymentSuccessNotification = async (billingRecordId: string): Promise<
     // Send notification to all active tenants in the room
     for (const tenant of billingRecord.room.tenants) {
       if (tenant.user) {
-        const notification = await prisma.notification.create({
+        const notificationForUser = await prisma.notification.create({
           data: {
             userId: tenant.user.id,
             title: 'Payment Confirmed',
@@ -298,15 +300,22 @@ const sendPaymentSuccessNotification = async (billingRecordId: string): Promise<
           }
         });
 
-        // Emit WebSocket notification
+        // Emit WebSocket notification to users
         try {
-          const { emitNotificationToUser } = await import('../config/socket');
-          emitNotificationToUser(tenant.user.id, notification);
+          emitNotificationToUser(tenant.user.id, notificationForUser);
         } catch (socketError) {
           console.error('Failed to emit WebSocket notification:', socketError);
         }
       }
     }
+
+    //Send Websocket notification to admins
+    try {
+      notifyBillPayed(billingRecord.roomId, billingRecord.month, billingRecord.year, billingRecord.totalAmount)
+    } catch (socketError) {
+      console.error('Failed to emit WebSocket notification to Admins:', socketError);
+    }
+
   } catch (error) {
     console.error('Failed to send payment success notification:', error);
   }

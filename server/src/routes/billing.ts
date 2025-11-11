@@ -91,4 +91,11 @@ router.get('/yearly-trend', billingController.getYearlyTrendData);
  */
 router.get('/export', requireAdmin, billingController.exportFinancialData);
 
+/**
+ * @route GET /api/billing/:id/status
+ * @desc Get payment status of a billing record
+ * @access Authenticated users (filtered by access)
+ */
+router.get('/:id/status', billingController.getBillingStatus)
+
 export default router;

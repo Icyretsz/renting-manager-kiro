@@ -25,7 +25,6 @@ import {
 } from '@/components/UserManagement';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 const UserManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('users');

@@ -864,3 +864,38 @@ export const getYearlyTrendData = async (
     ...data
   }));
 };
+
+/**
+ * Get billing status (lightweight version)
+ */
+export const getBillingStatus = async (id: string): Promise<{
+  id: string;
+  paymentStatus: PaymentStatus;
+  paymentDate: Date | null;
+  totalAmount: number;
+  month: number;
+  year: number;
+  createdAt: Date;
+} | null> => {
+  const billingRecord = await prisma.billingRecord.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      paymentStatus: true,
+      paymentDate: true,
+      totalAmount: true,
+      month: true,
+      year: true,
+      createdAt: true
+    }
+  });
+
+  if (!billingRecord) {
+    return null;
+  }
+
+  return {
+    ...billingRecord,
+    totalAmount: billingRecord.totalAmount.toNumber()
+  };
+};

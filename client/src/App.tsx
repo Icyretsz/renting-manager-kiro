@@ -26,7 +26,7 @@ import { SettingsPage } from './pages/SettingsPage';
 // Main app content that requires authentication
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
-  const { user: appUser, isAuthenticated: storeAuthenticated, token } = useAuthStore()
+  const { user: appUser, isAuthenticated: storeAuthenticated } = useAuthStore()
   const navigate = useNavigate()
 
   // Initialize WebSocket notifications (this handles the connection internally)

@@ -364,9 +364,10 @@ export const exportFinancialData = async (req: Request, res: Response, next: Nex
   } catch (error) {
     next(error);
   }
-};/**
- * Ge
-t yearly trend data for financial dashboard
+};
+
+/**
+ * Get yearly trend data for financial dashboard
  */
 export const getYearlyTrendData = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -380,6 +381,32 @@ export const getYearlyTrendData = async (req: Request, res: Response, next: Next
     res.json({
       success: true,
       data: trendData
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get payment status
+ */
+export const getBillingStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = getStringParam(req.params, 'id');
+
+    if (!id) {
+      throw new ValidationError('Billing record ID is required');
+    }
+
+    const billingStatus = await billingService.getBillingStatus(id);
+
+    if (!billingStatus) {
+      throw new AppError('Billing record not found', 404);
+    }
+
+    res.json({
+      success: true,
+      data: billingStatus
     });
   } catch (error) {
     next(error);

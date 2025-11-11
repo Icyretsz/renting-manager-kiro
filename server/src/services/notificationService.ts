@@ -1,5 +1,5 @@
 import admin from '../config/firebase';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { emitNotificationToUser, emitNotificationUpdate } from '../config/socket';
 
 const prisma = new PrismaClient();
@@ -100,6 +100,19 @@ const templates = {
         action: 'pay_bill',
       },
     }),
+
+    BILL_PAYED: (roomNumber: number, month: number, year: number, amount: Prisma.Decimal): NotificationTemplate => ({
+      title: 'User Payed',
+      message: `User's bill of Room ${roomNumber} (${month}/${year}) has been payed. Amount: ₫${amount}`,
+      type: 'bill_payed',
+      data: {
+        roomNumber: roomNumber.toString(),
+        month: month.toString(),
+        year: year.toString(),
+        amount: amount.toString(),
+        action: 'pay_bill',
+      },
+    })
   };
 
 /**
@@ -285,6 +298,19 @@ export const notifyBillGenerated = async (
 ): Promise<void> => {
   const template = templates.BILL_GENERATED(roomNumber, month, year, amount);
   await sendToRoomUsers(roomId, template);
+};
+
+/**
+ * Notify admins about bill payed
+ */
+export const notifyBillPayed = async (
+  roomNumber: number, 
+  month: number, 
+  year: number, 
+  amount: Prisma.Decimal
+): Promise<void> => {
+  const template = templates.BILL_PAYED(roomNumber, month, year, amount);
+  await sendToAdmins(template);
 };
 
 /**

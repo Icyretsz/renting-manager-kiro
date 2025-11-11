@@ -6,6 +6,7 @@ import { NavigateFunction } from 'react-router-dom';
 import { Notification } from '@/types';
 import { queryClient } from '@/services/queryClient';
 import { meterReadingKeys } from './useMeterReadings';
+import { billingKeys } from './useBilling';
 
 export const useWebSocketNotifications = (navigate: NavigateFunction) => {
   const { socket, isConnected } = useSocket();
@@ -55,8 +56,10 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
             // Specifically invalidate the room's readings if roomNumber is available
             if (notificationData.roomNumber) {
-              const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
-              queryClient.invalidateQueries({ queryKey: roomQueryKey });
+              const roomQueryKeyReadings = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
+              queryClient.invalidateQueries({ queryKey: roomQueryKeyReadings });
+              const roomQueryKeyBilling = billingKeys.byRoom(Number(notificationData.roomNumber))
+              queryClient.invalidateQueries({ queryKey: roomQueryKeyBilling})
             }
             break;
             
