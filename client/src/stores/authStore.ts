@@ -66,12 +66,12 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      // CRITICAL FIX: Don't persist token - let Auth0 manage it
-      // This prevents stale token issues
+      // Persist token so it's available on page reload
+      // Auth0Provider will refresh it if expired
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        // token: state.token, // REMOVED - don't persist token
+        token: state.token, // Persist token for page reloads
       }),
     }
   )

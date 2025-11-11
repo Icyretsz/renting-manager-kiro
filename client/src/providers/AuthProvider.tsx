@@ -61,7 +61,7 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
           // Check if we have a stored token and if it's still valid
           const hasValidStoredToken = storedToken && !isTokenExpired(storedToken);
           
-          if (hasValidStoredToken && hasInitializedRef.current) {
+          if (hasValidStoredToken) {
             // We already have a valid token, just ensure user is synced
             console.log('Auth0Integration: Using valid cached token');
             
@@ -76,6 +76,7 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
             };
             
             login(storedToken, appUser);
+            hasInitializedRef.current = true;
           } else {
             // Need to fetch a fresh token
             console.log('Auth0Integration: Fetching fresh token...', {

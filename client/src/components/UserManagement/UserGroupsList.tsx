@@ -1,10 +1,9 @@
 import React from 'react';
-import { Collapse, Avatar, Typography } from 'antd';
+import { Collapse, Avatar, Typography, CollapseProps } from 'antd';
 import { UserOutlined, HomeOutlined } from '@ant-design/icons';
 import { UserWithTenant } from '@/hooks/useUserManagement';
 import { UserCard } from './UserCard';
 
-const { Panel } = Collapse;
 const { Text } = Typography;
 
 interface UserGroupsListProps {
@@ -46,32 +45,29 @@ export const UserGroupsList: React.FC<UserGroupsListProps> = ({
   };
 
   const groupedUsers = groupUsersByRoom();
-  const panels = [];
+  const items: CollapseProps['items'] = [];
 
   // Admin users
   if (groupedUsers['admin']?.length > 0) {
-    panels.push(
-      <Panel 
-        header={
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#ff4d4f', marginRight: '8px' }} size="small" />
-            <Text strong>Admin Users ({groupedUsers['admin'].length})</Text>
-          </div>
-        } 
-        key="admin"
-      >
-        {groupedUsers['admin'].map(user => (
-          <UserCard
-            key={user.id}
-            user={user}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onLink={onLink}
-            onUnlink={onUnlink}
-          />
-        ))}
-      </Panel>
-    );
+    items.push({
+      key: 'admin',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#ff4d4f', marginRight: '8px' }} size="small" />
+          <Text strong>Admin Users ({groupedUsers['admin'].length})</Text>
+        </div>
+      ),
+      children: groupedUsers['admin'].map(user => (
+        <UserCard
+          key={user.id}
+          user={user}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onLink={onLink}
+          onUnlink={onUnlink}
+        />
+      ))
+    });
   }
 
   // Users by room
@@ -86,43 +82,15 @@ export const UserGroupsList: React.FC<UserGroupsListProps> = ({
       const roomNumber = roomKey.split('-')[1];
       const roomUsers = groupedUsers[roomKey];
       
-      panels.push(
-        <Panel 
-          header={
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <Avatar icon={<HomeOutlined />} style={{ backgroundColor: '#52c41a', marginRight: '8px' }} size="small" />
-              <Text strong>Room {roomNumber} ({roomUsers.length} user{roomUsers.length !== 1 ? 's' : ''})</Text>
-            </div>
-          } 
-          key={roomKey}
-        >
-          {roomUsers.map(user => (
-            <UserCard
-              key={user.id}
-              user={user}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onLink={onLink}
-              onUnlink={onUnlink}
-            />
-          ))}
-        </Panel>
-      );
-    });
-
-  // Unlinked users
-  if (groupedUsers['unlinked']?.length > 0) {
-    panels.push(
-      <Panel 
-        header={
+      items.push({
+        key: roomKey,
+        label: (
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#d9d9d9', marginRight: '8px' }} size="small" />
-            <Text strong>Unlinked Users ({groupedUsers['unlinked'].length})</Text>
+            <Avatar icon={<HomeOutlined />} style={{ backgroundColor: '#52c41a', marginRight: '8px' }} size="small" />
+            <Text strong>Room {roomNumber} ({roomUsers.length} user{roomUsers.length !== 1 ? 's' : ''})</Text>
           </div>
-        } 
-        key="unlinked"
-      >
-        {groupedUsers['unlinked'].map(user => (
+        ),
+        children: roomUsers.map(user => (
           <UserCard
             key={user.id}
             user={user}
@@ -131,14 +99,34 @@ export const UserGroupsList: React.FC<UserGroupsListProps> = ({
             onLink={onLink}
             onUnlink={onUnlink}
           />
-        ))}
-      </Panel>
-    );
+        ))
+      });
+    });
+
+  // Unlinked users
+  if (groupedUsers['unlinked']?.length > 0) {
+    items.push({
+      key: 'unlinked',
+      label: (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#d9d9d9', marginRight: '8px' }} size="small" />
+          <Text strong>Unlinked Users ({groupedUsers['unlinked'].length})</Text>
+        </div>
+      ),
+      children: groupedUsers['unlinked'].map(user => (
+        <UserCard
+          key={user.id}
+          user={user}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onLink={onLink}
+          onUnlink={onUnlink}
+        />
+      ))
+    });
   }
 
   return (
-    <Collapse defaultActiveKey={['admin', 'unlinked']} ghost>
-      {panels}
-    </Collapse>
+    <Collapse items={items} defaultActiveKey={['admin', 'unlinked']} ghost />
   );
 };
