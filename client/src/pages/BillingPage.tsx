@@ -43,7 +43,7 @@ const BillingPage: React.FC = () => {
   const exportDataMutation = useExportFinancialDataMutation();
   
   // Fresh QR code query (only when modal is visible and record is unpaid)
-  const { data: freshQRData, isLoading: qrLoading } = useFreshQRCodeQuery(
+  const { data: freshQRData, isLoading: qrLoading, error: qrError } = useFreshQRCodeQuery(
     selectedRecord?.id || '',
     qrCodeModalVisible && selectedRecord?.paymentStatus === 'UNPAID'
   );
@@ -373,6 +373,13 @@ const BillingPage: React.FC = () => {
             <div style={{ margin: '24px 0' }}>
               {qrLoading ? (
                 <LoadingSpinner message='Loading payment QR code...'/>
+              ) : qrError ? (
+                <Alert
+                  message="Failed to generate QR code"
+                  description={`Error: ${qrError instanceof Error ? qrError.message : 'Unknown error'}. Please try again or contact support.`}
+                  type="error"
+                  showIcon
+                />
               ) : freshQRData && 'qrCode' in freshQRData ? (
                 <div>
                   <div className='flex justify-center items-center'>
@@ -389,8 +396,9 @@ const BillingPage: React.FC = () => {
               ) : (
                 <Alert
                   message="QR Code not available"
-                  description="Unable to generate QR code. Please try again later."
-                  type="info"
+                  description="Unable to generate QR code. Please check if the bill is still unpaid and try again."
+                  type="warning"
+                  showIcon
                 />
               )}
             </div>

@@ -374,6 +374,9 @@ export const generateFreshQRCode = async (billingRecordId: string): Promise<stri
     const paymentLink = await generatePaymentLink(billingRecordId);
     return paymentLink.qrCode;
   } catch (error) {
+    if (error instanceof AppError || error instanceof ValidationError) {
+      throw error;
+    }
     throw new AppError('Failed to generate QR code', 500);
   }
 };

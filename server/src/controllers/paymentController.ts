@@ -62,6 +62,11 @@ export const getFreshQRCode = async (req: Request, res: Response, next: NextFunc
       throw new AppError('Billing record not found or access denied', 404);
     }
 
+    // Check if already paid
+    if (billingRecord.paymentStatus === 'PAID') {
+      throw new ValidationError('This bill has already been paid');
+    }
+
     // Generate fresh QR code
     const qrCode = await payosService.generateFreshQRCode(billingRecordId);
 
