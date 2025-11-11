@@ -3,7 +3,7 @@ import { CreatePaymentLinkRequest } from '@payos/node/lib/resources/v2/payment-r
 import { Webhook } from '@payos/node/lib/resources/webhooks/index'
 import { prisma } from '../config/database';
 import { AppError, ValidationError } from '../utils/errors';
-import { emitNotificationToUser } from '../config/socket';
+import { emitNotificationToUser, getSocketIO } from '../config/socket';
 
 import { PaymentStatus } from '@prisma/client';
 import { notifyBillPayed } from './notificationService';
@@ -197,17 +197,51 @@ export const handlePaymentWebhook = async (webhook: Webhook): Promise<void> => {
     }
 
     // Update billing record
-    await prisma.billingRecord.update({
+    const updatedBillingRecord = await prisma.billingRecord.update({
       where: { id: billingRecord.id },
       data: {
         paymentStatus,
         paymentDate,
         paymentTransactionId: reference
+      },
+      include: {
+        room: {
+          include: {
+            tenants: {
+              where: { isActive: true },
+              include: {
+                user: {
+                  select: { id: true }
+                }
+              }
+            }
+          }
+        }
       }
     });
 
     // Send notification to tenant about payment status
     if (paymentStatus === PaymentStatus.PAID) {
+      // Emit WebSocket event for instant payment status update
+      try {
+        const io = getSocketIO();
+        
+        // Emit to all active tenants in the room
+        for (const tenant of updatedBillingRecord.room.tenants) {
+          if (tenant.user) {
+            const userRoom = `user:${tenant.user.id}`;
+            io.to(userRoom).emit('payment:status_update', {
+              billingRecordId: billingRecord.id,
+              paymentStatus: 'PAID',
+              paymentDate,
+            });
+            console.log(`📡 Payment status update sent to user ${tenant.user.id}`);
+          }
+        }
+      } catch (socketError) {
+        console.error('Failed to emit payment status WebSocket event:', socketError);
+      }
+
       await sendPaymentSuccessNotification(billingRecord.id);
     }
   } catch (error) {

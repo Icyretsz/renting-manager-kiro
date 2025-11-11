@@ -5,18 +5,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { 
   useBillingRecordsQuery, 
   useBillingRecordQuery, 
-  useGeneratePaymentLinkMutation, 
   useFreshQRCodeQuery,
   useFinancialSummaryQuery,
   useExportFinancialDataMutation 
 } from '@/hooks/useBilling';
+import { useBillingStatusPolling } from '@/hooks/useBillingStatusPolling';
 import { BillingRecord } from '@/types';
 import dayjs from 'dayjs';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import {
   FinancialSummaryCard,
   BillingFilters,
-  BillingRecordCard
+  BillingRecordCard,
+  PaymentSuccessModal
 } from '@/components/Billing';
 
 const { Title, Text } = Typography;
@@ -26,6 +27,8 @@ const BillingPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [paidRecord, setPaidRecord] = useState<BillingRecord | null>(null);
 
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState(1);
@@ -37,7 +40,6 @@ const BillingPage: React.FC = () => {
   const { data: financialSummary } = useFinancialSummaryQuery();
   
   // Mutations
-  const generatePaymentLinkMutation = useGeneratePaymentLinkMutation();
   const exportDataMutation = useExportFinancialDataMutation();
   
   // Fresh QR code query (only when modal is visible and record is unpaid)
@@ -45,6 +47,20 @@ const BillingPage: React.FC = () => {
     selectedRecord?.id || '',
     qrCodeModalVisible && selectedRecord?.paymentStatus === 'UNPAID'
   );
+
+  // Hybrid approach: WebSocket + Polling for payment status
+  useBillingStatusPolling({
+    billingRecordId: selectedRecord?.id || null,
+    enabled: qrCodeModalVisible,
+    onPaymentSuccess: () => {
+      // Close QR modal and show success modal
+      setPaidRecord(selectedRecord);
+      setQrCodeModalVisible(false);
+      setSuccessModalVisible(true);
+    },
+    interval: 3000, // Poll every 3 seconds as fallback
+    useWebSocket: true, // Enable WebSocket for instant updates
+  });
 
   const isAdmin = user?.role === 'ADMIN';
 
@@ -66,18 +82,6 @@ const BillingPage: React.FC = () => {
 
     setSelectedRecord(record);
     setQrCodeModalVisible(true);
-  };
-
-  // Handle payment link generation
-  const handleGeneratePaymentLink = async (billingRecordId: string) => {
-    try {
-      const paymentLink = await generatePaymentLinkMutation.mutateAsync(billingRecordId);
-      
-      // Open payment URL in new tab
-      window.open(paymentLink.checkoutUrl, '_blank');
-    } catch (error) {
-      console.error('Failed to generate payment link:', error);
-    }
   };
 
   // Handle export data
@@ -345,16 +349,14 @@ const BillingPage: React.FC = () => {
           setSelectedRecord(null);
         }}
         footer={[
-          <Button key="close" onClick={() => setQrCodeModalVisible(false)}>
-            Close
-          </Button>,
-          <Button
-            key="pay-online"
-            type="primary"
-            onClick={() => selectedRecord && handleGeneratePaymentLink(selectedRecord.id)}
-            loading={generatePaymentLinkMutation.isPending}
+          <Button 
+            key="close" 
+            onClick={() => {
+              setQrCodeModalVisible(false);
+              setSelectedRecord(null);
+            }}
           >
-            Pay Online
+            Close
           </Button>,
         ]}
         width={500}
@@ -372,22 +374,46 @@ const BillingPage: React.FC = () => {
               {qrLoading ? (
                 <LoadingSpinner message='Loading payment QR code...'/>
               ) : freshQRData && 'qrCode' in freshQRData ? (
-                <QRCode value={freshQRData.qrCode} size={200} />
+                <div>
+                  <div className='flex justify-center items-center'>
+                    <QRCode value={freshQRData.qrCode} size={200} />
+                  </div>
+                  <Alert
+                    message="Waiting for payment..."
+                    description="We'll automatically detect when your payment is complete. You can switch to your banking app safely."
+                    type="info"
+                    showIcon
+                    style={{ marginTop: '16px' }}
+                  />
+                </div>
               ) : (
                 <Alert
                   message="QR Code not available"
-                  description="Please use the 'Pay Online' button to proceed with payment."
+                  description="Unable to generate QR code. Please try again later."
                   type="info"
                 />
               )}
             </div>
             
             <Text type="secondary">
-              Scan the QR code with your banking app or click "Pay Online" to proceed with payment.
+              Scan the QR code with your banking app to complete payment.
             </Text>
           </div>
         )}
       </Modal>
+
+      {/* Payment Success Modal */}
+      <PaymentSuccessModal
+        open={successModalVisible}
+        billingRecord={paidRecord}
+        onClose={() => {
+          setSuccessModalVisible(false);
+          setPaidRecord(null);
+          setSelectedRecord(null);
+        }}
+        formatCurrency={formatCurrency}
+        getMonthName={getMonthName}
+      />
     </div>
   );
 };

@@ -28,7 +28,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
       if (notification.data) {
         const notificationData = notification.data;
-        
+
         switch (notification.type) {
           case 'reading_submitted':
             // Invalidate all meter reading queries
@@ -43,14 +43,14 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
             }
             break;
-            
+
           case 'reading_modified':
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
             }
             break;
-            
+
           case 'reading_approved':
             // Invalidate all meter reading queries
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
@@ -59,10 +59,11 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
               const roomQueryKeyReadings = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKeyReadings });
               const roomQueryKeyBilling = billingKeys.byRoom(Number(notificationData.roomNumber))
-              queryClient.invalidateQueries({ queryKey: roomQueryKeyBilling})
+              queryClient.invalidateQueries({ queryKey: roomQueryKeyBilling })
+              queryClient.invalidateQueries({ queryKey: billingKeys.lists() })
             }
             break;
-            
+
           case 'reading_rejected':
             // Invalidate all meter reading queries
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
@@ -71,7 +72,18 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
               queryClient.invalidateQueries({ queryKey: meterReadingKeys.byRoom(Number(notificationData.roomNumber)) });
             }
             break;
-            
+
+          case 'bill_payed':
+            // Invalidate all billing queries
+            queryClient.invalidateQueries({ queryKey: billingKeys.all });
+            // Specifically invalidate the room's billing if roomNumber is available
+            if (notificationData.roomNumber) {
+              const roomQueryKeyBilling = billingKeys.byRoom(Number(notificationData.roomNumber))
+              queryClient.invalidateQueries({ queryKey: roomQueryKeyBilling })
+              queryClient.invalidateQueries({ queryKey: billingKeys.lists() })
+            }
+            break;
+
           default:
             // Fallback: invalidate all meter reading queries for unknown types
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
