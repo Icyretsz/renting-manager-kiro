@@ -297,8 +297,7 @@ export const getMonthlyFinancialReport = async (req: Request, res: Response, _ne
         data: report
       });
   } catch (error) {
-    //next(error);
-    console.log('something is wrong', req)
+    next(error);
   }
 };
 
