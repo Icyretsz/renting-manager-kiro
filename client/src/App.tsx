@@ -22,6 +22,7 @@ import { useAuthStore } from './stores';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
 import './styles/notifications.css';
 import { SettingsPage } from './pages/SettingsPage';
+import { ProfilePage } from '@/pages/ProfilePage';
 
 // Main app content that requires authentication
 const AppContent = () => {
@@ -197,6 +198,20 @@ const AppContent = () => {
               <ProtectedRoute requireTenantLink={false}>
                 <MainLayout>
                   <SettingsPage />
+                </MainLayout>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/unauthorized" replace />
+            )
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            userRole === 'USER' ? (
+              <ProtectedRoute requireTenantLink={true}>
+                <MainLayout>
+                  <ProfilePage />
                 </MainLayout>
               </ProtectedRoute>
             ) : (

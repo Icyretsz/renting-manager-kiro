@@ -6,6 +6,7 @@ import {
 
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 import { NotificationBell } from '@/components/Notifications';
 
@@ -13,29 +14,38 @@ const { Header: AntHeader } = Layout;
 const { Text } = Typography;
 
 export const MobileHeader: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
-
-  const userMenuItems = [
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: 'Profile',
-      onClick: () => {
-        // Navigate to profile page
-      },
-    },
-    {
-      type: 'divider' as const,
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Sign Out',
-      onClick: logout,
-      danger: true,
-    },
-  ];
+  // Build menu items conditionally based on user role
+  const userMenuItems = user?.role === 'USER' 
+    ? [
+        {
+          key: 'profile',
+          icon: <UserOutlined />,
+          label: 'Profile',
+          onClick: () => navigate('/profile'),
+        },
+        {
+          type: 'divider' as const,
+        },
+        {
+          key: 'logout',
+          icon: <LogoutOutlined />,
+          label: 'Sign Out',
+          onClick: logout,
+          danger: true,
+        },
+      ]
+    : [
+        {
+          key: 'logout',
+          icon: <LogoutOutlined />,
+          label: 'Sign Out',
+          onClick: logout,
+          danger: true,
+        },
+      ];
 
   return (
     <AntHeader className="bg-white shadow-sm border-b border-gray-200 px-4 flex items-center justify-between h-14 sticky top-0 z-40">
