@@ -41,19 +41,21 @@ model Room {
 }
 
 model Tenant {
-  id          String    @id @default(cuid())
-  name        String
-  email       String?
-  phone       String?
-  roomId      Int       @map("room_id")
-  userId      String?   @unique @map("user_id")
-  moveInDate  DateTime? @map("move_in_date")
-  moveOutDate DateTime? @map("move_out_date")
-  isActive    Boolean   @default(true) @map("is_active")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  room        Room      @relation(fields: [roomId], references: [id])
-  user        User?     @relation(fields: [userId], references: [id])
+  id               String    @id @default(cuid())
+  name             String
+  email            String?
+  phone            String?
+  fingerprintId    Int?      @map("fingerprint_id")
+  permanentAddress String?   @map("permanent_address")
+  roomId           Int       @map("room_id")
+  userId           String?   @unique @map("user_id")
+  moveInDate       DateTime? @map("move_in_date")
+  moveOutDate      DateTime? @map("move_out_date")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  room             Room      @relation(fields: [roomId], references: [id])
+  user             User?     @relation(fields: [userId], references: [id])
 
   @@map("tenants")
 }

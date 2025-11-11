@@ -28,6 +28,8 @@ export interface Tenant {
   name: string;
   email?: string;
   phone?: string;
+  fingerprintId?: number;
+  permanentAddress?: string;
   roomId: number;
   room?: Room;
   userId?: string; // Optional - links to User if tenant has an account

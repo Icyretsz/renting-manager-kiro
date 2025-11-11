@@ -90,7 +90,7 @@ export const createTenant = async (req: AuthenticatedRequest, res: Response, nex
       throw new AppError('Admin access required', 403);
     }
 
-    const { name, email, phone, roomId, moveInDate } = req.body;
+    const { name, email, phone, fingerprintId, permanentAddress, roomId, moveInDate } = req.body;
 
     if (!name || !roomId) {
       throw new AppError('Name and room ID are required', 400);
@@ -103,6 +103,8 @@ export const createTenant = async (req: AuthenticatedRequest, res: Response, nex
     
     if (email !== undefined) createData.email = email;
     if (phone !== undefined) createData.phone = phone;
+    if (fingerprintId !== undefined) createData.fingerprintId = parseInt(fingerprintId);
+    if (permanentAddress !== undefined) createData.permanentAddress = permanentAddress;
     if (moveInDate !== undefined) createData.moveInDate = new Date(moveInDate);
 
     const tenant = await tenantService.createTenant(createData);
@@ -129,12 +131,14 @@ export const updateTenant = async (req: AuthenticatedRequest, res: Response, nex
     }
 
     const tenantId = getStringParam(req.params, 'id', 'Tenant ID is required');
-    const { name, email, phone, roomId, moveInDate, moveOutDate, isActive } = req.body;
+    const { name, email, phone, fingerprintId, permanentAddress, roomId, moveInDate, moveOutDate, isActive } = req.body;
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
+    if (fingerprintId !== undefined) updateData.fingerprintId = fingerprintId ? parseInt(fingerprintId) : null;
+    if (permanentAddress !== undefined) updateData.permanentAddress = permanentAddress;
     if (roomId !== undefined) updateData.roomId = parseInt(roomId);
     if (moveInDate !== undefined) updateData.moveInDate = moveInDate ? new Date(moveInDate) : null;
     if (moveOutDate !== undefined) updateData.moveOutDate = moveOutDate ? new Date(moveOutDate) : null;

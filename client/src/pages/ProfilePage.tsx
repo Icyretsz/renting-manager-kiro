@@ -7,6 +7,8 @@ import {
   HomeOutlined,
   CalendarOutlined,
   IdcardOutlined,
+  SafetyOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
@@ -79,6 +81,22 @@ export const ProfilePage: React.FC = () => {
                   <Space>
                     <PhoneOutlined />
                     {tenant.phone}
+                  </Space>
+                </Descriptions.Item>
+              )}
+              {tenant.fingerprintId && (
+                <Descriptions.Item label="Fingerprint ID">
+                  <Space>
+                    <SafetyOutlined />
+                    <Text copyable>{tenant.fingerprintId}</Text>
+                  </Space>
+                </Descriptions.Item>
+              )}
+              {tenant.permanentAddress && (
+                <Descriptions.Item label="Permanent Address">
+                  <Space>
+                    <EnvironmentOutlined />
+                    {tenant.permanentAddress}
                   </Space>
                 </Descriptions.Item>
               )}

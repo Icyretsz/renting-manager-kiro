@@ -22,6 +22,15 @@ const createTenantValidation = [
     .trim()
     .isLength({ max: 50 })
     .withMessage('Phone number must be less than 50 characters'),
+  body('fingerprintId')
+    .optional()
+    .isInt()
+    .withMessage('Fingerprint ID must be an integer'),
+  body('permanentAddress')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Permanent address must be less than 500 characters'),
   body('roomId')
     .isInt({ min: 1 })
     .withMessage('Valid room ID is required'),
@@ -47,6 +56,15 @@ const updateTenantValidation = [
     .trim()
     .isLength({ max: 50 })
     .withMessage('Phone number must be less than 50 characters'),
+  body('fingerprintId')
+    .optional()
+    .isInt()
+    .withMessage('Fingerprint ID must be an integer'),
+  body('permanentAddress')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Permanent address must be less than 500 characters'),
   body('roomId')
     .optional()
     .isInt({ min: 1 })

@@ -88,6 +88,25 @@ export const TenantModal: React.FC<TenantModalProps> = ({
         <Row gutter={[16, 8]}>
           <Col xs={24} sm={12}>
             <Form.Item
+              name="fingerprintId"
+              label="Fingerprint ID"
+            >
+              <Input type="number" placeholder="Enter fingerprint ID" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="permanentAddress"
+              label="Permanent Address"
+            >
+              <Input placeholder="Enter permanent address" />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={[16, 8]}>
+          <Col xs={24} sm={12}>
+            <Form.Item
               name="moveInDate"
               label="Move In Date"
             >

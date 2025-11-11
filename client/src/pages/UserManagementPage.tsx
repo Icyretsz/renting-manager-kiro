@@ -126,6 +126,8 @@ const UserManagementPage: React.FC = () => {
       name: tenant.name,
       email: tenant.email,
       phone: tenant.phone,
+      fingerprintId: tenant.fingerprintId,
+      permanentAddress: tenant.permanentAddress,
       roomId: tenant.roomId,
       moveInDate: tenant.moveInDate ? dayjs(tenant.moveInDate) : null,
       moveOutDate: tenant.moveOutDate ? dayjs(tenant.moveOutDate) : null,

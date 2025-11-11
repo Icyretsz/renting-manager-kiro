@@ -10,6 +10,8 @@ export interface CreateTenantData {
   name: string;
   email?: string;
   phone?: string;
+  fingerprintId?: number;
+  permanentAddress?: string;
   roomId: number;
   moveInDate?: Date;
 }
@@ -18,6 +20,8 @@ export interface UpdateTenantData {
   name?: string;
   email?: string;
   phone?: string;
+  fingerprintId?: number | null;
+  permanentAddress?: string;
   roomId?: number;
   moveInDate?: Date;
   moveOutDate?: Date;
@@ -194,6 +198,8 @@ export const createTenant = async (data: CreateTenantData): Promise<TenantWithRo
       name: data.name,
       email: data.email || null,
       phone: data.phone || null,
+      fingerprintId: data.fingerprintId || null,
+      permanentAddress: data.permanentAddress || null,
       roomId: data.roomId,
       moveInDate: data.moveInDate || null,
       isActive: true
