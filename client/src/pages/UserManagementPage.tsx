@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Form, message, Tabs, Typography, Pagination } from 'antd';
+import { Form, message, Tabs, Typography, Pagination, TabsProps } from 'antd';
 import { useTenantsQuery, useCreateTenantMutation, useUpdateTenantMutation, useDeleteTenantMutation } from '@/hooks/useTenants';
 import { useRoomsQuery } from '@/hooks/useRooms';
-import { 
-  useUsersQuery, 
-  useCreateUserMutation, 
-  useUpdateUserMutation, 
+import {
+  useUsersQuery,
+  useCreateUserMutation,
+  useUpdateUserMutation,
   useDeleteUserMutation,
   useLinkUserToTenantMutation,
   useUnlinkUserFromTenantMutation,
@@ -212,20 +212,122 @@ const UserManagementPage: React.FC = () => {
 
   const filteredTenants = tenants?.filter(tenant => {
     const matchesSearch = tenant.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                         (tenant.email && tenant.email.toLowerCase().includes(searchText.toLowerCase()));
+      (tenant.email && tenant.email.toLowerCase().includes(searchText.toLowerCase()));
     const matchesRoom = !filterRoom || tenant.roomId === filterRoom;
-    const matchesStatus = !filterStatus || 
-                         (filterStatus === 'active' && tenant.isActive) ||
-                         (filterStatus === 'inactive' && !tenant.isActive) ||
-                         (filterStatus === 'linked' && tenant.userId) ||
-                         (filterStatus === 'unlinked' && !tenant.userId);
+    const matchesStatus = !filterStatus ||
+      (filterStatus === 'active' && tenant.isActive) ||
+      (filterStatus === 'inactive' && !tenant.isActive) ||
+      (filterStatus === 'linked' && tenant.userId) ||
+      (filterStatus === 'unlinked' && !tenant.userId);
     return matchesSearch && matchesRoom && matchesStatus;
   }) || [];
 
   // Get available tenants for linking (not already linked to another user)
-  const availableTenantsForLinking = tenants?.filter(tenant => 
+  const availableTenantsForLinking = tenants?.filter(tenant =>
     !tenant.userId || tenant.userId === selectedUser?.id
   ) || [];
+
+  const items: TabsProps['items'] = [
+    {
+      key: 'users',
+      label: 'Users',
+      children: <div>
+        <UserFilters
+          searchText={searchText}
+          onSearchChange={setSearchText}
+          onAddUser={handleCreateUser}
+        />
+
+        {usersLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <LoadingSpinner message='Loading users...' />
+          </div>
+        ) : users.length > 0 ? (
+          <>
+            <div style={{ marginBottom: '16px' }}>
+              <Text type="secondary">
+                Showing {((userPage - 1) * userPageSize) + 1}-{Math.min(userPage * userPageSize, usersData?.pagination?.total || 0)} of {usersData?.pagination?.total || 0} users
+              </Text>
+            </div>
+
+            <UserGroupsList
+              users={users}
+              onEdit={handleEditUser}
+              onDelete={handleDeleteUser}
+              onLink={handleLinkUserTenant}
+              onUnlink={handleUnlinkUserTenant}
+            />
+
+            <div style={{ textAlign: 'center', marginTop: '24px' }}>
+              <Pagination
+                current={userPage}
+                pageSize={userPageSize}
+                total={usersData?.pagination?.total || 0}
+                showSizeChanger
+                showQuickJumper
+                showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} users`}
+                onChange={(newPage, newPageSize) => {
+                  setUserPage(newPage);
+                  if (newPageSize !== userPageSize) {
+                    setUserPageSize(newPageSize);
+                  }
+                }}
+                pageSizeOptions={['5', '10', '20', '50']}
+              />
+            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Text type="secondary">No users found</Text>
+          </div>
+        )}
+      </div>,
+    },
+    {
+      key: 'tenants',
+      label: 'Tenants',
+      children: <div>
+        <TenantFilters
+          searchText={searchText}
+          filterRoom={filterRoom}
+          filterStatus={filterStatus}
+          onSearchChange={setSearchText}
+          onRoomChange={setFilterRoom}
+          onStatusChange={setFilterStatus}
+          onAddTenant={handleCreateTenant}
+        />
+
+        {tenantsLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <LoadingSpinner message='Loading tenants...' />
+          </div>
+        ) : filteredTenants.length > 0 ? (
+          <>
+            <div style={{ marginBottom: '16px' }}>
+              <Text type="secondary">
+                {filteredTenants.length} tenant{filteredTenants.length !== 1 ? 's' : ''} found
+              </Text>
+            </div>
+
+            <TenantGroupsList
+              tenants={filteredTenants}
+              onEdit={handleEditTenant}
+              onDelete={handleDeleteTenant}
+            />
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Text type="secondary">No tenants found</Text>
+            <div style={{ marginTop: '8px' }}>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                Try adjusting your filters or add a new tenant
+              </Text>
+            </div>
+          </div>
+        )}
+      </div>,
+    },
+  ];
 
   return (
     <div style={{ padding: '16px' }}>
@@ -236,100 +338,7 @@ const UserManagementPage: React.FC = () => {
         </Text>
       </div>
 
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane tab="Users" key="users">
-          <UserFilters
-            searchText={searchText}
-            onSearchChange={setSearchText}
-            onAddUser={handleCreateUser}
-          />
-
-          {usersLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <LoadingSpinner message='Loading users...'/>
-            </div>
-          ) : users.length > 0 ? (
-            <>
-              <div style={{ marginBottom: '16px' }}>
-                <Text type="secondary">
-                  Showing {((userPage - 1) * userPageSize) + 1}-{Math.min(userPage * userPageSize, usersData?.pagination?.total || 0)} of {usersData?.pagination?.total || 0} users
-                </Text>
-              </div>
-
-              <UserGroupsList
-                users={users}
-                onEdit={handleEditUser}
-                onDelete={handleDeleteUser}
-                onLink={handleLinkUserTenant}
-                onUnlink={handleUnlinkUserTenant}
-              />
-
-              <div style={{ textAlign: 'center', marginTop: '24px' }}>
-                <Pagination
-                  current={userPage}
-                  pageSize={userPageSize}
-                  total={usersData?.pagination?.total || 0}
-                  showSizeChanger
-                  showQuickJumper
-                  showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} users`}
-                  onChange={(newPage, newPageSize) => {
-                    setUserPage(newPage);
-                    if (newPageSize !== userPageSize) {
-                      setUserPageSize(newPageSize);
-                    }
-                  }}
-                  pageSizeOptions={['5', '10', '20', '50']}
-                />
-              </div>
-            </>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <Text type="secondary">No users found</Text>
-            </div>
-          )}
-        </TabPane>
-
-        <TabPane tab="Tenants" key="tenants">
-          <TenantFilters
-            searchText={searchText}
-            filterRoom={filterRoom}
-            filterStatus={filterStatus}
-            onSearchChange={setSearchText}
-            onRoomChange={setFilterRoom}
-            onStatusChange={setFilterStatus}
-            onAddTenant={handleCreateTenant}
-          />
-
-          {tenantsLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <LoadingSpinner message='Loading tenants...'/>
-            </div>
-          ) : filteredTenants.length > 0 ? (
-            <>
-              <div style={{ marginBottom: '16px' }}>
-                <Text type="secondary">
-                  {filteredTenants.length} tenant{filteredTenants.length !== 1 ? 's' : ''} found
-                </Text>
-              </div>
-
-              <TenantGroupsList
-                tenants={filteredTenants}
-                onEdit={handleEditTenant}
-                onDelete={handleDeleteTenant}
-              />
-            </>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <Text type="secondary">No tenants found</Text>
-              <div style={{ marginTop: '8px' }}>
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Try adjusting your filters or add a new tenant
-                </Text>
-              </div>
-            </div>
-          )}
-        </TabPane>
-      </Tabs>
+      <Tabs items={items} defaultActiveKey={activeTab} onChange={setActiveTab} />
 
       {/* User Modal */}
       <UserModal

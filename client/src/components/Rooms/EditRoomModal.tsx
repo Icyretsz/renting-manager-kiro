@@ -118,7 +118,7 @@ export const EditRoomModal: React.FC<EditRoomModalProps> = ({
       open={visible}
       onCancel={handleCancel}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
       width={800}
       style={{ top: 20 }}
     >
