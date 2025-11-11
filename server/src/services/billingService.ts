@@ -508,9 +508,12 @@ export const getFinancialSummary = async (
 ): Promise<FinancialSummary> => {
     const whereClause: any = {};
 
-    if (month && year) {
-      whereClause.month = month;
+    // Apply filters based on what's provided
+    if (year) {
       whereClause.year = year;
+    }
+    if (month) {
+      whereClause.month = month;
     }
 
     // Filter by user access for regular users
@@ -571,6 +574,8 @@ export const getMonthlyFinancialReport = async (
     userId?: string
 ): Promise<MonthlyFinancialReport> => {
     const whereClause: any = { month, year };
+
+    console.log('where', whereClause)
 
     // Filter by user access for regular users
     const userRoomFilter = await getUserRoomFilter(userRole || '', userId);

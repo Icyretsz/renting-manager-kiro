@@ -22,34 +22,6 @@ router.post('/generate/:readingId', requireAdmin, billingController.generateBill
 router.post('/calculate', billingController.calculateRealtimeBill);
 
 /**
- * @route GET /api/billing/:id
- * @desc Get billing record by ID
- * @access Authenticated users (filtered by access)
- */
-router.get('/:id', billingController.getBillingRecordById);
-
-/**
- * @route GET /api/billing
- * @desc Get billing records with filters and pagination
- * @access Authenticated users (filtered by access)
- */
-router.get('/', billingController.getBillingRecords);
-
-/**
- * @route GET /api/billing/room/:roomId
- * @desc Get billing history for a specific room
- * @access Authenticated users (filtered by access)
- */
-router.get('/room/:roomId', billingController.getRoomBillingHistory);
-
-/**
- * @route PUT /api/billing/:id/payment-status
- * @desc Update payment status of a billing record
- * @access Admin only
- */
-router.put('/:id/payment-status', requireAdmin, billingController.updatePaymentStatus);
-
-/**
  * @route POST /api/billing/mark-overdue
  * @desc Mark overdue payments
  * @access Admin only
@@ -92,10 +64,38 @@ router.get('/yearly-trend', billingController.getYearlyTrendData);
 router.get('/export', requireAdmin, billingController.exportFinancialData);
 
 /**
+ * @route GET /api/billing/room/:roomId
+ * @desc Get billing history for a specific room
+ * @access Authenticated users (filtered by access)
+ */
+router.get('/room/:roomId', billingController.getRoomBillingHistory);
+
+/**
  * @route GET /api/billing/:id/status
  * @desc Get payment status of a billing record
  * @access Authenticated users (filtered by access)
  */
-router.get('/:id/status', billingController.getBillingStatus)
+router.get('/:id/status', billingController.getBillingStatus);
+
+/**
+ * @route PUT /api/billing/:id/payment-status
+ * @desc Update payment status of a billing record
+ * @access Admin only
+ */
+router.put('/:id/payment-status', requireAdmin, billingController.updatePaymentStatus);
+
+/**
+ * @route GET /api/billing/:id
+ * @desc Get billing record by ID
+ * @access Authenticated users (filtered by access)
+ */
+router.get('/:id', billingController.getBillingRecordById);
+
+/**
+ * @route GET /api/billing
+ * @desc Get billing records with filters and pagination
+ * @access Authenticated users (filtered by access)
+ */
+router.get('/', billingController.getBillingRecords)
 
 export default router;

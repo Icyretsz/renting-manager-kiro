@@ -727,8 +727,11 @@ export const approveReading = async (id: string, approvedBy: string): Promise<Me
   try {
     const billingRecord = await billingService.generateBillingRecord(id);
     billingRecordId = billingRecord.id;
+    console.log(`✓ Billing record generated successfully: ${billingRecordId} for reading: ${id}`);
   } catch (error) {
-    console.error('Failed to generate billing record for approved reading:', error);
+    console.error('✗ Failed to generate billing record for approved reading:', error);
+    console.error('Reading ID:', id);
+    console.error('Error details:', error instanceof Error ? error.message : error);
     // Don't throw error as the approval was successful
   }
 
