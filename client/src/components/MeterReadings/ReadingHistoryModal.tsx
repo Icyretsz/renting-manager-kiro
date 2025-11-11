@@ -23,8 +23,7 @@ import {
   HistoryOutlined
 } from '@ant-design/icons';
 import { MeterReading } from '@/types';
-import { getS3ImageFromFileName } from '@/utils/getS3ImageFromFileName';
-import { useGetPresignedURLMutation } from '@/hooks/useFileUpload';
+import { useGetPresignedURLQuery } from '@/hooks/useFileUpload';
 import { LoadingSpinner } from '../Loading';
 
 const { Text } = Typography;
@@ -147,27 +146,30 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
   const paginatedReadings = readingsWithUsage.slice(startIndex, endIndex);
 
   const ReadingCard: React.FC<{ reading: MeterReading & { waterUsage: number; electricityUsage: number; isFirstReading: boolean } }> = ({ reading }) => {
-    const [waterPhotoURL, setWaterPhotoURL] = useState<string>('');
-    const [electricityPhotoURL, setElectricityPhotoURL] = useState<string>('');
-    const {mutateAsync: getPresignedURL, isPending} = useGetPresignedURLMutation()
+    // Use queries for fetching presigned URLs (with caching)
+    const { data: waterPresigned, isLoading: waterLoading } = useGetPresignedURLQuery(
+      reading.waterPhotoUrl ? {
+        operation: 'get',
+        roomNumber: reading.roomId.toString(),
+        contentType: undefined,
+        meterType: 'water',
+        fileName: reading.waterPhotoUrl
+      } : null
+    );
 
-    React.useEffect(() => {
-      const loadImages = async () => {
-        if (waterPhotoURL !== '' || electricityPhotoURL !== '') return
-        if (reading.waterPhotoUrl) {
-          const waterUrl = await getPresignedURL({operation: 'get', roomNumber: reading.roomId.toString(), contentType: undefined, meterType: 'water', fileName: reading.waterPhotoUrl});
-          setWaterPhotoURL(waterUrl.url || '');
-          console.log(waterUrl)
-        }
-        if (reading.electricityPhotoUrl) {
-          const electricityUrl = await getPresignedURL({operation: 'get', roomNumber: reading.roomId.toString(), contentType: undefined, meterType: 'electricity', fileName: reading.electricityPhotoUrl});
-          setElectricityPhotoURL(electricityUrl.url || '');
-          console.log(electricityUrl)
-        }
-        
-      };
-      loadImages();
-    }, [reading.roomId, reading.waterPhotoUrl, reading.electricityPhotoUrl]);
+    const { data: electricityPresigned, isLoading: electricityLoading } = useGetPresignedURLQuery(
+      reading.electricityPhotoUrl ? {
+        operation: 'get',
+        roomNumber: reading.roomId.toString(),
+        contentType: undefined,
+        meterType: 'electricity',
+        fileName: reading.electricityPhotoUrl
+      } : null
+    );
+
+    const waterPhotoURL = waterPresigned?.url || '';
+    const electricityPhotoURL = electricityPresigned?.url || '';
+    const isPending = waterLoading || electricityLoading;
 
     return (<Card
       className="mb-4 shadow-sm hover:shadow-md transition-shadow"

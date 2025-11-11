@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery, useRoomQuery } from '@/hooks/useRooms';
 import { useMeterReadingsQuery, useSubmitMeterReadingMutation, useUpdateMeterReadingMutation } from '@/hooks/useMeterReadings';
 import { useSettingValue } from '@/hooks/useSettings';
-import { useGetPresignedURLMutation, useUploadToS3Mutation } from '@/hooks/useFileUpload';
+import { useGetPresignedURLMutation, useGetPresignedURLQuery, useUploadToS3Mutation } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import {
@@ -74,7 +74,7 @@ export const MeterReadingsPage: React.FC = () => {
   const hasPendingReading = currentMonthReadings.some(r => r.status === 'PENDING' && (!isAdmin() ? r.submittedBy === user?.id : true));
   const canCreateNewReading = !hasApprovedReading && !hasPendingReading;
 
-  const getPresignedURL = useGetPresignedURLMutation();
+  const getPresignedURLForUpload = useGetPresignedURLMutation(); // For PUT operations
   const uploadToS3 = useUploadToS3Mutation();
   const submitMutation = useSubmitMeterReadingMutation();
   const updateMutation = useUpdateMeterReadingMutation();
@@ -83,80 +83,82 @@ export const MeterReadingsPage: React.FC = () => {
     ? rooms
     : (userRoomId && rooms ? rooms.filter(room => room.id === userRoomId) : []);
 
-  // Helper function to create UploadFile from filename (for fetching existing photos)
-  const createUploadFileFromName = async (fileName: string, type: 'water' | 'electricity'): Promise<UploadFile | null> => {
-    if (!fileName || !selectedRoomId) return null;
-    
-    try {
-      // Fetch presigned GET URL to display the existing photo
-      const presignedURL = await getPresignedURL.mutateAsync({
-        operation: 'get',
-        roomNumber: selectedRoomId.toString(),
-        contentType: undefined, // Not needed for GET operations
-        meterType: type,
-        fileName: fileName
-      });
-      
-      return {
-        uid: fileName,
-        name: fileName,
-        status: 'done',
-        url: presignedURL.url,
-      };
-    } catch (error) {
-      console.error('Failed to fetch presigned GET URL:', error);
-      return null;
-    }
-  };
-
   useEffect(() => {
     if (!isAdmin() && userRoomId && !selectedRoomId) {
       setSelectedRoomId(userRoomId);
     }
   }, [isAdmin, userRoomId, selectedRoomId]);
 
-  useEffect(() => {
-    const loadExistingPhotos = async () => {
-      if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
-        form.setFieldsValue({
-          waterReading: toNumber(currentMonthReading.waterReading),
-          electricityReading: toNumber(currentMonthReading.electricityReading),
-        });
-        
-        // Set filenames from DB
-        const waterFileName = currentMonthReading.waterPhotoUrl || ''; // Will be waterPhotoName after DB migration
-        const electricityFileName = currentMonthReading.electricityPhotoUrl || ''; // Will be electricityPhotoName after DB migration
-        
-        setWaterPhotoName(waterFileName);
-        setElectricityPhotoName(electricityFileName);
-        
-        // Create file lists for Upload component (fetch presigned GET URLs)
-        const waterFile = await createUploadFileFromName(waterFileName, 'water');
-        const electricityFile = await createUploadFileFromName(electricityFileName, 'electricity');
-        
-        setWaterPhotoList(waterFile ? [waterFile] : []);
-        setElectricityPhotoList(electricityFile ? [electricityFile] : []);
+  // Fetch presigned URLs for existing photos using queries (with caching)
+  const waterPhotoParams = currentMonthReading?.waterPhotoUrl && selectedRoomId && (canEditCurrentReading || canAdminOverride) ? {
+    operation: 'get' as const,
+    roomNumber: selectedRoomId.toString(),
+    contentType: undefined,
+    meterType: 'water' as const,
+    fileName: currentMonthReading.waterPhotoUrl
+  } : null;
 
-        if (previousReading && currentRoom) {
-          calculateBill(
-            toNumber(currentMonthReading.waterReading),
-            toNumber(currentMonthReading.electricityReading)
-          );
-        }
-      } else if (canCreateNewReading) {
-        form.resetFields();
-        setWaterPhotoName('');
-        setElectricityPhotoName('');
-        setWaterPhotoList([]);
-        setElectricityPhotoList([]);
-        setCalculatedBill({
-          totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
-        });
+  const electricityPhotoParams = currentMonthReading?.electricityPhotoUrl && selectedRoomId && (canEditCurrentReading || canAdminOverride) ? {
+    operation: 'get' as const,
+    roomNumber: selectedRoomId.toString(),
+    contentType: undefined,
+    meterType: 'electricity' as const,
+    fileName: currentMonthReading.electricityPhotoUrl
+  } : null;
+
+  const { data: waterPresigned } = useGetPresignedURLQuery(waterPhotoParams);
+  const { data: electricityPresigned } = useGetPresignedURLQuery(electricityPhotoParams);
+
+  useEffect(() => {
+    if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
+      form.setFieldsValue({
+        waterReading: toNumber(currentMonthReading.waterReading),
+        electricityReading: toNumber(currentMonthReading.electricityReading),
+      });
+      
+      // Set filenames from DB
+      const waterFileName = currentMonthReading.waterPhotoUrl || '';
+      const electricityFileName = currentMonthReading.electricityPhotoUrl || '';
+      
+      setWaterPhotoName(waterFileName);
+      setElectricityPhotoName(electricityFileName);
+      
+      // Create file lists for Upload component using fetched presigned URLs
+      if (waterPresigned?.url) {
+        setWaterPhotoList([{
+          uid: waterFileName,
+          name: waterFileName,
+          status: 'done',
+          url: waterPresigned.url,
+        }]);
       }
-    };
-    
-    loadExistingPhotos();
-  }, [currentMonthReading, canEditCurrentReading, canAdminOverride, canCreateNewReading, form, previousReading, currentRoom]);
+      
+      if (electricityPresigned?.url) {
+        setElectricityPhotoList([{
+          uid: electricityFileName,
+          name: electricityFileName,
+          status: 'done',
+          url: electricityPresigned.url,
+        }]);
+      }
+
+      if (previousReading && currentRoom) {
+        calculateBill(
+          toNumber(currentMonthReading.waterReading),
+          toNumber(currentMonthReading.electricityReading)
+        );
+      }
+    } else if (canCreateNewReading) {
+      form.resetFields();
+      setWaterPhotoName('');
+      setElectricityPhotoName('');
+      setWaterPhotoList([]);
+      setElectricityPhotoList([]);
+      setCalculatedBill({
+        totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
+      });
+    }
+  }, [currentMonthReading, canEditCurrentReading, canAdminOverride, canCreateNewReading, form, previousReading, currentRoom, waterPresigned, electricityPresigned]);
 
   const handleRoomChange = (roomId: number) => {
     setSelectedRoomId(roomId);
@@ -207,8 +209,8 @@ export const MeterReadingsPage: React.FC = () => {
     }
 
     try {
-      // Get presigned URL for upload
-      const presignedURL = await getPresignedURL.mutateAsync({
+      // Get presigned URL for upload (PUT operation)
+      const presignedURL = await getPresignedURLForUpload.mutateAsync({
         operation: 'put',
         roomNumber: selectedRoomId.toString(),
         contentType: file.type,
@@ -403,7 +405,7 @@ export const MeterReadingsPage: React.FC = () => {
                   hasApprovedReading={hasApprovedReading}
                   hasPendingReading={hasPendingReading}
                   selectedRoomId={selectedRoomId}
-                  uploadLoading={uploadToS3.isPending || getPresignedURL.isPending}
+                  uploadLoading={uploadToS3.isPending || getPresignedURLForUpload.isPending}
                   submitLoading={submitMutation.isPending || updateMutation.isPending}
                   onPhotoUpload={handlePhotoUpload}
                   onSubmit={handleSubmit}

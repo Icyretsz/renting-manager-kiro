@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Button, Row, Col, Card, Image, Divider, Typography, Tag, Timeline, Popconfirm } from 'antd';
+import { Modal, Button, Row, Col, Card, Image, Divider, Typography, Tag, Timeline, Popconfirm, Spin } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, HistoryOutlined } from '@ant-design/icons';
 import { MeterReading } from '@/types';
 import getActorInfo from '@/utils/getActorInfo';
+import { useGetPresignedURLQuery } from '@/hooks/useFileUpload';
 
 const { Text } = Typography;
 
@@ -31,6 +32,26 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   rejectLoading,
   getStatusColor
 }) => {
+  // Fetch presigned URLs for photos using queries (with caching)
+  const waterPhotoParams = reading?.waterPhotoUrl && reading?.roomId ? {
+    operation: 'get' as const,
+    roomNumber: reading.roomId.toString(),
+    contentType: undefined,
+    meterType: 'water' as const,
+    fileName: reading.waterPhotoUrl
+  } : null;
+
+  const electricityPhotoParams = reading?.electricityPhotoUrl && reading?.roomId ? {
+    operation: 'get' as const,
+    roomNumber: reading.roomId.toString(),
+    contentType: undefined,
+    meterType: 'electricity' as const,
+    fileName: reading.electricityPhotoUrl
+  } : null;
+
+  const { data: waterPresigned, isLoading: waterLoading } = useGetPresignedURLQuery(waterPhotoParams);
+  const { data: electricityPresigned, isLoading: electricityLoading } = useGetPresignedURLQuery(electricityPhotoParams);
+
   if (!reading) return null;
 
   return (
@@ -132,9 +153,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             <Col span={12}>
               <div className="text-center">
                 <div className="text-sm font-medium mb-2 text-cyan-600">Water Meter</div>
-                {reading.waterPhotoUrl ? (
+                {waterLoading ? (
+                  <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Spin tip="Loading photo..." />
+                  </div>
+                ) : waterPresigned?.url ? (
                   <Image
-                    src={reading.waterPhotoUrl}
+                    src={waterPresigned.url}
                     alt="Water meter"
                     width="100%"
                     height={200}
@@ -150,9 +175,13 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             <Col span={12}>
               <div className="text-center">
                 <div className="text-sm font-medium mb-2 text-blue-600">Electricity Meter</div>
-                {reading.electricityPhotoUrl ? (
+                {electricityLoading ? (
+                  <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Spin tip="Loading photo..." />
+                  </div>
+                ) : electricityPresigned?.url ? (
                   <Image
-                    src={reading.electricityPhotoUrl}
+                    src={electricityPresigned.url}
                     alt="Electricity meter"
                     width="100%"
                     height={200}

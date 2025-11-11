@@ -50,7 +50,7 @@ export const useUploadMeterPhotoMutation = () => {
   });
 };
 
-//Get presigned url
+//Get presigned url (mutation for PUT operations)
 export const useGetPresignedURLMutation = () => {
   return useMutation({
     mutationFn: async ({
@@ -78,6 +78,38 @@ export const useGetPresignedURLMutation = () => {
         throw new Error('Error getting presigned URL')
       }
     },
+  })
+}
+
+//Get presigned url (query for GET operations - with caching)
+export const useGetPresignedURLQuery = (params: PresignedURLParams | null) => {
+  return useQuery({
+    queryKey: [...fileUploadKeys.all, 'presigned', params?.operation, params?.roomNumber, params?.meterType, params?.fileName],
+    queryFn: async (): Promise<ImageUploadPresignedURLType> => {
+      if (!params) throw new Error('No params provided');
+      
+      const queryParams: Record<string, string | undefined> = { 
+        operation: params.operation, 
+        roomNumber: params.roomNumber, 
+        contentType: params.contentType, 
+        meterType: params.meterType, 
+        fileName: params.fileName 
+      }
+
+      const response = await api.get<ApiResponse<ImageUploadPresignedURLType>>(
+        '/upload/get-presigned',
+        { params: queryParams }
+      )
+
+      if (response.data.data?.url) {
+        return response.data.data
+      } else {
+        throw new Error('Error getting presigned URL')
+      }
+    },
+    enabled: !!params && !!params.fileName && !!params.roomNumber,
+    staleTime: 30 * 60 * 1000, // 5 minutes - presigned URLs typically last 15 minutes
+    gcTime: 30 * 60 * 1000, // 10 minutes
   })
 }
 
