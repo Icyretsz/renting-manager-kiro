@@ -153,6 +153,75 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response): P
 };
 
 /**
+ * Delete a single notification
+ */
+export const deleteNotification = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    const { notificationId } = req.params;
+    if (!notificationId) {
+      throw new AppError('Notification ID is required', 400);
+    }
+
+    await notificationService.deleteNotification(userId, notificationId);
+
+    res.json({
+      success: true,
+      message: 'Notification deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        success: false,
+        error: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      });
+    }
+  }
+};
+
+/**
+ * Clear all notifications for the user
+ */
+export const clearAllNotifications = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new AppError('User not authenticated', 401);
+    }
+
+    await notificationService.clearAllNotifications(userId);
+
+    res.json({
+      success: true,
+      message: 'All notifications cleared successfully',
+    });
+  } catch (error) {
+    console.error('Error clearing all notifications:', error);
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        success: false,
+        error: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      });
+    }
+  }
+};
+
+/**
  * Update user's FCM token for push notifications
  */
 export const updateFCMToken = async (req: Request, res: Response): Promise<void> => {

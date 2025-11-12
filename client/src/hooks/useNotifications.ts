@@ -82,7 +82,7 @@ export const useMarkAllNotificationsReadMutation = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await api.put<ApiResponse<void>>('/notifications/mark-all-read');
+      const response = await api.patch<ApiResponse<void>>('/notifications/mark-all-read');
       return response.data;
     },
     onSuccess: () => {

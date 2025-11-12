@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Statistic } from 'antd';
 import { CalculatorOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 interface BillCalculationCardProps {
   calculatedBill: {
@@ -23,6 +24,7 @@ export const BillCalculationCard: React.FC<BillCalculationCardProps> = ({
   trashFee,
   baseRent
 }) => {
+  const { t } = useTranslation();
   return (
     <Card className="bg-blue-50 border-blue-200" size="small">
       <div className="text-center">
@@ -34,13 +36,10 @@ export const BillCalculationCard: React.FC<BillCalculationCardProps> = ({
           suffix="VNĐ"
           valueStyle={{ color: '#1890ff', fontSize: '24px' }}
         />
-        <div>Electricity: {calculatedBill.electricityUsage} kWh x {electricityRate.toLocaleString()} = {calculatedBill.electricityBill.toLocaleString()} VNĐ</div>
-        <div>Water: {calculatedBill.waterUsage} m³ x {waterRate.toLocaleString()} = {calculatedBill.waterBill.toLocaleString()} VNĐ</div>
-        <div>Trash fee: {trashFee.toLocaleString()} VNĐ</div>
-        <div>Base rent: {baseRent ? baseRent.toLocaleString() : 'Loading...'} VNĐ</div>
-        <div className="text-xs text-gray-600 mt-2">
-          Including base rent, utilities, and trash fee
-        </div>
+        <div>{`${t('billing.electricityCost')}`}: {calculatedBill.electricityUsage} kWh x {electricityRate.toLocaleString()} = {calculatedBill.electricityBill.toLocaleString()} VNĐ</div>
+        <div>{`${t('billing.waterCost')}`}: {calculatedBill.waterUsage} m³ x {waterRate.toLocaleString()} = {calculatedBill.waterBill.toLocaleString()} VNĐ</div>
+        <div>{`${t('billing.trashFee')}`}: {trashFee.toLocaleString()} VNĐ</div>
+        <div>{`${t('billing.baseRent')}`}: {baseRent ? baseRent.toLocaleString() : 'Loading...'} VNĐ</div>
       </div>
     </Card>
   );

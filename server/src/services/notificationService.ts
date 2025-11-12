@@ -479,6 +479,71 @@ export const markAllAsRead = async (userId: string): Promise<void> => {
 };
 
 /**
+ * Delete a single notification
+ */
+export const deleteNotification = async (userId: string, notificationId: string): Promise<void> => {
+  try {
+    // Verify the notification belongs to the user before deleting
+    const notification = await prisma.notification.findFirst({
+      where: {
+        id: notificationId,
+        userId,
+      },
+    });
+
+    if (!notification) {
+      throw new Error('Notification not found or access denied');
+    }
+
+    await prisma.notification.delete({
+      where: { id: notificationId },
+    });
+
+    // Emit WebSocket update for deletion
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { auth0Id: true }
+    });
+
+    if (user?.auth0Id) {
+      emitNotificationUpdate(user.auth0Id, {
+        type: 'notification_deleted',
+        notificationId,
+      });
+    }
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    throw error;
+  }
+};
+
+/**
+ * Clear all notifications for a user
+ */
+export const clearAllNotifications = async (userId: string): Promise<void> => {
+  try {
+    await prisma.notification.deleteMany({
+      where: { userId },
+    });
+
+    // Emit WebSocket update for bulk deletion
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { auth0Id: true }
+    });
+
+    if (user?.auth0Id) {
+      emitNotificationUpdate(user.auth0Id, {
+        type: 'all_cleared',
+      });
+    }
+  } catch (error) {
+    console.error('Error clearing all notifications:', error);
+    throw error;
+  }
+};
+
+/**
  * Update user's FCM token
  */
 export const updateFCMToken = async (userId: string, fcmToken: string): Promise<void> => {
