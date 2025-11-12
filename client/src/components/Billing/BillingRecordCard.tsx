@@ -3,6 +3,7 @@ import { Card, Button, Tag, Avatar, Row, Col, Typography } from 'antd';
 import { EyeOutlined, QrcodeOutlined, HomeOutlined, CalendarOutlined, DropboxOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { BillingRecord } from '@/types';
 import dayjs from 'dayjs';
+import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const { Text } = Typography;
 
@@ -25,6 +26,8 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
   formatCurrency,
   getMonthName
 }) => {
+  const { t, getPaymentStatus } = useTranslationHelpers();
+  
   return (
     <Card
       style={{ marginBottom: '16px' }}
@@ -36,7 +39,7 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
           onClick={() => onViewDetails(record)}
           size="small"
         >
-          Details
+          {t('billing.details')}
         </Button>,
         record.paymentStatus === 'UNPAID' ? (
           <Button
@@ -46,11 +49,11 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
             size="small"
             style={{ color: '#1890ff' }}
           >
-            Pay Now
+            {t('billing.payNow')}
           </Button>
         ) : (
           <Button type="text" disabled size="small">
-            Paid
+            {t('billing.paidStatus')}
           </Button>
         ),
       ]}
@@ -63,16 +66,16 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
           />
           <div>
             <Text strong style={{ fontSize: '16px' }}>
-              Room {record.room?.roomNumber}
+              {t('rooms.room')} {record.room?.roomNumber}
             </Text>
             <br />
             <Text type="secondary" style={{ fontSize: '12px' }}>
-              Floor {record.room?.floor}
+              {t('rooms.floor')} {record.room?.floor}
             </Text>
           </div>
         </div>
         <Tag color={getPaymentStatusColor(record.paymentStatus)} style={{ margin: 0 }}>
-          {record.paymentStatus}
+          {getPaymentStatus(record.paymentStatus)}
         </Tag>
       </div>
 
@@ -81,7 +84,7 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
             <CalendarOutlined style={{ marginRight: '8px', color: '#666' }} />
             <Text style={{ fontSize: '14px' }}>
-              {getMonthName(record.month)} {record.year}
+              {record.month}/{record.year}
             </Text>
           </div>
         </Col>
@@ -99,7 +102,7 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
             <DropboxOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
             <Text style={{ fontSize: '12px' }}>
-              {parseFloat(record.waterUsage.toString()).toFixed(1)} units
+              {parseFloat(record.waterUsage.toString()).toFixed(1)} m³
             </Text>
           </div>
         </Col>
@@ -107,7 +110,7 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px' }}>
             <ThunderboltOutlined style={{ marginRight: '6px', color: '#faad14' }} />
             <Text style={{ fontSize: '12px' }}>
-              {parseFloat(record.electricityUsage.toString()).toFixed(1)} units
+              {parseFloat(record.electricityUsage.toString()).toFixed(1)} kWh
             </Text>
           </div>
         </Col>
@@ -116,7 +119,7 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
       {record.paymentDate && (
         <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#f6ffed', borderRadius: '4px' }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            Paid on {dayjs(record.paymentDate).format('MMM DD, YYYY')}
+            {t('billing.paidOn', { date: dayjs(record.paymentDate).format('MMM DD, YYYY') })}
           </Text>
         </div>
       )}
@@ -124,7 +127,7 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
       {isAdmin && (
         <div style={{ marginTop: '8px', borderTop: '1px solid #f0f0f0', paddingTop: '8px' }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            Created: {dayjs(record.createdAt).format('MMM DD, YYYY')}
+            {t('billing.createdOn')}: {dayjs(record.createdAt).format('DD/MM/YYYY')}
           </Text>
         </div>
       )}

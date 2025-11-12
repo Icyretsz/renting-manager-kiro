@@ -187,7 +187,21 @@
         "allRooms": "All Rooms",
         "allFloors": "All Floors",
         "exportData": "Export Data",
-        "monthBill": "{{month}} {{year}} Bill"
+        "monthBill": "{{month}} {{year}} Bill",
+        "calculatedBill": "Monthly Calculated Bill",
+        "paymentConfirmation": "A confirmation has been sent to your account. Thank you for your payment!",
+        "financialOverview": "Financial Overview",
+        "noBillingDataYet": "No billing data available yet. Billing records will appear here once meter readings are approved.",
+        "totalIncome": "Total Income",
+        "totalPaidAmount": "Total Paid",
+        "totalUnpaidAmount": "Total Unpaid",
+        "totalOverdueAmount": "Total Overdue",
+        "occupiedRooms": "Occupied Rooms",
+        "avgRoomIncome": "Avg Room Income",
+        "details": "Details",
+        "paidStatus": "Paid",
+        "createdOn": "Created",
+        "paidOn": "Paid on {{date}}"
     },
     "meterReadings": {
         "title": "Meter Readings",

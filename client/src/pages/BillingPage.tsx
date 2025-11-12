@@ -21,11 +21,13 @@ import {
   BillingRecordCard,
   PaymentSuccessModal
 } from '@/components/Billing';
+import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const { Title, Text } = Typography;
 
 const BillingPage: React.FC = () => {
   const { user } = useAuth();
+  const { t, getMonthName, formatCurrency, getPaymentStatus, getPaymentStatusColor } = useTranslationHelpers();
   const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [qrCodeModalVisible, setQrCodeModalVisible] = useState(false);
@@ -76,8 +78,8 @@ const BillingPage: React.FC = () => {
   const handleGenerateQRCode = async (record: BillingRecord) => {
     if (record.paymentStatus === 'PAID') {
       Modal.info({
-        title: 'Payment Already Completed',
-        content: 'This bill has already been paid.',
+        title: t('billing.paymentAlreadyCompleted'),
+        content: t('billing.billAlreadyPaid'),
       });
       return;
     }
@@ -103,51 +105,23 @@ const BillingPage: React.FC = () => {
     }
   };
 
-  // Get payment status color
-  const getPaymentStatusColor = (status: string): "success" | "error" | "warning" | "default" => {
-    switch (status) {
-      case 'PAID': return 'success';
-      case 'OVERDUE': return 'error';
-      case 'UNPAID': return 'warning';
-      default: return 'default';
-    }
-  };
-
-  // Format currency
-  const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(num);
-  };
-
-  // Get month name
-  const getMonthName = (month: number) => {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[month - 1];
-  };
-
   return (
     <div style={{ padding: '16px' }}>
       <div style={{ marginBottom: '24px' }} className="flex justify-between items-start">
         <div>
           <Title level={2}>
-            {isAdmin ? 'Billing Management' : 'My Bills'}
+            {isAdmin ? t('billing.title') : t('billing.titleUser')}
           </Title>
           <Text type="secondary">
             {isAdmin 
-              ? 'Manage billing records and payment status across all rooms' 
-              : 'View your billing history and make payments'
+              ? t('billing.subtitle')
+              : t('billing.subtitleUser')
             }
           </Text>
         </div>
         <RefreshButton
           queryKeys={[billingKeys.all]}
-          tooltip="Refresh billing data"
+          tooltip={t('common.refreshData')}
         />
       </div>
 
@@ -188,9 +162,9 @@ const BillingPage: React.FC = () => {
         {billingLoading ? (
           <Card>
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <LoadingSpinner message='Loading billing records...'/>
+              <LoadingSpinner message={t('billing.loadingBillingRecords')}/>
               <div style={{ marginTop: '16px' }}>
-                <Text type="secondary">Loading billing records...</Text>
+                <Text type="secondary">{t('billing.loadingBillingRecords')}</Text>
               </div>
             </div>
           </Card>
@@ -198,7 +172,11 @@ const BillingPage: React.FC = () => {
           <>
             <div style={{ marginBottom: '16px' }}>
               <Text type="secondary">
-                Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, billingData.pagination?.total || 0)} of {billingData.pagination?.total || 0} records
+                {t('billing.showing', { 
+                  start: ((page - 1) * pageSize) + 1, 
+                  end: Math.min(page * pageSize, billingData.pagination?.total || 0), 
+                  total: billingData.pagination?.total || 0 
+                })}
               </Text>
             </div>
             
@@ -222,7 +200,8 @@ const BillingPage: React.FC = () => {
                 total={billingData.pagination?.total || 0}
                 showSizeChanger
                 showQuickJumper
-                showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+                showTotal={(total, range) => t('billing.showing', { start: range[0], end: range[1], total })}
+
                 onChange={(newPage, newPageSize) => {
                   setPage(newPage);
                   if (newPageSize !== pageSize) {
@@ -236,10 +215,10 @@ const BillingPage: React.FC = () => {
         ) : (
           <Card>
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <Text type="secondary">No billing records found</Text>
+              <Text type="secondary">{t('billing.noBillingRecords')}</Text>
               <div style={{ marginTop: '8px' }}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Try adjusting your filters or check back later
+                  {t('billing.adjustFilters')}
                 </Text>
               </div>
             </div>
@@ -249,7 +228,7 @@ const BillingPage: React.FC = () => {
 
       {/* Bill Details Modal */}
       <Modal
-        title={`Bill Details - Room ${selectedRecord?.room?.roomNumber}`}
+        title={t('billing.billDetails', { room: selectedRecord?.room?.roomNumber })}
         open={paymentModalVisible}
         onCancel={() => {
           setPaymentModalVisible(false);
@@ -257,7 +236,7 @@ const BillingPage: React.FC = () => {
         }}
         footer={[
           <Button key="close" onClick={() => setPaymentModalVisible(false)}>
-            Close
+            {t('common.close')}
           </Button>,
           selectedRecord?.paymentStatus === 'UNPAID' && (
             <Button
@@ -269,7 +248,7 @@ const BillingPage: React.FC = () => {
                 handleGenerateQRCode(selectedRecord);
               }}
             >
-              Pay Now
+              {t('billing.payNow')}
             </Button>
           ),
         ]}
@@ -279,58 +258,58 @@ const BillingPage: React.FC = () => {
           <div>
             <Row gutter={16} style={{ marginBottom: '16px' }}>
               <Col span={12}>
-                <Text strong>Period:</Text>
+                <Text strong>{t('billing.period')}:</Text>
                 <br />
-                <Text>{getMonthName(selectedRecordDetails.month)} {selectedRecordDetails.year}</Text>
+                <Text>{selectedRecordDetails.month}/{selectedRecordDetails.year}</Text>
               </Col>
               <Col span={12}>
-                <Text strong>Payment Status:</Text>
+                <Text strong>{t('billing.paymentStatus')}:</Text>
                 <br />
                 <Tag color={getPaymentStatusColor(selectedRecordDetails.paymentStatus)}>
-                  {selectedRecordDetails.paymentStatus}
+                  {getPaymentStatus(selectedRecordDetails.paymentStatus)}
                 </Tag>
               </Col>
             </Row>
 
             <Divider />
 
-            <Title level={5}>Usage Details</Title>
+            <Title level={5}>{t('billing.usageDetails')}</Title>
             <Row gutter={16} style={{ marginBottom: '16px' }}>
               <Col span={12}>
-                <Text>Water Usage: {parseFloat(selectedRecordDetails.waterUsage.toString()).toFixed(1)} units</Text>
+                <Text>{t('billing.waterUsage')}: {parseFloat(selectedRecordDetails.waterUsage.toString()).toFixed(1)} m³</Text>
                 <br />
-                <Text>Cost: {formatCurrency(selectedRecordDetails.waterCost)}</Text>
+                <Text>{t('billing.cost')}: {formatCurrency(selectedRecordDetails.waterCost)}</Text>
               </Col>
               <Col span={12}>
-                <Text>Electricity Usage: {parseFloat(selectedRecordDetails.electricityUsage.toString()).toFixed(1)} units</Text>
+                <Text>{t('billing.electricityUsage')}: {parseFloat(selectedRecordDetails.electricityUsage.toString()).toFixed(1)} kWh</Text>
                 <br />
-                <Text>Cost: {formatCurrency(selectedRecordDetails.electricityCost)}</Text>
+                <Text>{t('billing.cost')}: {formatCurrency(selectedRecordDetails.electricityCost)}</Text>
               </Col>
             </Row>
 
             <Divider />
 
-            <Title level={5}>Bill Breakdown</Title>
+            <Title level={5}>{t('billing.billBreakdown')}</Title>
             <div style={{ marginBottom: '16px' }}>
               <Row justify="space-between">
-                <Text>Base Rent:</Text>
+                <Text>{t('billing.baseRent')}:</Text>
                 <Text>{formatCurrency(selectedRecordDetails.baseRent)}</Text>
               </Row>
               <Row justify="space-between">
-                <Text>Water Cost:</Text>
+                <Text>{t('billing.waterCost')}:</Text>
                 <Text>{formatCurrency(selectedRecordDetails.waterCost)}</Text>
               </Row>
               <Row justify="space-between">
-                <Text>Electricity Cost:</Text>
+                <Text>{t('billing.electricityCost')}:</Text>
                 <Text>{formatCurrency(selectedRecordDetails.electricityCost)}</Text>
               </Row>
               <Row justify="space-between">
-                <Text>Trash Fee:</Text>
+                <Text>{t('billing.trashFee')}:</Text>
                 <Text>{formatCurrency(selectedRecordDetails.trashFee)}</Text>
               </Row>
               <Divider />
               <Row justify="space-between">
-                <Text strong style={{ fontSize: '16px' }}>Total Amount:</Text>
+                <Text strong style={{ fontSize: '16px' }}>{t('billing.totalAmount')}:</Text>
                 <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>
                   {formatCurrency(selectedRecordDetails.totalAmount)}
                 </Text>
@@ -339,7 +318,7 @@ const BillingPage: React.FC = () => {
 
             {selectedRecordDetails.paymentDate && (
               <Alert
-                message={`Payment completed on ${dayjs(selectedRecordDetails.paymentDate).format('MMMM DD, YYYY')}`}
+                message={t('billing.paymentCompleted', { date: dayjs(selectedRecordDetails.paymentDate).format('MMMM DD, YYYY') })}
                 type="success"
                 showIcon
               />
@@ -350,7 +329,7 @@ const BillingPage: React.FC = () => {
 
       {/* QR Code Payment Modal */}
       <Modal
-        title={`Pay Bill - Room ${selectedRecord?.room?.roomNumber}`}
+        title={t('billing.payBill', { room: selectedRecord?.room?.roomNumber })}
         open={qrCodeModalVisible}
         onCancel={() => {
           setQrCodeModalVisible(false);
@@ -364,7 +343,7 @@ const BillingPage: React.FC = () => {
               setSelectedRecord(null);
             }}
           >
-            Close
+            {t('common.close')}
           </Button>,
         ]}
         width={500}
@@ -375,16 +354,16 @@ const BillingPage: React.FC = () => {
               {formatCurrency(selectedRecord.totalAmount)}
             </Title>
             <Text type="secondary">
-              {getMonthName(selectedRecord.month)} {selectedRecord.year} Bill
+              {t('billing.monthBill', { month: selectedRecord.month, year: selectedRecord.year })}
             </Text>
             
             <div style={{ margin: '24px 0' }}>
               {qrLoading ? (
-                <LoadingSpinner message='Loading payment QR code...'/>
+                <LoadingSpinner message={t('billing.loadingQRCode')}/>
               ) : qrError ? (
                 <Alert
-                  message="Failed to generate QR code"
-                  description={`Error: ${qrError instanceof Error ? qrError.message : 'Unknown error'}. Please try again or contact support.`}
+                  message={t('billing.failedToGenerateQR')}
+                  description={t('billing.qrCodeError', { error: qrError instanceof Error ? qrError.message : 'Unknown error' })}
                   type="error"
                   showIcon
                 />
@@ -394,8 +373,8 @@ const BillingPage: React.FC = () => {
                     <QRCode value={freshQRData.qrCode} size={200} />
                   </div>
                   <Alert
-                    message="Waiting for payment..."
-                    description="We'll automatically detect when your payment is complete. You can switch to your banking app safely."
+                    message={t('billing.waitingForPayment')}
+                    description={t('billing.autoDetectPayment')}
                     type="info"
                     showIcon
                     style={{ marginTop: '16px' }}
@@ -403,8 +382,8 @@ const BillingPage: React.FC = () => {
                 </div>
               ) : (
                 <Alert
-                  message="QR Code not available"
-                  description="Unable to generate QR code. Please check if the bill is still unpaid and try again."
+                  message={t('billing.qrCodeNotAvailable')}
+                  description={t('billing.checkBillStatus')}
                   type="warning"
                   showIcon
                 />
@@ -412,7 +391,7 @@ const BillingPage: React.FC = () => {
             </div>
             
             <Text type="secondary">
-              Scan the QR code with your banking app to complete payment.
+              {t('billing.scanQRCode')}
             </Text>
           </div>
         )}

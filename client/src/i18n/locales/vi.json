@@ -187,7 +187,21 @@
         "allRooms": "Tất cả phòng",
         "allFloors": "Tất cả tầng",
         "exportData": "Xuất dữ liệu",
-        "monthBill": "Hóa đơn tháng {{month}} {{year}}"
+        "monthBill": "Hóa đơn tháng {{month}} {{year}}",
+        "calculatedBill": "Hóa đơn tạm tính",
+        "paymentConfirmation": "Xác nhận đã được gửi đến tài khoản của bạn. Cảm ơn bạn đã thanh toán!",
+        "financialOverview": "Tổng quan tài chính",
+        "noBillingDataYet": "Chưa có dữ liệu hóa đơn. Hóa đơn sẽ xuất hiện ở đây sau khi chỉ số đồng hồ được phê duyệt.",
+        "totalIncome": "Tổng thu nhập",
+        "totalPaidAmount": "Tổng đã thanh toán",
+        "totalUnpaidAmount": "Tổng chưa thanh toán",
+        "totalOverdueAmount": "Tổng quá hạn",
+        "occupiedRooms": "Phòng đã thuê",
+        "avgRoomIncome": "Thu nhập TB/phòng",
+        "details": "Chi tiết",
+        "paidStatus": "Đã thanh toán",
+        "createdOn": "Ngày tạo",
+        "paidOn": "Đã thanh toán vào {{date}}"
     },
     "meterReadings": {
         "title": "Chỉ số đồng hồ",

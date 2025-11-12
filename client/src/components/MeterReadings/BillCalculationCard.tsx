@@ -30,7 +30,7 @@ export const BillCalculationCard: React.FC<BillCalculationCardProps> = ({
       <div className="text-center">
         <CalculatorOutlined className="text-2xl text-blue-500 mb-2" />
         <Statistic
-          title="Calculated Monthly Bill"
+          title={`${t('billing.calculatedBill')}`}
           value={calculatedBill.totalBill}
           precision={0}
           suffix="VNĐ"

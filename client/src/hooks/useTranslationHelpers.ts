@@ -42,6 +42,30 @@ export const useTranslationHelpers = () => {
     }
   }
 
+  const getPaymentStatus = (status: string): string => {
+    switch(status) {
+      case 'PAID':
+        return t('billing.paid')
+      case 'UNPAID':
+        return t('billing.unpaid')
+      case 'OVERDUE':
+        return t('billing.overdue')
+      case 'PENDING':
+        return t('billing.pending')
+      default:
+        return status
+    }
+  }
+
+  const getPaymentStatusColor = (status: string): "success" | "error" | "warning" | "default" => {
+    switch (status) {
+      case 'PAID': return 'success';
+      case 'OVERDUE': return 'error';
+      case 'UNPAID': return 'warning';
+      default: return 'default';
+    }
+  }
+
   const getModificationHistoryAction = (action: string): string => {
     switch(action) {
       case 'CREATE':
@@ -88,6 +112,8 @@ export const useTranslationHelpers = () => {
     getMonthName,
     formatCurrency,
     getStatus,
+    getPaymentStatus,
+    getPaymentStatusColor,
     getModificationHistoryAction,
     getModificationHistoryFieldName,
     getRole
