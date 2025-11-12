@@ -43,6 +43,7 @@ import {
   useYearlyTrendDataQuery
 } from '@/hooks/useBilling';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -51,6 +52,8 @@ const FinancialDashboardPage: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   const [viewType, setViewType] = useState<'monthly' | 'yearly'>('monthly');
+
+  const { t } = useTranslation();
 
   // Queries
   const { data: financialSummary, isLoading: summaryLoading } = useFinancialSummaryQuery({
@@ -126,9 +129,9 @@ const FinancialDashboardPage: React.FC = () => {
     if (!financialSummary) return [];
     
     return [
-      { name: 'Paid', value: financialSummary.totalPaid, color: '#52c41a' },
-      { name: 'Unpaid', value: financialSummary.totalUnpaid, color: '#faad14' },
-      { name: 'Overdue', value: financialSummary.totalOverdue, color: '#ff4d4f' }
+      { name: `${t('billing.paid')}`, value: financialSummary.totalPaid, color: '#52c41a' },
+      { name: `${t('billing.unpaid')}`, value: financialSummary.totalUnpaid, color: '#faad14' },
+      { name: `${t('billing.overdue')}`, value: financialSummary.totalOverdue, color: '#ff4d4f' }
     ].filter(item => item.value > 0);
   };
 
@@ -148,23 +151,23 @@ const FinancialDashboardPage: React.FC = () => {
   // Recent billing table columns
   const recentBillingColumns = [
     {
-      title: 'Room',
+      title: `${t('rooms.room')}`,
       key: 'room',
-      render: (record: any) => `Room ${record.room?.roomNumber || record.roomId}`,
+      render: (record: any) => `${t('rooms.room')} ${record.room?.roomNumber || record.roomId}`,
     },
     {
-      title: 'Period',
+      title: `${t('billing.period')}`,
       key: 'period',
       render: (record: any) => `${record.month}/${record.year}`,
     },
     {
-      title: 'Amount',
+      title: `${t('billing.amount')}`,
       dataIndex: 'totalAmount',
       key: 'totalAmount',
       render: (amount: number) => formatCurrency(amount),
     },
     {
-      title: 'Status',
+      title: `${t('billing.paymentStatus')}`,
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
       render: (status: string) => (
@@ -176,13 +179,10 @@ const FinancialDashboardPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <Title level={2}>Financial Dashboard</Title>
-        <Text type="secondary">
-          Comprehensive financial analytics and reporting for rental management
-        </Text>
+        <Title level={2}>{t('dashboard.financialReports')}</Title>
       </div>
 
       {/* Controls */}
@@ -193,8 +193,8 @@ const FinancialDashboardPage: React.FC = () => {
             onChange={setViewType}
             style={{ width: 120 }}
           >
-            <Option value="monthly">Monthly</Option>
-            <Option value="yearly">Yearly</Option>
+            <Option value="monthly">{t('financialDashboard.monthly')}</Option>
+            <Option value="yearly">{t('financialDashboard.yearly')}</Option>
           </Select>
           
           {viewType === 'monthly' && (
@@ -227,7 +227,7 @@ const FinancialDashboardPage: React.FC = () => {
             onClick={handleExport}
             loading={exportDataMutation.isPending}
           >
-            Export Report
+            {t('financialDashboard.exportReport')}
           </Button>
         </Space>
       </Card>
@@ -237,7 +237,7 @@ const FinancialDashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Total Income"
+              title={t('financialDashboard.totalIncome')}
               value={financialSummary?.totalIncome || 0}
               formatter={(value) => formatCurrency(value as number)}
               prefix={<DollarOutlined />}
@@ -248,7 +248,7 @@ const FinancialDashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Collection Rate"
+              title={t('financialDashboard.collectionRate')}
               value={collectionRate}
               precision={1}
               suffix="%"
@@ -261,7 +261,7 @@ const FinancialDashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Occupancy Rate"
+              title={t('financialDashboard.occupancyRate')}
               value={occupancyRate}
               precision={1}
               suffix="%"
@@ -274,7 +274,7 @@ const FinancialDashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Average Room Income"
+              title={t('financialDashboard.averageRoomIncome')}
               value={financialSummary?.averageRoomIncome || 0}
               formatter={(value) => formatCurrency(value as number)}
               prefix={<PieChartOutlined />}
@@ -287,7 +287,7 @@ const FinancialDashboardPage: React.FC = () => {
       {/* Payment Status Overview */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} lg={12}>
-          <Card title="Payment Status Distribution" loading={summaryLoading}>
+          <Card title={t('financialDashboard.paymentStatusDistribution')} loading={summaryLoading}>
             {paymentStatusData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -310,13 +310,13 @@ const FinancialDashboardPage: React.FC = () => {
               </ResponsiveContainer>
             ) : (
               <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                <Text type="secondary">No payment data available</Text>
+                <Text type="secondary">{`${t('financialDashboard.noPaymentData')}`}</Text>
               </div>
             )}
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="Collection Progress">
+          <Card title={t('financialDashboard.collectionProgress')}>
             <div style={{ marginBottom: '16px' }}>
               <Text strong>Paid: {formatCurrency(financialSummary?.totalPaid || 0)}</Text>
               <Progress 
@@ -349,7 +349,7 @@ const FinancialDashboardPage: React.FC = () => {
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         {viewType === 'monthly' && chartData.length > 0 && (
           <Col xs={24}>
-            <Card title={`Room Revenue Breakdown - ${selectedMonth}/${selectedYear}`} loading={monthlyLoading}>
+            <Card title={`${t('financialDashboard.roomRevenueBreakdown')} - ${selectedMonth}/${selectedYear}`} loading={monthlyLoading}>
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -357,10 +357,10 @@ const FinancialDashboardPage: React.FC = () => {
                   <YAxis tickFormatter={(value) => `₫${(value / 1000000).toFixed(1)}M`} />
                   <Tooltip formatter={(value) => formatCurrency(value as number)} />
                   <Legend />
-                  <Bar dataKey="baseRent" stackId="a" fill="#8884d8" name="Base Rent" />
-                  <Bar dataKey="waterCost" stackId="a" fill="#82ca9d" name="Water Cost" />
-                  <Bar dataKey="electricityCost" stackId="a" fill="#ffc658" name="Electricity Cost" />
-                  <Bar dataKey="trashFee" stackId="a" fill="#ff7300" name="Trash Fee" />
+                  <Bar dataKey="baseRent" stackId="a" fill="#8884d8" name={`${t('billing.baseRent')}`} />
+                  <Bar dataKey="waterCost" stackId="a" fill="#82ca9d" name={`${t('billing.waterCost')}`} />
+                  <Bar dataKey="electricityCost" stackId="a" fill="#ffc658" name={`${t('billing.electricityCost')}`} />
+                  <Bar dataKey="trashFee" stackId="a" fill="#ff7300" name={`${t('billing.trashFee')}`} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -369,7 +369,7 @@ const FinancialDashboardPage: React.FC = () => {
         
         {viewType === 'yearly' && yearlyTrendData && (
           <Col xs={24}>
-            <Card title={`Income Trend - ${selectedYear}`}>
+            <Card title={`${t('financialDashboard.incomeTrend')} - ${selectedYear}`}>
               <ResponsiveContainer width="100%" height={400}>
                 <AreaChart data={yearlyTrendData}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -377,9 +377,9 @@ const FinancialDashboardPage: React.FC = () => {
                   <YAxis tickFormatter={(value) => `₫${(value / 1000000).toFixed(1)}M`} />
                   <Tooltip formatter={(value) => formatCurrency(value as number)} />
                   <Legend />
-                  <Area type="monotone" dataKey="totalIncome" stackId="1" stroke="#8884d8" fill="#8884d8" name="Total Income" />
-                  <Area type="monotone" dataKey="totalPaid" stackId="2" stroke="#82ca9d" fill="#82ca9d" name="Paid" />
-                  <Area type="monotone" dataKey="totalUnpaid" stackId="3" stroke="#ffc658" fill="#ffc658" name="Unpaid" />
+                  <Area type="monotone" dataKey="totalIncome" stackId="1" stroke="#8884d8" fill="#8884d8" name={`${t('financialDashboard.totalIncome')}`} />
+                  <Area type="monotone" dataKey="totalPaid" stackId="2" stroke="#82ca9d" fill="#82ca9d" name={`${t('billing.paid')}`} />
+                  <Area type="monotone" dataKey="totalUnpaid" stackId="3" stroke="#ffc658" fill="#ffc658" name={`${t('billing.unpaid')}`} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card>
@@ -388,7 +388,7 @@ const FinancialDashboardPage: React.FC = () => {
       </Row>
 
       {/* Recent Billing Activity */}
-      <Card title="Recent Billing Activity">
+      <Card title={`${t('financialDashboard.recentBillingActivity')}`}>
         <Table
           columns={recentBillingColumns}
           dataSource={recentBilling?.data || []}

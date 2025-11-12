@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Tooltip } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
 interface RefreshButtonProps {
   queryKeys: readonly (readonly (string | number | Record<string, any>)[])[];
@@ -14,16 +15,19 @@ interface RefreshButtonProps {
 
 export const RefreshButton: React.FC<RefreshButtonProps> = ({
   queryKeys,
-  tooltip = 'Refresh data',
+  tooltip,
   size = 'middle',
   type = 'default',
   className = '',
   cooldownSeconds = 30,
 }) => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [loading, setLoading] = React.useState(false);
   const [cooldownRemaining, setCooldownRemaining] = React.useState(0);
   const cooldownTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  
+  const defaultTooltip = tooltip || t('common.refreshData');
 
   React.useEffect(() => {
     // Cleanup timer on unmount
@@ -71,8 +75,8 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
 
   const isDisabled = loading || cooldownRemaining > 0;
   const tooltipText = cooldownRemaining > 0
-    ? `Please wait ${cooldownRemaining}s before refreshing again`
-    : tooltip;
+    ? t('common.pleaseWait', { seconds: cooldownRemaining })
+    : defaultTooltip;
 
   return (
     <Tooltip title={tooltipText}>
@@ -85,7 +89,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
         type={type}
         className={className}
       >
-        {cooldownRemaining > 0 ? `Refresh (${cooldownRemaining}s)` : 'Refresh'}
+        {cooldownRemaining > 0 ? t('refresh.cooldown', { seconds: cooldownRemaining }) : t('refresh.button')}
       </Button>
     </Tooltip>
   );

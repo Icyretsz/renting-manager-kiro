@@ -23,13 +23,14 @@ import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
 import './styles/notifications.css';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { useTranslation } from 'react-i18next';
 
 // Main app content that requires authentication
 const AppContent = () => {
   const { isLoading, isAuthenticated } = useAuth0();
   const { user: appUser, isAuthenticated: storeAuthenticated } = useAuthStore()
   const navigate = useNavigate()
-
+  const { t } = useTranslation();
   // Initialize WebSocket notifications (this handles the connection internally)
   const { contextHolder } = useWebSocketNotifications(navigate);
 
@@ -37,7 +38,7 @@ const AppContent = () => {
 
   // Show loading while Auth0 is initializing
   if (isLoading) {
-    return <LoadingSpinner fullScreen message="Loading application..." />;
+    return <LoadingSpinner fullScreen message={`${t('common.loading')}`} />;
   }
 
   // Check both Auth0 and store authentication state
@@ -47,7 +48,7 @@ const AppContent = () => {
 
   // Show loading while app user is being set up
   if (!appUser) {
-    return <LoadingSpinner fullScreen message="Setting up user..." />;
+    return <LoadingSpinner fullScreen message={`${t('common.settingUpUser')}`} />;
   }
 
   // Get user role from app user

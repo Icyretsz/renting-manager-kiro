@@ -13,25 +13,27 @@ import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { RefreshButton } from '@/components/Common/RefreshButton';
 import { EditRoomModal } from '@/components/Rooms';
 import { Room } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
 export const RoomsPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const { data: rooms, isLoading, error } = useRoomsQuery();
+  const { t } = useTranslation();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [roomToEdit, setRoomToEdit] = useState<Room | null>(null);
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading rooms..." />;
+    return <LoadingSpinner message={t('rooms.loadingRooms')} />;
   }
 
   if (error) {
     return (
       <div className="text-center py-8">
-        <Text type="danger">Failed to load rooms</Text>
+        <Text type="danger">{t('rooms.failedToLoad')}</Text>
       </div>
     );
   }
@@ -77,7 +79,7 @@ export const RoomsPage: React.FC = () => {
         <div className="text-center">
           <Title level={5} className="mb-1 flex justify-center items-center gap-2">
             <HomeOutlined className="text-2xl text-blue-500" />
-            Room {room.roomNumber}
+            {t('rooms.room')} {room.roomNumber}
           </Title>
           <div className="flex items-center justify-center mb-2">
             <UserOutlined className="mr-1 text-gray-500" />
@@ -86,7 +88,7 @@ export const RoomsPage: React.FC = () => {
             </Text>
           </div>
           <Tag color={isFullyOccupied ? 'red' : occupancyRate > 50 ? 'orange' : 'green'}>
-            {isFullyOccupied ? 'Full' : occupancyRate > 50 ? 'Partial' : 'Available'}
+            {isFullyOccupied ? t('rooms.full') : occupancyRate > 50 ? t('rooms.partial') : t('rooms.available')}
           </Tag>
         </div>
       </Card>
@@ -95,12 +97,12 @@ export const RoomsPage: React.FC = () => {
 
   const RoomDetailModal: React.FC = () => (
     <Modal
-      title={`Room ${selectedRoom?.roomNumber} Details`}
+      title={t('rooms.roomDetails', { number: selectedRoom?.roomNumber })}
       open={modalVisible}
       onCancel={() => setModalVisible(false)}
       footer={[
         <Button key="close" onClick={() => setModalVisible(false)}>
-          Close
+          {t('common.close')}
         </Button>,
         ...(isAdmin() ? [
           <Button 
@@ -115,7 +117,7 @@ export const RoomsPage: React.FC = () => {
               }
             }}
           >
-            Edit Room
+            {t('rooms.editRoom')}
           </Button>
         ] : [])
       ]}
@@ -123,20 +125,20 @@ export const RoomsPage: React.FC = () => {
       {selectedRoom && (
         <div className="space-y-4">
           <div>
-            <Text strong>Floor:</Text> {selectedRoom.floor}
+            <Text strong>{t('rooms.floor')}:</Text> {selectedRoom.floor}
           </div>
           <div>
-            <Text strong>Base Rent:</Text> {Number(selectedRoom.baseRent).toLocaleString() || 'Not set'} VNĐ
+            <Text strong>{t('rooms.baseRent')}:</Text> {Number(selectedRoom.baseRent).toLocaleString() || t('rooms.notSet')} VNĐ
           </div>
           <div>
-            <Text strong>Occupancy:</Text> {selectedRoom.occupancyCount}/{selectedRoom.maxTenants}
+            <Text strong>{t('rooms.occupancy')}:</Text> {selectedRoom.occupancyCount}/{selectedRoom.maxTenants}
           </div>
           
           {selectedRoom.tenants && selectedRoom.tenants.length > 0 && (
             <>
               <Divider />
               <div>
-                <Text strong>Current Tenants:</Text>
+                <Text strong>{t('rooms.currentTenants')}:</Text>
                 <div className="mt-2 space-y-2">
                   {selectedRoom.tenants.map((tenant) => (
                     <div key={tenant.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
@@ -166,21 +168,21 @@ export const RoomsPage: React.FC = () => {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <Title level={3} className="mb-1">Rooms</Title>
+            <Title level={3} className="mb-1">{t('rooms.title')}</Title>
             <Text className="text-gray-600">
-              Manage building rooms and occupancy
+              {t('rooms.subtitle')}
             </Text>
           </div>
           <RefreshButton
             queryKeys={[roomKeys.all]}
-            tooltip="Refresh rooms data"
+            tooltip={t('common.refreshData')}
           />
         </div>
 
         {/* Floor 1 */}
         <div>
           <Title level={4} className="mb-3">
-            Floor 1 (Rooms 1-9)
+            {t('rooms.floor1')}
           </Title>
           <Row gutter={[12, 12]}>
             {floorOneRooms.map((room) => (
@@ -194,7 +196,7 @@ export const RoomsPage: React.FC = () => {
         {/* Floor 2 */}
         <div>
           <Title level={4} className="mb-3">
-            Floor 2 (Rooms 10-18)
+            {t('rooms.floor2')}
           </Title>
           <Row gutter={[12, 12]}>
             {floorTwoRooms.map((room) => (

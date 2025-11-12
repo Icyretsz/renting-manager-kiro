@@ -7,8 +7,10 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { NotificationBell } from '@/components/Notifications';
+import { LanguageSwitcher } from '@/components/Common/LanguageSwitcher';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -16,6 +18,7 @@ const { Text } = Typography;
 export const MobileHeader: React.FC = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Build menu items conditionally based on user role
   const userMenuItems = user?.role === 'USER' 
@@ -23,7 +26,7 @@ export const MobileHeader: React.FC = () => {
         {
           key: 'profile',
           icon: <UserOutlined />,
-          label: 'Profile',
+          label: t('auth.profile'),
           onClick: () => navigate('/profile'),
         },
         {
@@ -32,7 +35,7 @@ export const MobileHeader: React.FC = () => {
         {
           key: 'logout',
           icon: <LogoutOutlined />,
-          label: 'Sign Out',
+          label: t('auth.signOut'),
           onClick: logout,
           danger: true,
         },
@@ -41,7 +44,7 @@ export const MobileHeader: React.FC = () => {
         {
           key: 'logout',
           icon: <LogoutOutlined />,
-          label: 'Sign Out',
+          label: t('auth.signOut'),
           onClick: logout,
           danger: true,
         },
@@ -58,12 +61,14 @@ export const MobileHeader: React.FC = () => {
           className="flex items-center justify-center p-1"
         /> */}
         <Text className="text-lg font-semibold text-gray-800">
-          Rental Manager
+          {t('header.rentalManager')}
         </Text>
       </div>
 
-      {/* Right side - Notifications and User Menu */}
+      {/* Right side - Language, Notifications and User Menu */}
       <div className="flex items-center space-x-2">
+        {/* Language Switcher */}
+        <LanguageSwitcher />
         {/* Notifications */}
         <NotificationBell />
 

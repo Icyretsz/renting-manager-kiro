@@ -25,6 +25,8 @@ import {
 import { MeterReading } from '@/types';
 import { useGetPresignedURLQuery } from '@/hooks/useFileUpload';
 import { LoadingSpinner } from '../Loading';
+import { useTranslation } from 'react-i18next';
+import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const { Text } = Typography;
 
@@ -111,8 +113,10 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
   loading = false,
   roomNumber
 }) => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+  const { getStatus, getModificationHistoryAction, getModificationHistoryFieldName, getRole } = useTranslationHelpers()
 
   // Calculate usage differences for consecutive readings
   const readingsWithUsage = readings.map((reading, index) => {
@@ -146,6 +150,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
   const paginatedReadings = readingsWithUsage.slice(startIndex, endIndex);
 
   const ReadingCard: React.FC<{ reading: MeterReading & { waterUsage: number; electricityUsage: number; isFirstReading: boolean } }> = ({ reading }) => {
+    const { t } = useTranslation();
     // Use queries for fetching presigned URLs (with caching)
     const { data: waterPresigned, isLoading: waterLoading } = useGetPresignedURLQuery(
       reading.waterPhotoUrl ? {
@@ -182,7 +187,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
             {reading.month}/{reading.year}
           </div>
           <Text type="secondary" className="text-sm">
-            Submitted: {new Date(reading.submittedAt).toLocaleDateString()}
+            {t('meterReadings.submitted')}: {new Date(reading.submittedAt).toLocaleDateString()}
           </Text>
         </div>
         <Tag
@@ -190,7 +195,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
           icon={getStatusIcon(reading.status)}
           className="capitalize"
         >
-          {reading.status}
+          {getStatus(reading.status)}
         </Tag>
       </div>
 
@@ -201,7 +206,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
             <div className="text-lg font-medium text-blue-600">
               {toNumber(reading.waterReading).toFixed(1)}
             </div>
-            <Text type="secondary" className="text-xs">Water (units)</Text>
+            <Text type="secondary" className="text-xs">{t('meterReadings.water')} (m³)</Text>
           </div>
         </Col>
         <Col xs={12} sm={6}>
@@ -209,7 +214,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
             <div className="text-lg font-medium text-yellow-600">
               {toNumber(reading.electricityReading).toFixed(1)}
             </div>
-            <Text type="secondary" className="text-xs">Electricity (kWh)</Text>
+            <Text type="secondary" className="text-xs">{t('meterReadings.electricity')} (kWh)</Text>
           </div>
         </Col>
         <Col xs={12} sm={6}>
@@ -217,7 +222,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
             <div className="text-lg font-medium text-green-600">
               {reading.totalAmount ? `${toNumber(reading.totalAmount).toLocaleString()}` : '-'}
             </div>
-            <Text type="secondary" className="text-xs">Total (VNĐ)</Text>
+            <Text type="secondary" className="text-xs">{t('meterReadings.total')} (VNĐ)</Text>
           </div>
         </Col>
         <Col xs={12} sm={6}>
@@ -252,7 +257,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                 </Tooltip>
               ) : <LoadingSpinner />}
             </Space>
-            <Text type="secondary" className="text-xs block">Photos</Text>
+            <Text type="secondary" className="text-xs block">{t('meterReadings.photos')}</Text>
           </div>
         </Col>
       </Row>
@@ -266,7 +271,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
             key: reading.id,
             label: (
               <Text type="secondary" className="text-sm">
-                View detailed breakdown
+                {t('meterReadings.viewDetailedBreakdown')}
               </Text>
             ),
             children: (
@@ -274,7 +279,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                 <Row gutter={[16, 8]}>
                   <Col xs={12} sm={6}>
                     <Statistic
-                      title={"Water Usage"}
+                      title={t('meterReadings.waterUsage')}
                       value={reading.waterUsage}
                       precision={1}
                       suffix="m³"
@@ -282,13 +287,13 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     />
                     {reading.isFirstReading && (
                       <Text type="secondary" className="text-xs">
-                        (First entry)
+                        ({t('meterReadings.firstEntry')})
                       </Text>
                     )}
                   </Col>
                   <Col xs={12} sm={6}>
                     <Statistic
-                      title={"Electricity Usage"}
+                      title={t('meterReadings.electricityUsage')}
                       value={reading.electricityUsage}
                       precision={1}
                       suffix="kWh"
@@ -296,7 +301,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                     />
                     {reading.isFirstReading && (
                       <Text type="secondary" className="text-xs">
-                        (First entry)
+                        ({t('meterReadings.firstEntry')})
                       </Text>
                     )}
                   </Col>
@@ -307,18 +312,18 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <div className="flex items-center mb-2">
                       <HistoryOutlined className="text-gray-500 mr-1" />
-                      <Text strong className="text-sm">Modification History</Text>
+                      <Text strong className="text-sm">{t('meterReadings.modificationHistory')}</Text>
                     </div>
                     <div className="space-y-2">
                       {reading.modifications.map((mod) => (
                         <div key={mod.id} className="text-xs bg-white p-2 rounded border">
                           <div className="flex justify-between items-start">
                             <div>
-                              <span className="font-medium capitalize">
-                                {mod.modificationType}
+                              <span className="font-medium">
+                                {getModificationHistoryAction(mod.modificationType)}
                               </span>
                               {mod.fieldName && (
-                                <span className="text-gray-600"> - {mod.fieldName}</span>
+                                <span className="text-gray-600"> - {getModificationHistoryFieldName(mod.fieldName)}</span>
                               )}
                             </div>
                             <span className="text-gray-500">
@@ -327,13 +332,15 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                           </div>
                           {mod.oldValue && mod.newValue && (
                             <div className="text-gray-600 mt-1">
-                              Changed from "{mod.oldValue}" to "{mod.newValue}"
+                              {t('meterReadings.changedFromTo', { oldValue: mod.oldValue, newValue: mod.newValue })}
                             </div>
                           )}
                           <div className="text-gray-500 mt-1">
                             {(() => {
                               const actor = getActorInfo(mod, reading);
-                              return `By ${actor.name} (${actor.role})${actor.roomId ? ` - Room ${actor.roomId}` : ''}`;
+                              return actor.roomId 
+                                ? t('meterReadings.byActorRoleRoom', { name: actor.name, role: getRole(actor.role), room: actor.roomId })
+                                : t('meterReadings.byActorRole', { name: actor.name, role: getRole(actor.role) });
                             })()}
                           </div>
                         </div>
@@ -344,7 +351,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
 
                 {reading.approvedAt && (
                   <div className="mt-2 text-xs text-gray-500">
-                    Approved on: {new Date(reading.approvedAt).toLocaleDateString()}
+                    {t('meterReadings.approvedOn')}: {new Date(reading.approvedAt).toLocaleDateString()}
                   </div>
                 )}
               </div>
@@ -360,10 +367,10 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
     <Modal
       title={
         <div>
-          Reading History
+          {t('meterReadings.readingHistoryTitle')}
           {roomNumber && (
             <Text type="secondary" className="ml-2">
-              - Room {roomNumber}
+              - {t('meterReadings.room')} {roomNumber}
             </Text>
           )}
         </div>
@@ -372,7 +379,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
       onCancel={onClose}
       footer={[
         <Button key="close" onClick={onClose}>
-          Close
+          {t('common.close')}
         </Button>
       ]}
       width={800}
@@ -381,11 +388,11 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
       <div className="max-h-96 overflow-y-auto">
         {loading ? (
           <div className="text-center py-8">
-            <Text type="secondary">Loading reading history...</Text>
+            <Text type="secondary">{t('meterReadings.loadingReadingHistory')}</Text>
           </div>
         ) : readingsWithUsage.length === 0 ? (
           <Empty
-            description="No reading history found"
+            description={t('meterReadings.noReadingHistoryFound')}
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : (
@@ -403,7 +410,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
                   onChange={setCurrentPage}
                   showSizeChanger={false}
                   showTotal={(total, range) =>
-                    `${range[0]}-${range[1]} of ${total} readings`
+                    t('meterReadings.readingsRange', { start: range[0], end: range[1], total })
                   }
                   size="small"
                 />

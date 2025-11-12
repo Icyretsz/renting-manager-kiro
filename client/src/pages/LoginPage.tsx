@@ -2,11 +2,13 @@ import { Button, Card, Typography } from 'antd';
 import { LoginOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Paragraph } = Typography;
 
 export const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -18,10 +20,10 @@ export const LoginPage = () => {
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
           <Title level={2} className="mb-2">
-            Rental Management System
+            {t('header.rentalManager')}
           </Title>
           <Paragraph className="text-gray-600">
-            Please sign in to access your account
+            {t('auth.pleaseSignIn')}
           </Paragraph>
         </div>
 
@@ -32,12 +34,12 @@ export const LoginPage = () => {
           onClick={login}
           className="w-full"
         >
-          Sign In with Auth0
+          {t('auth.signInWith')}
         </Button>
 
         <div className="mt-6 text-center">
           <Paragraph className="text-sm text-gray-500">
-            Secure authentication powered by Auth0
+            {t('auth.secureAuth')}
           </Paragraph>
         </div>
       </Card>

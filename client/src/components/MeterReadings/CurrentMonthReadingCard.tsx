@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Alert, Tag } from 'antd';
 import { MeterReading } from '@/types';
+import { useTranslation } from 'react-i18next';
+import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
@@ -25,6 +27,9 @@ export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = (
   canAdminOverride,
   canCreateNewReading
 }) => {
+  const { t } = useTranslation();
+  const { getStatus } = useTranslationHelpers()
+  
   const getStatusColor = () => {
     switch (reading.status) {
       case 'APPROVED': return 'border-green-200 bg-green-50';
@@ -35,13 +40,13 @@ export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = (
 
   return (
     <Card
-      title={`Current Month Reading (${currentMonth}/${currentYear})`}
+      title={t('meterReadings.currentMonthReadingTitle', { month: currentMonth, year: currentYear })}
       size="small"
       className={getStatusColor()}
       extra={
         submissionCount > 1 && (
           <span className="text-xs text-gray-500">
-            {submissionCount} submissions
+            {submissionCount} {t('meterReadings.submissions')}
           </span>
         )
       }
@@ -49,28 +54,28 @@ export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = (
       <Row gutter={16}>
         <Col span={8}>
           <Statistic
-            title="Water"
+            title={t('meterReadings.water')}
             value={toNumber(reading.waterReading)}
             precision={1}
-            suffix="units"
+            suffix='m³'
           />
         </Col>
         <Col span={8}>
           <Statistic
-            title="Electricity"
+            title={t('meterReadings.electricity')}
             value={toNumber(reading.electricityReading)}
             precision={1}
-            suffix="units"
+            suffix='kWh'
           />
         </Col>
         <Col span={8}>
           <div className="text-center">
-            <div className="text-sm text-gray-500 mb-1">Status</div>
+            <div className="text-sm text-gray-500 mb-1">{t('meterReadings.status')}</div>
             <Tag color={
               reading.status === 'APPROVED' ? 'green' :
               reading.status === 'REJECTED' ? 'red' : 'orange'
             }>
-              {reading.status.toUpperCase()}
+              {getStatus(reading.status.toUpperCase())}
             </Tag>
           </div>
         </Col>
@@ -78,8 +83,8 @@ export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = (
 
       {reading.status === 'APPROVED' && !isAdmin && (
         <Alert
-          message="Reading Approved"
-          description="This reading has been approved and cannot be modified. Contact admin if changes are needed."
+          message={t('meterReadings.readingApproved')}
+          description={t('meterReadings.readingApprovedDesc')}
           type="success"
           showIcon
           className="mt-3"
@@ -88,8 +93,8 @@ export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = (
 
       {reading.status === 'REJECTED' && (
         <Alert
-          message="Reading Rejected"
-          description={`This reading was rejected. ${canCreateNewReading ? 'You can submit a new reading below.' : 'Please wait for admin review of other submissions.'}`}
+          message={t('meterReadings.readingRejected')}
+          description={canCreateNewReading ? t('meterReadings.readingRejectedCanSubmit') : t('meterReadings.readingRejectedWaitReview')}
           type="error"
           showIcon
           className="mt-3"
@@ -98,8 +103,8 @@ export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = (
 
       {reading.status === 'PENDING' && (
         <Alert
-          message="Pending Approval"
-          description="This reading is waiting for admin approval. You can still modify it until it's approved."
+          message={t('meterReadings.pendingApproval')}
+          description={t('meterReadings.pendingApprovalDesc')}
           type="warning"
           showIcon
           className="mt-3"
@@ -108,8 +113,8 @@ export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = (
 
       {canAdminOverride && (
         <Alert
-          message="Admin Override Available"
-          description="As an admin, you can modify this approved reading. Changes will be logged in the modification history."
+          message={t('meterReadings.adminOverrideAvailable')}
+          description={t('meterReadings.adminOverrideDesc')}
           type="info"
           showIcon
           className="mt-3"

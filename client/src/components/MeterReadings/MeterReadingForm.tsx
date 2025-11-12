@@ -4,6 +4,7 @@ import { SaveOutlined, PlusOutlined } from '@ant-design/icons';
 import { MeterReading, MeterType, Room } from '@/types';
 import { BillCalculationCard } from './BillCalculationCard';
 import getBase64 from '@/utils/getBase64';
+import { useTranslation } from 'react-i18next';
 
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
@@ -64,6 +65,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   electricityPhotoList,
   setElectricityPhotoList
 }) => {
+  const { t } = useTranslation();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [previewTitle, setPreviewTitle] = useState('');
@@ -87,10 +89,10 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   };
 
   const getTitle = () => {
-    if (canAdminOverride) return "Current Month Reading (Admin Override)";
-    if (canEdit) return "Edit Current Month Reading";
-    if (canCreateNew) return "Submit New Reading";
-    return "Current Month Reading";
+    if (canAdminOverride) return t('meterReadings.currentMonthReadingAdminOverride');
+    if (canEdit) return t('meterReadings.editCurrentMonthReading');
+    if (canCreateNew) return t('meterReadings.submitNewReading');
+    return t('meterReadings.currentMonthReading');
   };
 
   return (
@@ -98,16 +100,16 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
       <Card title={getTitle()} size="small">
         {hasApprovedReading && !canAdminOverride ? (
           <Alert
-            message="Reading Already Approved"
-            description="An approved reading exists for this month and cannot be modified."
+            message={t('meterReadings.readingAlreadyApproved')}
+            description={t('meterReadings.readingAlreadyApprovedDesc')}
             type="success"
             showIcon
             className="mb-4"
           />
         ) : hasPendingReading && !canEdit && !canCreateNew ? (
           <Alert
-            message="Reading Pending Review"
-            description="A reading is currently pending admin approval. You cannot submit another until it's reviewed."
+            message={t('meterReadings.readingPendingReview')}
+            description={t('meterReadings.readingPendingReviewDesc')}
             type="warning"
             showIcon
             className="mb-4"
@@ -124,13 +126,13 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           {/* Water Reading */}
           <Form.Item
             name="waterReading"
-            label="Water Meter Reading"
+            label={t('meterReadings.waterMeterReading')}
             rules={[
-              { required: true, message: 'Please enter water reading' },
+              { required: true, message: t('meterReadings.pleaseEnterWaterReading') },
               {
                 validator: (_, value) => {
                   if (previousReading && value < toNumber(previousReading.waterReading)) {
-                    return Promise.reject('Reading cannot be less than previous month');
+                    return Promise.reject(t('meterReadings.readingCannotBeLessThanPrevious'));
                   }
                   return Promise.resolve();
                 }
@@ -139,7 +141,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           >
             <InputNumber
               className="w-full"
-              placeholder="Enter water reading"
+              placeholder={t('meterReadings.enterWaterReading')}
               precision={1}
               min={0}
               step={0.1}
@@ -147,7 +149,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           </Form.Item>
 
           {/* Water Photo Upload */}
-          <Form.Item label="Water Meter Photo">
+          <Form.Item label={t('meterReadings.waterMeterPhoto')}>
             <Upload
               accept="image/*"
               beforeUpload={(file) => onPhotoUpload(file, 'water')}
@@ -155,7 +157,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
               fileList={waterPhotoList}
               onChange={handleWaterChange}
               onPreview={handlePreview}
-              disabled={uploadLoading || !selectedRoomId}
+              disabled={uploadLoading || !selectedRoomId || (!canEdit && !canAdminOverride && !canCreateNew)}
               maxCount={1}
             >
               {waterPhotoList.length === 0 && (
@@ -167,7 +169,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                 >
                   <div className="flex flex-col justify-center items-center">
                     <PlusOutlined />
-                    Upload
+                    {t('meterReadings.upload')}
                   </div>
                 </Button>
               )}
@@ -179,13 +181,13 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           {/* Electricity Reading */}
           <Form.Item
             name="electricityReading"
-            label="Electricity Meter Reading"
+            label={t('meterReadings.electricityMeterReading')}
             rules={[
-              { required: true, message: 'Please enter electricity reading' },
+              { required: true, message: t('meterReadings.pleaseEnterElectricityReading') },
               {
                 validator: (_, value) => {
                   if (previousReading && value < toNumber(previousReading.electricityReading)) {
-                    return Promise.reject('Reading cannot be less than previous month');
+                    return Promise.reject(t('meterReadings.readingCannotBeLessThanPrevious'));
                   }
                   return Promise.resolve();
                 }
@@ -194,7 +196,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           >
             <InputNumber
               className="w-full"
-              placeholder="Enter electricity reading"
+              placeholder={t('meterReadings.enterElectricityReading')}
               precision={1}
               min={0}
               step={0.1}
@@ -202,7 +204,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
           </Form.Item>
 
           {/* Electricity Photo Upload */}
-          <Form.Item label="Electricity Meter Photo">
+          <Form.Item label={t('meterReadings.electricityMeterPhoto')}>
             <Upload
               accept="image/*"
               beforeUpload={(file) => onPhotoUpload(file, 'electricity')}
@@ -210,7 +212,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
               fileList={electricityPhotoList}
               onChange={handleElectricityChange}
               onPreview={handlePreview}
-              disabled={uploadLoading || !selectedRoomId}
+              disabled={uploadLoading || !selectedRoomId || (!canEdit && !canAdminOverride && !canCreateNew)}
               maxCount={1}
             >
               {electricityPhotoList.length === 0 && (
@@ -222,7 +224,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
                 >
                   <div className="flex flex-col justify-center items-center">
                     <PlusOutlined />
-                    Upload
+                    {t('meterReadings.upload')}
                   </div>
                 </Button>
               )}
@@ -258,12 +260,12 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
               }
             >
               {canAdminOverride
-                ? 'Update Reading (Admin Override)'
+                ? t('meterReadings.updateReadingAdminOverride')
                 : canEdit
-                  ? 'Update Reading'
+                  ? t('meterReadings.updateReading')
                   : canCreateNew
-                    ? 'Submit New Reading'
-                    : 'Cannot Submit'
+                    ? t('meterReadings.submitNewReading')
+                    : t('meterReadings.cannotSubmit')
               }
             </Button>
           </Form.Item>

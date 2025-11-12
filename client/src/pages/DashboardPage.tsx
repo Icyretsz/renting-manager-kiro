@@ -2,17 +2,18 @@ import { Card, Typography, Row, Col, Statistic } from 'antd';
 import {
   HomeOutlined,
   FileTextOutlined,
-  DollarOutlined
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { UserRoomsPage } from './UserRoomsPage';
 import FinancialDashboardPage from './FinancialDashboardPage';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Paragraph } = Typography;
 
 export const DashboardPage = () => {
   const { user, isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <PageErrorBoundary>
@@ -20,10 +21,10 @@ export const DashboardPage = () => {
         {/* Welcome Section */}
         <div className="mb-6">
           <Title level={3} className="mb-1">
-            Welcome, {user?.name?.split(' ')[0]}
+            {t('dashboard.welcomeBack', { name: user?.name?.split(' ')[0] })}
           </Title>
           <Paragraph className="text-gray-600 mb-0">
-            {isAdmin() ? 'Administrator' : 'User'} • {user?.email}
+            {isAdmin() ? t('dashboard.administrator') : t('dashboard.user')} • {user?.email}
           </Paragraph>
         </div>
 
@@ -32,12 +33,11 @@ export const DashboardPage = () => {
         {/* Admin Features */}
         {isAdmin() && (
           <>
-            {/* Quick Stats */}
             <Row gutter={[16, 16]}>
               <Col span={12}>
                 <Card>
                   <Statistic
-                    title="Total Rooms"
+                    title={t('dashboard.totalRooms')}
                     value={18}
                     prefix={<HomeOutlined />}
                     valueStyle={{ color: '#3f8600' }}
@@ -47,51 +47,51 @@ export const DashboardPage = () => {
               <Col span={12}>
                 <Card>
                   <Statistic
-                    title="This Month"
-                    value="Nov 2024"
+                    title={t('dashboard.thisMonth')}
+                    value={`${new Date().getMonth() + 1}/${new Date().getFullYear()}`}
                     prefix={<FileTextOutlined />}
                     valueStyle={{ color: '#1890ff' }}
                   />
                 </Card>
               </Col>
             </Row>
-            <Card title="Admin Features" extra={<DollarOutlined />}>
+            {/* <Card title={t('dashboard.adminFeatures')} extra={<DollarOutlined />}>
               <Paragraph className="mb-3">
-                As an admin, you have access to:
+                {t('dashboard.adminAccess')}
               </Paragraph>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center">
                   <HomeOutlined className="mr-2 text-blue-500" />
-                  Room & tenant management
+                  {t('dashboard.roomTenantManagement')}
                 </li>
                 <li className="flex items-center">
                   <FileTextOutlined className="mr-2 text-green-500" />
-                  Reading approvals
+                  {t('dashboard.readingApprovals')}
                 </li>
                 <li className="flex items-center">
                   <DollarOutlined className="mr-2 text-orange-500" />
-                  Financial reports
+                  {t('dashboard.financialReports')}
                 </li>
               </ul>
             </Card>
 
-            {/* System Status */}
-            <Card title="System Status">
+            System Status
+            <Card title={t('dashboard.systemStatus')}>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Authentication</span>
-                  <span className="text-green-600 font-medium">✅ Active</span>
+                  <span className="text-gray-600">{t('dashboard.authentication')}</span>
+                  <span className="text-green-600 font-medium">✅ {t('common.active')}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">API Connection</span>
-                  <span className="text-green-600 font-medium">✅ Ready</span>
+                  <span className="text-gray-600">{t('dashboard.apiConnection')}</span>
+                  <span className="text-green-600 font-medium">✅ {t('dashboard.ready')}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Role Access</span>
-                  <span className="text-green-600 font-medium">✅ Enabled</span>
+                  <span className="text-gray-600">{t('dashboard.roleAccess')}</span>
+                  <span className="text-green-600 font-medium">✅ {t('dashboard.enabled')}</span>
                 </div>
               </div>
-            </Card>
+            </Card> */}
             
             <FinancialDashboardPage />
 

@@ -19,6 +19,7 @@ import {
 import { UploadFile } from 'antd/es/upload';
 import { meterReadingKeys } from '@/hooks/useMeterReadings';
 import { roomKeys } from '@/hooks/useRooms';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
@@ -30,6 +31,7 @@ export const MeterReadingsPage: React.FC = () => {
   const { isAdmin, user } = useAuth();
   const { data: rooms } = useRoomsQuery();
   const [form] = Form.useForm();
+  const { t } = useTranslation();
 
   const waterRate = useSettingValue('water_rate', 22000);
   const electricityRate = useSettingValue('electricity_rate', 3500);
@@ -306,9 +308,9 @@ export const MeterReadingsPage: React.FC = () => {
       <PageErrorBoundary>
         <div className="space-y-4">
           <div>
-            <Title level={3} className="mb-1">Meter Readings</Title>
+            <Title level={3} className="mb-1">{`${t('meterReadings.title')}`}</Title>
             <Text className="text-gray-600">
-              Submit monthly utility readings with photos
+              {`${t('meterReadings.subtitle')}`}
             </Text>
           </div>
           <RoomSelector
@@ -318,7 +320,7 @@ export const MeterReadingsPage: React.FC = () => {
             isAdmin={isAdmin()}
             userRoomId={userRoomId}
           />
-          <LoadingSpinner message="Loading previous readings..." />
+          <LoadingSpinner message={`${t('meterReadings.loadingPreviousReadings')}`} />
         </div>
       </PageErrorBoundary>
     );
@@ -329,9 +331,9 @@ export const MeterReadingsPage: React.FC = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-start">
           <div>
-            <Title level={3} className="mb-1">Meter Readings</Title>
+            <Title level={3} className="mb-1">{`${t('meterReadings.title')}`}</Title>
             <Text className="text-gray-600">
-              Submit monthly utility readings with photos
+              {`${t('meterReadings.subtitle')}`}
             </Text>
           </div>
           <RefreshButton
@@ -339,7 +341,6 @@ export const MeterReadingsPage: React.FC = () => {
               meterReadingKeys.all,
               roomKeys.all,
             ]}
-            tooltip="Refresh meter readings and room data"
           />
         </div>
 
@@ -354,8 +355,8 @@ export const MeterReadingsPage: React.FC = () => {
         {isAdmin() && !selectedRoomId && (
           <Card size="small">
             <div className="text-center py-8 text-gray-500">
-              <div className="text-lg mb-2">Select a Room</div>
-              <div className="text-sm">Choose a room from the dropdown above to view and manage meter readings.</div>
+              <div className="text-lg mb-2">{`${t('meterReadings.selectARoom')}`}</div>
+              <div className="text-sm">{`${t('meterReadings.selectRoomToView')}`}</div>
             </div>
           </Card>
         )}
@@ -364,7 +365,7 @@ export const MeterReadingsPage: React.FC = () => {
           <>
             {readingLoading ? (
               <Card size="small">
-                <LoadingSpinner message="Loading meter readings..." />
+                <LoadingSpinner message={`${t('meterReadings.loadingReadings')}`} />
               </Card>
             ) : (
               <>
@@ -391,7 +392,7 @@ export const MeterReadingsPage: React.FC = () => {
                     onClick={() => setShowHistoryModal(true)}
                     disabled={!selectedRoomId}
                   >
-                    View Reading History
+                    {`${t('meterReadings.viewHistory')}`}
                   </Button>
                 </Card>
 
@@ -429,8 +430,8 @@ export const MeterReadingsPage: React.FC = () => {
                 />
 
                 <Alert
-                  message="Reading Submission Guidelines"
-                  description="Please ensure photos are clear and show the complete meter display. Readings cannot be less than the previous month's values."
+                  message={`${t('meterReadings.guidelineTitle')}`}
+                  description={`${t('meterReadings.guidelineDes')}`}
                   type="info"
                   showIcon
                   className="text-sm"
