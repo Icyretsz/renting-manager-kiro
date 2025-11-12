@@ -331,8 +331,21 @@ export const updateMeterReading = async (id: string, data: UpdateMeterReadingDat
     }
   });
 
-  // Send notification if admin modified an approved reading
+  // Update billing record if admin modified an approved reading
   if (userRole === 'ADMIN' && existingReading.status === ReadingStatus.APPROVED && modifications.length > 0) {
+    try {
+      const updatedBilling = await billingService.updateBillingRecordFromReading(id);
+      if (updatedBilling) {
+        console.log(`✓ Billing record updated successfully: ${updatedBilling.id} for reading: ${id}`);
+      }
+    } catch (error) {
+      console.error('✗ Failed to update billing record for modified reading:', error);
+      console.error('Reading ID:', id);
+      console.error('Error details:', error instanceof Error ? error.message : error);
+      // Don't throw error as the update was successful
+    }
+
+    // Send notification about the modification
     try {
       const { notifyReadingModified } = await import('./notificationService');
       await notifyReadingModified(

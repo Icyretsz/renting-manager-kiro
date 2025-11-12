@@ -205,6 +205,92 @@ export const generateBillingRecord = async (readingId: string): Promise<BillingR
 };
 
 /**
+ * Update billing record when an approved meter reading is modified
+ */
+export const updateBillingRecordFromReading = async (readingId: string): Promise<BillingRecordWithDetails | null> => {
+  const reading = await prisma.meterReading.findUnique({
+    where: { id: readingId },
+    include: {
+      room: {
+        select: {
+          id: true,
+          roomNumber: true,
+          floor: true,
+          baseRent: true
+        }
+      }
+    }
+  });
+
+  if (!reading) {
+    throw new AppError('Meter reading not found', 404);
+  }
+
+  if (reading.status !== ReadingStatus.APPROVED) {
+    console.log('Cannot update billing record for non-approved reading');
+    return null;
+  }
+
+  // Find existing billing record
+  const existingBilling = await prisma.billingRecord.findUnique({
+    where: { readingId }
+  });
+
+  if (!existingBilling) {
+    console.log('No billing record found for this reading');
+    return null;
+  }
+
+  // Recalculate usage and costs
+  const calculation = await calculateBilling(
+    reading.roomId,
+    reading.month,
+    reading.year,
+    reading.waterReading.toNumber(),
+    reading.electricityReading.toNumber(),
+    reading.baseRent.toNumber()
+  );
+
+  // Update billing record
+  const updatedBillingRecord = await prisma.billingRecord.update({
+    where: { id: existingBilling.id },
+    data: {
+      waterUsage: calculation.waterUsage,
+      electricityUsage: calculation.electricityUsage,
+      waterCost: calculation.waterCost,
+      electricityCost: calculation.electricityCost,
+      baseRent: calculation.baseRent,
+      trashFee: calculation.trashFee,
+      totalAmount: calculation.totalAmount
+    },
+    include: {
+      room: {
+        select: {
+          id: true,
+          roomNumber: true,
+          floor: true,
+          baseRent: true
+        }
+      },
+      reading: {
+        select: {
+          id: true,
+          month: true,
+          year: true,
+          waterReading: true,
+          electricityReading: true,
+          status: true,
+          submittedAt: true,
+          approvedAt: true
+        }
+      }
+    }
+  });
+
+  return updatedBillingRecord;
+};
+
+/**
  * Calculate billing amounts based on meter readings
  */
 export const calculateBilling = async (

@@ -16,13 +16,13 @@ router.get('/unread-count', notificationController.getUnreadCount);
 // Mark specific notifications as read
 router.patch('/mark-read', notificationController.markNotificationsAsRead);
 
-// Mark single notification as read
-router.put('/:notificationId/read', notificationController.markSingleNotificationAsRead);
-
 // Mark all notifications as read
 router.patch('/mark-all-read', notificationController.markAllNotificationsAsRead);
 
 // Update FCM token for push notifications
 router.patch('/fcm-token', notificationController.updateFCMToken);
+
+// Mark single notification as read
+router.put('/:notificationId/read', notificationController.markSingleNotificationAsRead);
 
 export default router;

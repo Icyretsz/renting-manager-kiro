@@ -41,6 +41,9 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
+              const roomQueryKeyBilling = billingKeys.byRoom(Number(notificationData.roomNumber))
+              queryClient.invalidateQueries({ queryKey: roomQueryKeyBilling })
+              queryClient.invalidateQueries({ queryKey: billingKeys.lists() })
             }
             break;
 
@@ -48,6 +51,9 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
+              const roomQueryKeyBilling = billingKeys.byRoom(Number(notificationData.roomNumber))
+              queryClient.invalidateQueries({ queryKey: roomQueryKeyBilling })
+              queryClient.invalidateQueries({ queryKey: billingKeys.lists() })
             }
             break;
 

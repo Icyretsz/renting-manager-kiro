@@ -128,6 +128,8 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response): P
         throw new AppError('User not authenticated', 401);
       }
 
+      console.log('mark all')
+
       await notificationService.markAllAsRead(userId);
 
       res.json({

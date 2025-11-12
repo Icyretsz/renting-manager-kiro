@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Form, Button, Typography, Alert } from 'antd';
 import { HistoryOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
@@ -114,6 +114,30 @@ export const MeterReadingsPage: React.FC = () => {
   const { data: waterPresigned } = useGetPresignedURLQuery(waterPhotoParams);
   const { data: electricityPresigned } = useGetPresignedURLQuery(electricityPhotoParams);
 
+  // Calculate bill function - defined before useEffect that uses it
+  const calculateBill = useCallback((waterReading: number, electricityReading: number) => {
+    if (!previousReading || !currentRoom) return;
+
+    const prevWaterReading = toNumber(previousReading.waterReading);
+    const prevElectricityReading = toNumber(previousReading.electricityReading);
+    const baseRent = toNumber(currentRoom.baseRent);
+
+    const waterUsage = Math.max(0, waterReading - prevWaterReading);
+    const electricityUsage = Math.max(0, electricityReading - prevElectricityReading);
+
+    const waterCost = waterUsage * waterRate;
+    const electricityCost = electricityUsage * electricityRate;
+
+    const total = waterCost + electricityCost + baseRent + trashFee;
+    setCalculatedBill({
+      totalBill: total,
+      electricityUsage: electricityUsage,
+      waterUsage: waterUsage,
+      electricityBill: electricityCost,
+      waterBill: waterCost
+    });
+  }, [previousReading, currentRoom, waterRate, electricityRate, trashFee]);
+
   useEffect(() => {
     if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {
       form.setFieldsValue({
@@ -147,6 +171,7 @@ export const MeterReadingsPage: React.FC = () => {
         }]);
       }
 
+      // Calculate bill with current month reading values
       if (previousReading && currentRoom) {
         calculateBill(
           toNumber(currentMonthReading.waterReading),
@@ -163,7 +188,7 @@ export const MeterReadingsPage: React.FC = () => {
         totalBill: 0, electricityUsage: 0, waterUsage: 0, waterBill: 0, electricityBill: 0
       });
     }
-  }, [currentMonthReading, canEditCurrentReading, canAdminOverride, canCreateNewReading, form, previousReading, currentRoom, waterPresigned, electricityPresigned]);
+  }, [currentMonthReading, canEditCurrentReading, canAdminOverride, canCreateNewReading, form, previousReading, currentRoom, waterPresigned, electricityPresigned, calculateBill]);
 
   const handleRoomChange = (roomId: number) => {
     setSelectedRoomId(roomId);
@@ -182,29 +207,6 @@ export const MeterReadingsPage: React.FC = () => {
     if (values.waterReading && values.electricityReading && previousReading && currentRoom) {
       calculateBill(values.waterReading, values.electricityReading);
     }
-  };
-
-  const calculateBill = (waterReading: number, electricityReading: number) => {
-    if (!previousReading || !currentRoom) return;
-
-    const prevWaterReading = toNumber(previousReading.waterReading);
-    const prevElectricityReading = toNumber(previousReading.electricityReading);
-    const baseRent = toNumber(currentRoom.baseRent);
-
-    const waterUsage = Math.max(0, waterReading - prevWaterReading);
-    const electricityUsage = Math.max(0, electricityReading - prevElectricityReading);
-
-    const waterCost = waterUsage * waterRate;
-    const electricityCost = electricityUsage * electricityRate;
-
-    const total = waterCost + electricityCost + baseRent + trashFee;
-    setCalculatedBill({
-      totalBill: total,
-      electricityUsage: electricityUsage,
-      waterUsage: waterUsage,
-      electricityBill: electricityCost,
-      waterBill: waterCost
-    });
   };
 
   const handlePhotoUpload = async (file: File, type: 'water' | 'electricity'): Promise<boolean> => {
