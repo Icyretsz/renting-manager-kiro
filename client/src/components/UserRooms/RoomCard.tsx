@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, Tag, Typography } from 'antd';
 import { HomeOutlined, UserOutlined, DollarOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Room } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
@@ -18,6 +19,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
   electricityRate,
   trashFee
 }) => {
+  const { t } = useTranslation()
   const occupancyRate = (room.occupancyCount / room.maxTenants) * 100;
   const isFullyOccupied = room.occupancyCount >= room.maxTenants;
 
@@ -28,7 +30,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
       actions={[
         <div key="info" className="text-xs text-gray-500">
           <InfoCircleOutlined className="mr-1" />
-          View Details
+          {t('rooms.viewDetails')}
         </div>
       ]}
     >
@@ -38,11 +40,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           <div className="flex items-center justify-center gap-2 mb-1">
             <HomeOutlined className="text-lg text-blue-500" />
             <Title level={5} className="mb-0">
-              Room {room.roomNumber}
+              {`${t('rooms.room')}`} {room.roomNumber}
             </Title>
           </div>
           <Text className="text-xs text-gray-600">
-            Floor {room.floor}
+            {`${t('rooms.floor')}`} {room.floor}
           </Text>
         </div>
 
@@ -51,11 +53,11 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           <div className="flex items-center">
             <UserOutlined className="mr-1 text-gray-500" />
             <Text className="text-sm">
-              {room.occupancyCount}/{room.maxTenants} tenants
+              {room.occupancyCount}/{room.maxTenants} {`${t('tenants.title')}`}
             </Text>
           </div>
           <Tag color={isFullyOccupied ? 'red' : occupancyRate > 50 ? 'orange' : 'green'}>
-            {isFullyOccupied ? 'Full' : occupancyRate > 50 ? 'Partial' : 'Available'}
+            {isFullyOccupied ? `${t('rooms.full')}` : `${t('rooms.available')}`}
           </Tag>
         </div>
 
@@ -64,7 +66,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <DollarOutlined className="mr-1 text-gray-500" />
-              <Text className="text-sm">Base Rent</Text>
+              <Text className="text-sm">{`${t('billing.baseRent')}`}</Text>
             </div>
             <Text className="text-sm font-medium">
               {Number(room.baseRent).toLocaleString() || 'Not set'} VNĐ
@@ -72,16 +74,16 @@ export const RoomCard: React.FC<RoomCardProps> = ({
           </div>
           <div className="text-xs text-gray-500 space-y-1">
             <div className="flex justify-between">
-              <span>Water:</span>
+              <span>{`${t('rooms.waterFee')}`}:</span>
               <span>{waterRate.toLocaleString()} VNĐ/m³</span>
             </div>
             <div className="flex justify-between">
-              <span>Electricity:</span>
+              <span>{`${t('rooms.electricityRate')}`}:</span>
               <span>{electricityRate.toLocaleString()} VNĐ/kWh</span>
             </div>
             <div className="flex justify-between">
-              <span>Trash:</span>
-              <span>{trashFee.toLocaleString()} VNĐ/month</span>
+              <span>${`${t('billing.trashFee')}`}:</span>
+              <span>{trashFee.toLocaleString()} VNĐ/{`${t('common.month')}`}</span>
             </div>
           </div>
         </div>
@@ -89,7 +91,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
         {/* Current Tenants */}
         {room.tenants && room.tenants.length > 0 && (
           <div>
-            <Text className="text-xs text-gray-600 font-medium">Current Tenants:</Text>
+            <Text className="text-xs text-gray-600 font-medium">{`${t('rooms.currentTenants')}`}:</Text>
             <div className="mt-1 space-y-1">
               {room.tenants.slice(0, 2).map((tenant) => (
                 <div key={tenant.id} className="text-xs text-gray-700">
@@ -98,7 +100,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
               ))}
               {room.tenants.length > 2 && (
                 <div className="text-xs text-gray-500">
-                  +{room.tenants.length - 2} more
+                  +{room.tenants.length - 2} {`${t('common.more')}`}
                 </div>
               )}
             </div>

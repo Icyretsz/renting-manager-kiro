@@ -14,10 +14,12 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { useFirebaseMessaging } from '@/hooks/useFirebaseMessaging';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text, Paragraph } = Typography;
 
 export const NotificationSettings: React.FC = () => {
+  const { t } = useTranslation();
   const {
     isSupported,
     permission,
@@ -32,22 +34,22 @@ export const NotificationSettings: React.FC = () => {
         return {
           status: 'success' as const,
           icon: <CheckCircleOutlined className="text-green-500" />,
-          text: 'Notifications enabled',
-          description: 'You will receive push notifications for important updates.',
+          text: t('notifications.notificationsEnabled'),
+          description: t('notifications.notificationsEnabledDesc'),
         };
       case 'denied':
         return {
           status: 'error' as const,
           icon: <ExclamationCircleOutlined className="text-red-500" />,
-          text: 'Notifications blocked',
-          description: 'Please enable notifications in your browser settings to receive updates.',
+          text: t('notifications.notificationsBlocked'),
+          description: t('notifications.notificationsBlockedDesc'),
         };
       default:
         return {
           status: 'warning' as const,
           icon: <BellOutlined className="text-orange-500" />,
-          text: 'Notifications not configured',
-          description: 'Enable notifications to stay updated on reading approvals and important updates.',
+          text: t('notifications.notificationsNotConfigured'),
+          description: t('notifications.notificationsNotConfiguredDesc'),
         };
     }
   };
@@ -65,8 +67,8 @@ export const NotificationSettings: React.FC = () => {
     return (
       <Card>
         <Alert
-          message="Notifications Not Supported"
-          description="Your browser does not support push notifications. Please use a modern browser to receive notifications."
+          message={t('notifications.notSupported')}
+          description={t('notifications.notSupportedDesc')}
           type="warning"
           showIcon
         />
@@ -80,7 +82,7 @@ export const NotificationSettings: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <SettingOutlined className="text-lg" />
-            <Title level={4} className="mb-0">Notification Settings</Title>
+            <Title level={4} className="mb-0">{t('notifications.notificationSettings')}</Title>
           </div>
         </div>
 
@@ -98,7 +100,7 @@ export const NotificationSettings: React.FC = () => {
         {/* Error Display */}
         {error && (
           <Alert
-            message="Notification Error"
+            message={t('notifications.notificationError')}
             description={error}
             type="error"
             showIcon
@@ -110,9 +112,9 @@ export const NotificationSettings: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Text strong>Push Notifications</Text>
+              <Text strong>{t('notifications.pushNotifications')}</Text>
               <div className="text-sm text-gray-500">
-                Receive notifications for reading approvals and updates
+                {t('notifications.pushNotificationsDesc')}
               </div>
             </div>
             <Switch
@@ -129,22 +131,22 @@ export const NotificationSettings: React.FC = () => {
               onClick={handleEnableNotifications}
               className="w-full"
             >
-              Enable Notifications
+              {t('notifications.enableNotifications')}
             </Button>
           )}
 
           {permission === 'denied' && (
             <Alert
-              message="Notifications Blocked"
+              message={t('notifications.notificationsBlocked')}
               description={
                 <div>
                   <Paragraph className="mb-2">
-                    To enable notifications, please:
+                    {t('notifications.notificationsBlockedInstructions')}
                   </Paragraph>
                   <ol className="ml-4">
-                    <li>Click the lock icon in your browser's address bar</li>
-                    <li>Change notifications from "Block" to "Allow"</li>
-                    <li>Refresh this page</li>
+                    <li>{t('notifications.notificationsBlockedStep1')}</li>
+                    <li>{t('notifications.notificationsBlockedStep2')}</li>
+                    <li>{t('notifications.notificationsBlockedStep3')}</li>
                   </ol>
                 </div>
               }
@@ -158,14 +160,14 @@ export const NotificationSettings: React.FC = () => {
 
         {/* Notification Types */}
         <div className="space-y-3">
-          <Text strong>Notification Types</Text>
+          <Text strong>{t('notifications.notificationTypes')}</Text>
           
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div>
-                <Text>Reading Submissions</Text>
+                <Text>{t('notifications.readingSubmissions')}</Text>
                 <div className="text-sm text-gray-500">
-                  When tenants submit new meter readings (Admin only)
+                  {t('notifications.readingSubmissionsDesc')}
                 </div>
               </div>
               <Switch
@@ -176,9 +178,9 @@ export const NotificationSettings: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <Text>Reading Approvals</Text>
+                <Text>{t('notifications.readingApprovalsType')}</Text>
                 <div className="text-sm text-gray-500">
-                  When your readings are approved or rejected
+                  {t('notifications.readingApprovalsDesc')}
                 </div>
               </div>
               <Switch
@@ -189,9 +191,9 @@ export const NotificationSettings: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <Text>Payment Reminders</Text>
+                <Text>{t('notifications.paymentReminders')}</Text>
                 <div className="text-sm text-gray-500">
-                  Reminders for upcoming or overdue payments
+                  {t('notifications.paymentRemindersDesc')}
                 </div>
               </div>
               <Switch
@@ -202,9 +204,9 @@ export const NotificationSettings: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <Text>System Updates</Text>
+                <Text>{t('notifications.systemUpdates')}</Text>
                 <div className="text-sm text-gray-500">
-                  Important system announcements and updates
+                  {t('notifications.systemUpdatesDesc')}
                 </div>
               </div>
               <Switch

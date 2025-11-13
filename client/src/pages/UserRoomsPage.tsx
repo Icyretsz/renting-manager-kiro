@@ -8,10 +8,12 @@ import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary'
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { RefreshButton } from '@/components/Common/RefreshButton';
 import { RoomCard, RoomDetailsView } from '@/components/UserRooms';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
 export const UserRoomsPage: React.FC = () => {
+  const { t } = useTranslation()
   const { isAdmin, user, isLoading: authLoading } = useAuth();
   const { data: allRooms, isLoading: roomsLoading } = useRoomsQuery();
   
@@ -25,7 +27,7 @@ export const UserRoomsPage: React.FC = () => {
   const trashFee = useSettingValue('trash_fee', 52000);
 
   if (authLoading || roomsLoading || (!isAdmin() && userRoomId && userRoomLoading)) {
-    return <LoadingSpinner message="Loading room information..." />;
+    return <LoadingSpinner message={`${t('rooms.loadingRooms')}`} />;
   }
 
   // console.log(user)
@@ -42,7 +44,7 @@ export const UserRoomsPage: React.FC = () => {
           <div className="text-center py-8">
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="No rooms found"
+              description={`${t('rooms.failedToLoad')}`}
             />
           </div>
         </PageErrorBoundary>
@@ -55,12 +57,11 @@ export const UserRoomsPage: React.FC = () => {
           {/* Header */}
           <div className="flex justify-between items-start">
             <div>
-              <Title level={3} className="mb-1">All Rooms</Title>
-              <Text className="text-gray-600">Overview of all building rooms</Text>
+              <Title level={3} className="mb-1">{`${t('billing.allRooms')}`}</Title>
+              <Text className="text-gray-600">{`${t('billing.subtitle')}`}</Text>
             </div>
             <RefreshButton
               queryKeys={[roomKeys.all]}
-              tooltip="Refresh rooms data"
             />
           </div>
 
@@ -89,7 +90,7 @@ export const UserRoomsPage: React.FC = () => {
         <div className="text-center py-8">
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="You are not assigned to any room as a tenant"
+            description={`${t('tenants.tenantNotAssigned')}`}
           />
         </div>
       </PageErrorBoundary>
@@ -102,12 +103,11 @@ export const UserRoomsPage: React.FC = () => {
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <Title level={3} className="mb-1">My Room</Title>
-            <Text className="text-gray-600">Your assigned room as a tenant</Text>
+            <Title level={3} className="mb-1">{`${t('meterReadings.yourRoom')}`}</Title>
+            {/* <Text className="text-gray-600">Your assigned room as a tenant</Text> */}
           </div>
           <RefreshButton
             queryKeys={[roomKeys.all]}
-            tooltip="Refresh room data"
           />
         </div>
 

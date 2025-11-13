@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, Button, Typography } from 'antd';
 import { BellOutlined, CloseOutlined } from '@ant-design/icons';
 import { useFirebaseMessaging } from '@/hooks/useFirebaseMessaging';
+import { useTranslation } from 'react-i18next';
 
 const { Text, Paragraph } = Typography;
 
@@ -10,6 +11,7 @@ interface NotificationPromptProps {
 }
 
 export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onDismiss }) => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(true);
   const { requestPermission, permission } = useFirebaseMessaging();
 
@@ -53,11 +55,10 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onDismis
         <BellOutlined className="text-blue-500 text-xl mt-1" />
         <div className="flex-1">
           <Text strong className="text-blue-800">
-            Stay Updated with Push Notifications
+            {t('notifications.stayUpdated')}
           </Text>
           <Paragraph className="text-blue-700 mb-3 mt-1">
-            Get instant notifications when your meter readings are approved, bills are ready, 
-            or important updates are available.
+            {t('notifications.stayUpdatedDesc')}
           </Paragraph>
           <div className="flex space-x-2">
             <Button 
@@ -65,13 +66,13 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onDismis
               size="small"
               onClick={handleEnableNotifications}
             >
-              Enable Notifications
+              {t('notifications.enableNotifications')}
             </Button>
             <Button 
               size="small"
               onClick={handleDismiss}
             >
-              Maybe Later
+              {t('notifications.maybeLater')}
             </Button>
           </div>
         </div>

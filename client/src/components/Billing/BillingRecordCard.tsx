@@ -24,7 +24,6 @@ export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
   onGenerateQRCode,
   getPaymentStatusColor,
   formatCurrency,
-  getMonthName
 }) => {
   const { t, getPaymentStatus } = useTranslationHelpers();
   

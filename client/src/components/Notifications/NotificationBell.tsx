@@ -32,11 +32,13 @@ import {
   getNotificationNavigation,
   getNotificationIcon
 } from '@/utils/notificationNavigation';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
 export const NotificationBell: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const { notifications, unreadCount } = useNotificationStore();
 
@@ -85,14 +87,14 @@ export const NotificationBell: React.FC = () => {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60));
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1) return t('notifications.justNow');
+    if (diffInMinutes < 60) return t('notifications.minutesAgo', { count: diffInMinutes });
 
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 24) return t('notifications.hoursAgo', { count: diffInHours });
 
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d ago`;
+    if (diffInDays < 7) return t('notifications.daysAgo', { count: diffInDays });
 
     return new Date(date).toLocaleDateString();
   };
@@ -176,7 +178,7 @@ export const NotificationBell: React.FC = () => {
                   </Text>
                   {isClickable && (
                     <div className="flex items-center text-blue-600">
-                      <Text className="text-xs mr-1">Tap</Text>
+                      <Text className="text-xs mr-1">{t('notifications.tap')}</Text>
                       <RightOutlined className="text-xs" />
                     </div>
                   )}
@@ -199,13 +201,13 @@ export const NotificationBell: React.FC = () => {
                   />
                 )}
                 <Popconfirm
-                  title="Delete?"
+                  title={t('notifications.delete')}
                   onConfirm={(e) => {
                     e?.stopPropagation();
                     handleDeleteNotification(notification.id);
                   }}
-                  okText="Yes"
-                  cancelText="No"
+                  okText={t('notifications.yes')}
+                  cancelText={t('notifications.no')}
                   placement="topRight"
                 //onClick={(e) => e?.stopPropagation()}
                 >
@@ -238,7 +240,7 @@ export const NotificationBell: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <BellOutlined className="text-blue-600" />
-            <Text strong className="text-gray-800">Notifications</Text>
+            <Text strong className="text-gray-800">{t('notifications.title')}</Text>
             {unreadCount > 0 && (
               <Badge count={unreadCount} size="small" />
             )}
@@ -256,11 +258,11 @@ export const NotificationBell: React.FC = () => {
             )}
             {notifications.length > 0 && (
               <Popconfirm
-                title="Clear all notifications?"
-                description="This action cannot be undone."
+                title={t('notifications.clearAll')}
+                description={t('notifications.clearAllDescription')}
                 onConfirm={handleClearAll}
-                okText="Yes"
-                cancelText="No"
+                okText={t('notifications.yes')}
+                cancelText={t('notifications.no')}
                 placement="bottomRight"
               >
                 <Button
@@ -282,7 +284,7 @@ export const NotificationBell: React.FC = () => {
           <div className="p-6 text-center">
             <div className="animate-pulse">
               <BellOutlined className="text-2xl text-gray-300 mb-2" />
-              <Text type="secondary">Loading notifications...</Text>
+              <Text type="secondary">{t('notifications.loadingNotifications')}</Text>
             </div>
           </div>
         ) : notifications.length === 0 ? (
@@ -291,7 +293,7 @@ export const NotificationBell: React.FC = () => {
               image={<BellOutlined className="text-4xl text-gray-300" />}
               description={
                 <Text type="secondary" className="text-sm">
-                  No notifications yet
+                  {t('notifications.noNotificationsYet')}
                 </Text>
               }
               className="my-2"
@@ -313,7 +315,7 @@ export const NotificationBell: React.FC = () => {
             onClick={() => setDropdownVisible(false)}
             className="w-full text-center text-blue-600"
           >
-            View all {notifications.length} notifications
+            {t('notifications.viewAll', { count: notifications.length })}
           </Button>
         </div>)}
     </div>

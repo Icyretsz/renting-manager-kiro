@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, Row, Col, Divider, Typography } from 'antd';
 import { UserOutlined, DollarOutlined } from '@ant-design/icons';
 import { Room } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
@@ -18,13 +19,14 @@ export const RoomDetailsView: React.FC<RoomDetailsViewProps> = ({
   electricityRate,
   trashFee
 }) => {
+  const { t }  = useTranslation()
   return (
     <div className="space-y-2">
       {/* Room Header */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-3">
           <div className='font-bold text-xl'>
-            Room {room.roomNumber} (Floor {room.floor})
+            {`${t('rooms.room')}`} {room.roomNumber} ({`${t('rooms.floor')}`} {room.floor})
           </div>
         </div>
       </div>
@@ -37,7 +39,7 @@ export const RoomDetailsView: React.FC<RoomDetailsViewProps> = ({
             <div className="text-center">
               <Title level={4} className="mb-2 flex justify-center items-center gap-2">
                 <UserOutlined className="text-3xl text-blue-500" />
-                Occupancy
+                {`${t('rooms.occupancy')}`}
               </Title>
               <div className='flex justify-center items-center gap-15'>
                 <div className="space-y-2">
@@ -54,7 +56,7 @@ export const RoomDetailsView: React.FC<RoomDetailsViewProps> = ({
                         <Text className="font-medium">{tenant.name}</Text>
                         {tenant.moveInDate && (
                           <div className="text-xs text-gray-500">
-                            Moved in: {new Date(tenant.moveInDate).toLocaleDateString()}
+                            {`${t('tenants.moveInDate')}`}: {new Date(tenant.moveInDate).toLocaleDateString()}
                           </div>
                         )}
                       </div>
@@ -72,7 +74,7 @@ export const RoomDetailsView: React.FC<RoomDetailsViewProps> = ({
             <div className="text-center">
               <Title level={4} className="mb-2 flex justify-center items-center gap-2">
                 <DollarOutlined className="text-3xl text-green-500" />
-                Pricing Information
+                {`${t('rooms.pricingInformation')}`}
               </Title>
               
               {/* Base Rent */}
@@ -80,7 +82,7 @@ export const RoomDetailsView: React.FC<RoomDetailsViewProps> = ({
                 <Text className="text-2xl font-bold text-green-600">
                   {Number(room.baseRent).toLocaleString() || 'Not set'} VNĐ
                 </Text>
-                <div className="text-sm text-gray-600">Base Rent (Monthly)</div>
+                <div className="text-sm text-gray-600">{`${t('billing.baseRent')} (${t('common.month')})`}</div>
               </div>
 
               <Divider className="my-3" />
@@ -88,22 +90,19 @@ export const RoomDetailsView: React.FC<RoomDetailsViewProps> = ({
               {/* Utility Rates */}
               <div className="space-y-2 text-left">
                 <div className="flex justify-between items-center">
-                  <Text className="text-sm text-gray-600">Water Rate:</Text>
+                  <Text className="text-sm text-gray-600">{`${t('rooms.waterRate')}`}:</Text>
                   <Text className="text-sm font-medium">{waterRate.toLocaleString()} VNĐ/m³</Text>
                 </div>
                 <div className="flex justify-between items-center">
-                  <Text className="text-sm text-gray-600">Electricity Rate:</Text>
+                  <Text className="text-sm text-gray-600">{`${t('rooms.electricityRate')}`}:</Text>
                   <Text className="text-sm font-medium">{electricityRate.toLocaleString()} VNĐ/kWh</Text>
                 </div>
                 <div className="flex justify-between items-center">
-                  <Text className="text-sm text-gray-600">Trash Fee:</Text>
-                  <Text className="text-sm font-medium">{trashFee.toLocaleString()} VNĐ/month</Text>
+                  <Text className="text-sm text-gray-600">{`${t('billing.trashFee')}`}:</Text>
+                  <Text className="text-sm font-medium">{trashFee.toLocaleString()} VNĐ/{`${t('common.month')}`}</Text>
                 </div>
               </div>
 
-              <div className="text-xs text-gray-500 mt-3">
-                * Utility charges based on actual usage
-              </div>
             </div>
           </Card>
         </Col>
