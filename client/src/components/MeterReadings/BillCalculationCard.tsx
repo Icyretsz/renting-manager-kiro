@@ -1,21 +1,8 @@
 import React from 'react';
 import { Card, Statistic } from 'antd';
 import { CalculatorOutlined } from '@ant-design/icons';
+import { BillCalculationCardProps } from '@/types';
 import { useTranslation } from 'react-i18next';
-
-interface BillCalculationCardProps {
-  calculatedBill: {
-    totalBill: number;
-    electricityUsage: number;
-    waterUsage: number;
-    electricityBill: number;
-    waterBill: number;
-  };
-  waterRate: number;
-  electricityRate: number;
-  trashFee: number;
-  baseRent: number;
-}
 
 export const BillCalculationCard: React.FC<BillCalculationCardProps> = ({
   calculatedBill,

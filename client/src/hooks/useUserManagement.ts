@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
-import { User, Tenant, ApiResponse, PaginatedResponse } from '@/types';
+import {
+  User,
+  Tenant,
+  ApiResponse,
+  PaginatedResponse,
+  UserWithTenant,
+  LinkingSuggestion,
+  SuggestionsResponse,
+} from '@/types';
 
 // Query keys
 export const userManagementKeys = {
@@ -11,32 +19,8 @@ export const userManagementKeys = {
   suggestions: () => [...userManagementKeys.all, 'suggestions'] as const,
 };
 
-// User with tenant information
-export interface UserWithTenant extends User {
-  tenant?: {
-    id: string;
-    name: string;
-    roomId: number;
-    isActive: boolean;
-    moveInDate?: Date;
-    moveOutDate?: Date;
-    createdAt: Date;
-    updatedAt: Date;
-  };
-}
-
-// Linking suggestion
-export interface LinkingSuggestion {
-  user: User;
-  tenant: Tenant;
-  matchType: 'email_exact';
-}
-
-export interface SuggestionsResponse {
-  suggestions: LinkingSuggestion[];
-  unlinkedUsers: User[];
-  unlinkedTenants: Tenant[];
-}
+// Re-export types for backward compatibility
+export type { UserWithTenant, LinkingSuggestion, SuggestionsResponse };
 
 // Fetch users with pagination and filtering
 export const useUsersQuery = (filters?: Record<string, any>, page = 1, limit = 10) => {

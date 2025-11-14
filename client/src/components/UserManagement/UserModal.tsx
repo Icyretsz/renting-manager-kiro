@@ -1,17 +1,8 @@
 import React from 'react';
 import { Modal, Form, Input, Select, Button, Space } from 'antd';
-import { UserWithTenant } from '@/hooks/useUserManagement';
+import { UserModalProps } from '@/types';
 
 const { Option } = Select;
-
-interface UserModalProps {
-  visible: boolean;
-  user: UserWithTenant | null;
-  form: any;
-  loading: boolean;
-  onClose: () => void;
-  onSubmit: (values: any) => void;
-}
 
 export const UserModal: React.FC<UserModalProps> = ({
   visible,

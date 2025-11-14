@@ -1,17 +1,10 @@
 import React from 'react';
 import { Card, Tag, Typography } from 'antd';
 import { HomeOutlined, UserOutlined, DollarOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { Room } from '@/types';
+import { RoomCardProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
-
-interface RoomCardProps {
-  room: Room;
-  waterRate: number;
-  electricityRate: number;
-  trashFee: number;
-}
 
 export const RoomCard: React.FC<RoomCardProps> = ({
   room,

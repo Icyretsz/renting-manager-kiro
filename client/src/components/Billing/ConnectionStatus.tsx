@@ -1,11 +1,7 @@
 import React from 'react';
 import { Tag } from 'antd';
 import { WifiOutlined, SyncOutlined, DisconnectOutlined } from '@ant-design/icons';
-
-interface ConnectionStatusProps {
-  isConnected: boolean;
-  isPolling: boolean;
-}
+import { ConnectionStatusProps } from '@/types';
 
 export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({ 
   isConnected, 

@@ -1,22 +1,12 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Alert, Tag } from 'antd';
-import { MeterReading } from '@/types';
+import { CurrentMonthReadingCardProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
 };
-
-interface CurrentMonthReadingCardProps {
-  reading: MeterReading;
-  currentMonth: number;
-  currentYear: number;
-  submissionCount: number;
-  isAdmin: boolean;
-  canAdminOverride: boolean;
-  canCreateNewReading: boolean;
-}
 
 export const CurrentMonthReadingCard: React.FC<CurrentMonthReadingCardProps> = ({
   reading,

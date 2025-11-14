@@ -1,24 +1,10 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Typography } from 'antd';
 import { DollarOutlined } from '@ant-design/icons';
+import { FinancialSummaryCardProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
-
-interface FinancialSummary {
-  totalIncome: number;
-  totalPaid: number;
-  totalUnpaid: number;
-  totalOverdue: number;
-  occupiedRooms: number;
-  roomCount: number;
-  averageRoomIncome: number;
-}
-
-interface FinancialSummaryCardProps {
-  summary: FinancialSummary;
-  formatCurrency: (amount: string | number) => string;
-}
 
 export const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({
   summary,

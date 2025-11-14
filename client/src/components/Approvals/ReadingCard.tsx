@@ -1,19 +1,11 @@
 import React from 'react';
 import { Card, Row, Col, Tag, Button, Space, Popconfirm } from 'antd';
 import { EyeOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { MeterReading } from '@/types';
+import { ReadingCardProps } from '@/types';
 
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
 };
-
-interface ReadingCardProps {
-  reading: MeterReading;
-  onReview: (reading: MeterReading) => void;
-  onApprove: (readingId: string) => void;
-  approveLoading: boolean;
-  getStatusColor: (status: string) => string;
-}
 
 export const ReadingCard: React.FC<ReadingCardProps> = ({
   reading,

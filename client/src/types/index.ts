@@ -1,3 +1,7 @@
+// ============================================
+// CORE DOMAIN TYPES
+// ============================================
+
 // User and Authentication
 export interface User {
   id: string;
@@ -142,48 +146,6 @@ export interface BillingRecord {
   };
 }
 
-// Payment related types
-export interface PaymentLink {
-  checkoutUrl: string;
-  qrCode: string;
-  orderCode: number;
-  amount: number;
-  description: string;
-}
-
-// Financial Summary and Reports
-export interface FinancialSummary {
-  totalIncome: number;
-  totalPaid: number;
-  totalUnpaid: number;
-  totalOverdue: number;
-  roomCount: number;
-  occupiedRooms: number;
-  averageRoomIncome: number;
-}
-
-export interface MonthlyFinancialReport {
-  month: number;
-  year: number;
-  totalIncome: number;
-  totalPaid: number;
-  totalUnpaid: number;
-  totalOverdue: number;
-  roomBreakdown: Array<{
-    roomId: number;
-    roomNumber: number;
-    floor: number;
-    totalAmount: number;
-    paymentStatus: string;
-    waterUsage: number;
-    electricityUsage: number;
-    waterCost: number;
-    electricityCost: number;
-    baseRent: number;
-    trashFee: number;
-  }>;
-}
-
 // Notifications
 interface NotificationData {
   roomNumber: string;
@@ -228,26 +190,84 @@ export interface Setting {
   createdAt: Date;
 }
 
-// API Response Types
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
+// Utility Types
+export type MeterType = 'water' | 'electricity';
 
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+// ============================================
+// RE-EXPORTS
+// ============================================
 
-export interface ImageUploadPresignedURLType {
-  url: string,
-  fileName: string
-}
-  
-export type MeterType = 'water' | 'electricity'
+// API Types
+export type {
+  ApiResponse,
+  PaginatedResponse,
+  ImageUploadPresignedURLType,
+  TenantStatus,
+  UserProfile,
+  PaymentLink,
+  FinancialSummary,
+  MonthlyFinancialReport,
+} from './api';
+
+// User Management Types
+export type {
+  UserWithTenant,
+  LinkingSuggestion,
+  SuggestionsResponse,
+} from './user';
+
+// Component Props Types
+export type {
+  // Approvals
+  ReadingCardProps,
+  FiltersCardProps,
+  StatisticsCardsProps,
+  ReviewModalProps,
+  // Billing
+  BillingRecordCardProps,
+  BillingFiltersProps,
+  FinancialSummaryCardProps,
+  PaymentSuccessModalProps,
+  ConnectionStatusProps,
+  // Meter Readings
+  BillCalculation,
+  BillCalculationCardProps,
+  CurrentMonthReadingCardProps,
+  MeterReadingFormProps,
+  PreviousReadingCardProps,
+  ReadingHistoryModalProps,
+  RoomSelectorProps,
+  // Rooms
+  EditRoomModalProps,
+  // User Management
+  UserCardProps,
+  UserFiltersProps,
+  UserGroupsListProps,
+  UserModalProps,
+  LinkUserTenantModalProps,
+  TenantCardProps,
+  TenantFiltersProps,
+  TenantGroupsListProps,
+  TenantModalProps,
+  // User Rooms
+  RoomCardProps,
+  RoomDetailsViewProps,
+  // Common
+  RefreshButtonProps,
+  LanguageSwitcherProps,
+  // Notifications
+  NotificationPromptProps,
+  // Layout
+  MainLayoutProps,
+  NavItem,
+  // Error Boundary
+  ErrorBoundaryProps,
+  ErrorBoundaryState,
+  PageErrorBoundaryProps,
+  // Loading
+  LoadingSpinnerProps,
+  // Protected Route
+  ProtectedRouteProps,
+  // DevTools
+  InvalidateQueriesButtonProps,
+} from './components';

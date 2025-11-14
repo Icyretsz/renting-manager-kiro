@@ -1,18 +1,10 @@
 import React from 'react';
 import { Collapse, Avatar, Typography, CollapseProps } from 'antd';
 import { UserOutlined, HomeOutlined } from '@ant-design/icons';
-import { UserWithTenant } from '@/hooks/useUserManagement';
+import { UserGroupsListProps, UserWithTenant } from '@/types';
 import { UserCard } from './UserCard';
 
 const { Text } = Typography;
-
-interface UserGroupsListProps {
-  users: UserWithTenant[];
-  onEdit: (user: UserWithTenant) => void;
-  onDelete: (userId: string) => void;
-  onLink: (user: UserWithTenant) => void;
-  onUnlink: (user: UserWithTenant) => void;
-}
 
 export const UserGroupsList: React.FC<UserGroupsListProps> = ({
   users,

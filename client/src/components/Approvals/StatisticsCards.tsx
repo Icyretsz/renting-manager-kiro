@@ -1,12 +1,7 @@
 import React from 'react';
 import { Row, Col, Card, Statistic } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-design/icons';
-
-interface StatisticsCardsProps {
-  pendingCount: number;
-  totalCount: number;
-  approvedTodayCount: number;
-}
+import { StatisticsCardsProps } from '@/types';
 
 export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
   pendingCount,

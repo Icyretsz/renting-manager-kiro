@@ -1,19 +1,11 @@
 import React from 'react';
 import { Modal, Typography, Row, Divider, Button } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { BillingRecord } from '@/types';
+import { PaymentSuccessModalProps } from '@/types';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
-
-interface PaymentSuccessModalProps {
-  open: boolean;
-  billingRecord: BillingRecord | null;
-  onClose: () => void;
-  formatCurrency: (amount: string | number) => string;
-  getMonthName: (month: number) => string;
-}
 
 export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
   open,

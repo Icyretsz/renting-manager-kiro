@@ -1,14 +1,9 @@
 import React from 'react';
 import { Spin, Typography } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
+import { LoadingSpinnerProps } from '@/types';
 
 const { Text } = Typography;
-
-interface LoadingSpinnerProps {
-  size?: 'small' | 'default' | 'large';
-  message?: string;
-  fullScreen?: boolean;
-}
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'default',

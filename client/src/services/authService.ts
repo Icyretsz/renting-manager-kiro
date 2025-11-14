@@ -1,30 +1,8 @@
 import api from './api';
+import { TenantStatus, UserProfile } from '@/types';
 
-export interface TenantStatus {
-  isLinked: boolean;
-  tenant: {
-    id: string;
-    roomId: number;
-    roomNumber: number;
-    floor: number;
-  } | null;
-}
-
-export interface UserProfile {
-  id: string;
-  auth0Id: string;
-  email: string;
-  name: string;
-  role: string;
-  createdAt: string;
-  updatedAt: string;
-  tenantRoom: {
-    roomId: number;
-    roomNumber: number;
-    floor: number;
-    moveInDate: string;
-  } | null;
-}
+// Re-export types for backward compatibility
+export type { TenantStatus, UserProfile };
 
 export const authService = {
   /**

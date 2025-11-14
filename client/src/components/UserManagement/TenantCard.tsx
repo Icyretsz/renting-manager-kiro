@@ -1,16 +1,10 @@
 import React from 'react';
 import { Card, Button, Avatar, Tag, Typography, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined, UserOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
-import { Tenant } from '@/types';
+import { TenantCardProps } from '@/types';
 import dayjs from 'dayjs';
 
 const { Text } = Typography;
-
-interface TenantCardProps {
-  tenant: Tenant;
-  onEdit: (tenant: Tenant) => void;
-  onDelete: (tenantId: string) => void;
-}
 
 export const TenantCard: React.FC<TenantCardProps> = ({
   tenant,

@@ -1,18 +1,9 @@
 import React from 'react';
 import { Card, Select } from 'antd';
-import { Room } from '@/types';
+import { RoomSelectorProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
-
-interface RoomSelectorProps {
-  rooms: Room[] | undefined;
-  selectedRoomId: number | null;
-  onRoomChange: (roomId: number) => void;
-  isAdmin: boolean;
-  userRoomId?: number;
-  loading?: boolean;
-}
 
 export const RoomSelector: React.FC<RoomSelectorProps> = ({
   rooms,

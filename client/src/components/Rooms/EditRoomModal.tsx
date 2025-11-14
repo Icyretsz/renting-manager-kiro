@@ -1,17 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, InputNumber, Select, Button, message, Divider, List, Input, Space, Popconfirm } from 'antd';
 import { PlusOutlined, DeleteOutlined, UserOutlined } from '@ant-design/icons';
-import { Room, Tenant } from '@/types';
+import { EditRoomModalProps, Tenant } from '@/types';
 import { useUpdateRoomMutation, roomKeys } from '@/hooks/useRooms';
 import { useCreateTenantMutation, useDeleteTenantMutation } from '@/hooks/useTenants';
 import { useQueryClient } from '@tanstack/react-query';
-
-interface EditRoomModalProps {
-  room: Room | null;
-  visible: boolean;
-  onCancel: () => void;
-  onSuccess: () => void;
-}
 
 export const EditRoomModal: React.FC<EditRoomModalProps> = ({
   room,

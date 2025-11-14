@@ -1,19 +1,8 @@
 import React from 'react';
 import { Modal, Form, Input, Select, Button, Space, Row, Col, DatePicker, Switch } from 'antd';
-import { Tenant } from '@/types';
-import { Room } from '@/types';
+import { TenantModalProps } from '@/types';
 
 const { Option } = Select;
-
-interface TenantModalProps {
-  visible: boolean;
-  tenant: Tenant | null;
-  form: any;
-  rooms: Room[] | undefined;
-  loading: boolean;
-  onClose: () => void;
-  onSubmit: (values: any) => void;
-}
 
 export const TenantModal: React.FC<TenantModalProps> = ({
   visible,

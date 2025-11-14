@@ -1,15 +1,12 @@
-import React, { ReactNode, useState } from 'react';
+import React, { useState } from 'react';
 import { Layout } from 'antd';
+import { MainLayoutProps } from '@/types';
 import { MobileNavigation } from './MobileNavigation';
 import { MobileHeader } from './Header';
 import { MobileDrawer } from './Sidebar';
 import { NotificationPrompt } from '@/components/Notifications/NotificationPrompt';
 
 const { Content } = Layout;
-
-interface MainLayoutProps {
-  children: ReactNode;
-}
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);

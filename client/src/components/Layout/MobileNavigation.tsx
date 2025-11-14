@@ -9,15 +9,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-
-interface NavItem {
-  key: string;
-  icon: React.ReactNode;
-  label: string;
-  path: string;
-  adminOnly?: boolean;
-  badge?: number;
-}
+import { NavItem } from '@/types';
 
 export const MobileNavigation: React.FC = () => {
   const navigate = useNavigate();

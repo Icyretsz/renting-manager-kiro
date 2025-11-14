@@ -1,18 +1,10 @@
 import React from 'react';
 import { Card, Button, Avatar, Tag, Typography, Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined, LinkOutlined, DisconnectOutlined, UserOutlined, HomeOutlined, MailOutlined } from '@ant-design/icons';
-import { UserWithTenant } from '@/hooks/useUserManagement';
+import { UserCardProps } from '@/types';
 import dayjs from 'dayjs';
 
 const { Text } = Typography;
-
-interface UserCardProps {
-  user: UserWithTenant;
-  onEdit: (user: UserWithTenant) => void;
-  onDelete: (userId: string) => void;
-  onLink: (user: UserWithTenant) => void;
-  onUnlink: (user: UserWithTenant) => void;
-}
 
 export const UserCard: React.FC<UserCardProps> = ({
   user,

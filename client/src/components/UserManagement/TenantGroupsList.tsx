@@ -1,17 +1,11 @@
 import React from 'react';
 import { Collapse, Avatar, Typography, Badge } from 'antd';
 import { HomeOutlined } from '@ant-design/icons';
-import { Tenant } from '@/types';
+import { TenantGroupsListProps } from '@/types';
 import { TenantCard } from './TenantCard';
 
 const { Panel } = Collapse;
 const { Text } = Typography;
-
-interface TenantGroupsListProps {
-  tenants: Tenant[];
-  onEdit: (tenant: Tenant) => void;
-  onDelete: (tenantId: string) => void;
-}
 
 export const TenantGroupsList: React.FC<TenantGroupsListProps> = ({
   tenants,

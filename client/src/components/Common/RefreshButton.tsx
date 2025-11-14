@@ -1,17 +1,9 @@
 import React from 'react';
 import { Button, Tooltip } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
-import { useQueryClient } from '@tanstack/react-query';
+import { RefreshButtonProps } from '@/types';
+import { useQueryClient } from '@tantml:react-query';
 import { useTranslation } from 'react-i18next';
-
-interface RefreshButtonProps {
-  queryKeys: readonly (readonly (string | number | Record<string, any>)[])[];
-  tooltip?: string;
-  size?: 'small' | 'middle' | 'large';
-  type?: 'default' | 'primary' | 'text' | 'link';
-  className?: string;
-  cooldownSeconds?: number;
-}
 
 export const RefreshButton: React.FC<RefreshButtonProps> = ({
   queryKeys,

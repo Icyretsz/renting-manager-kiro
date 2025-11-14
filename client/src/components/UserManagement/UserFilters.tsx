@@ -1,12 +1,7 @@
 import React from 'react';
 import { Row, Col, Input, Button } from 'antd';
 import { SearchOutlined, UserAddOutlined } from '@ant-design/icons';
-
-interface UserFiltersProps {
-  searchText: string;
-  onSearchChange: (value: string) => void;
-  onAddUser: () => void;
-}
+import { UserFiltersProps } from '@/types';
 
 export const UserFilters: React.FC<UserFiltersProps> = ({
   searchText,

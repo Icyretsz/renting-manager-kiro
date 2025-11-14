@@ -1,11 +1,8 @@
 import React from 'react';
 import { Button } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
+import { InvalidateQueriesButtonProps } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
-
-interface InvalidateQueriesButtonProps {
-  className?: string;
-}
 
 export const InvalidateQueriesButton: React.FC<InvalidateQueriesButtonProps> = ({ 
   className = '' 

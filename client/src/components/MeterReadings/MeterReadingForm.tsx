@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, InputNumber, Button, Upload, Divider, Alert, Modal, Image, UploadFile } from 'antd';
 import { SaveOutlined, PlusOutlined } from '@ant-design/icons';
-import { MeterReading, MeterType, Room } from '@/types';
+import { MeterReadingFormProps } from '@/types';
 import { BillCalculationCard } from './BillCalculationCard';
 import getBase64 from '@/utils/getBase64';
 import { useTranslation } from 'react-i18next';
@@ -9,37 +9,6 @@ import { useTranslation } from 'react-i18next';
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
 };
-
-interface MeterReadingFormProps {
-  form: any;
-  previousReading: MeterReading | null;
-  currentRoom: Room | null;
-  calculatedBill: {
-    totalBill: number;
-    electricityUsage: number;
-    waterUsage: number;
-    electricityBill: number;
-    waterBill: number;
-  };
-  waterRate: number;
-  electricityRate: number;
-  trashFee: number;
-  canEdit: boolean;
-  canAdminOverride: boolean;
-  canCreateNew: boolean;
-  hasApprovedReading: boolean;
-  hasPendingReading: boolean;
-  selectedRoomId: number | null;
-  uploadLoading: boolean;
-  submitLoading: boolean;
-  onPhotoUpload: (file: File, type: MeterType) => Promise<boolean>;
-  onSubmit: (values: any) => Promise<void>;
-  onValuesChange: () => void;
-  waterPhotoList: UploadFile[];
-  setWaterPhotoList: (waterPhotoList: React.SetStateAction<UploadFile[]>) => void;
-  electricityPhotoList: UploadFile[];
-  setElectricityPhotoList: (electricityPhotoList: React.SetStateAction<UploadFile[]>) => void;
-}
 
 export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   form,

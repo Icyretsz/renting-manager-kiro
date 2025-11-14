@@ -1,15 +1,9 @@
 import React from 'react';
 import { Card, Row, Col, Select, Space } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
+import { FiltersCardProps } from '@/types';
 
 const { Option } = Select;
-
-interface FiltersCardProps {
-  filterStatus: string;
-  sortBy: string;
-  onFilterStatusChange: (value: string) => void;
-  onSortByChange: (value: string) => void;
-}
 
 export const FiltersCard: React.FC<FiltersCardProps> = ({
   filterStatus,

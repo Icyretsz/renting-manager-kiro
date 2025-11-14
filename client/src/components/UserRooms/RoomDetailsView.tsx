@@ -1,17 +1,10 @@
 import React from 'react';
 import { Card, Row, Col, Divider, Typography } from 'antd';
 import { UserOutlined, DollarOutlined } from '@ant-design/icons';
-import { Room } from '@/types';
+import { RoomDetailsViewProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
-
-interface RoomDetailsViewProps {
-  room: Room;
-  waterRate: number;
-  electricityRate: number;
-  trashFee: number;
-}
 
 export const RoomDetailsView: React.FC<RoomDetailsViewProps> = ({
   room,

@@ -22,21 +22,13 @@ import {
   ClockCircleOutlined,
   HistoryOutlined
 } from '@ant-design/icons';
-import { MeterReading } from '@/types';
+import { ReadingHistoryModalProps, MeterReading } from '@/types';
 import { useGetPresignedURLQuery } from '@/hooks/useFileUpload';
 import { LoadingSpinner } from '../Loading';
 import { useTranslation } from 'react-i18next';
 import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const { Text } = Typography;
-
-interface ReadingHistoryModalProps {
-  visible: boolean;
-  onClose: () => void;
-  readings: MeterReading[];
-  loading?: boolean;
-  roomNumber?: number;
-}
 
 // Utility function to safely convert Prisma Decimal strings to numbers
 const toNumber = (value: string | number): number => {

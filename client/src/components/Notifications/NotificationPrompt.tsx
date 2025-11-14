@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { Card, Button, Typography } from 'antd';
 import { BellOutlined, CloseOutlined } from '@ant-design/icons';
+import { NotificationPromptProps } from '@/types';
 import { useFirebaseMessaging } from '@/hooks/useFirebaseMessaging';
 import { useTranslation } from 'react-i18next';
 
 const { Text, Paragraph } = Typography;
-
-interface NotificationPromptProps {
-  onDismiss?: () => void;
-}
 
 export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onDismiss }) => {
   const { t } = useTranslation();

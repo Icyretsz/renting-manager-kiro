@@ -1,21 +1,11 @@
 import React from 'react';
 import { Card, Button, Tag, Avatar, Row, Col, Typography } from 'antd';
 import { EyeOutlined, QrcodeOutlined, HomeOutlined, CalendarOutlined, DropboxOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { BillingRecord } from '@/types';
+import { BillingRecordCardProps } from '@/types';
 import dayjs from 'dayjs';
 import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const { Text } = Typography;
-
-interface BillingRecordCardProps {
-  record: BillingRecord;
-  isAdmin: boolean;
-  onViewDetails: (record: BillingRecord) => void;
-  onGenerateQRCode: (record: BillingRecord) => void;
-  getPaymentStatusColor: (status: string) => "success" | "error" | "warning" | "default";
-  formatCurrency: (amount: string | number) => string;
-  getMonthName: (month: number) => string;
-}
 
 export const BillingRecordCard: React.FC<BillingRecordCardProps> = ({
   record,

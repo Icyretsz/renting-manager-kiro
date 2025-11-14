@@ -1,18 +1,9 @@
 import React from 'react';
 import { Row, Col, Input, Select, Button } from 'antd';
 import { SearchOutlined, UserAddOutlined } from '@ant-design/icons';
+import { TenantFiltersProps } from '@/types';
 
 const { Option } = Select;
-
-interface TenantFiltersProps {
-  searchText: string;
-  filterRoom?: number;
-  filterStatus?: string;
-  onSearchChange: (value: string) => void;
-  onRoomChange: (value: number | undefined) => void;
-  onStatusChange: (value: string | undefined) => void;
-  onAddTenant: () => void;
-}
 
 export const TenantFilters: React.FC<TenantFiltersProps> = ({
   searchText,

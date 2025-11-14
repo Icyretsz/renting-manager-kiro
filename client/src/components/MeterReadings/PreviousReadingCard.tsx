@@ -1,15 +1,11 @@
 import React from 'react';
 import { Card, Row, Col, Statistic } from 'antd';
-import { MeterReading } from '@/types';
+import { PreviousReadingCardProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
 };
-
-interface PreviousReadingCardProps {
-  reading: MeterReading;
-}
 
 export const PreviousReadingCard: React.FC<PreviousReadingCardProps> = ({ reading }) => {
   const { t } = useTranslation();

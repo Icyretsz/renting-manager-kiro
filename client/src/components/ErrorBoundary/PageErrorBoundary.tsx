@@ -2,11 +2,8 @@ import React from 'react';
 import { Result, Button } from 'antd';
 import { ReloadOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { PageErrorBoundaryProps } from '@/types';
 import { ErrorBoundary } from './ErrorBoundary';
-
-interface PageErrorBoundaryProps {
-  children: React.ReactNode;
-}
 
 const PageErrorFallback: React.FC = () => {
   const navigate = useNavigate();

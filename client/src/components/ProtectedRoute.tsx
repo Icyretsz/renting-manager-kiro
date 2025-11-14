@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { ProtectedRouteProps } from '@/types';
 import { useTenantStatus } from '@/hooks/useTenants';
 import { useAuthStore } from '@/stores/authStore';
 import { LoadingSpinner } from './Loading/LoadingSpinner';
-
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requireTenantLink?: boolean;
-}
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 

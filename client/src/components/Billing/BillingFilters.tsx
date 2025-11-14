@@ -1,19 +1,10 @@
 import React from 'react';
 import { Card, Row, Col, Select, DatePicker, Button } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
+import { BillingFiltersProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
-
-interface BillingFiltersProps {
-  isAdmin: boolean;
-  onStatusChange: (value: string | undefined) => void;
-  onRoomChange: (value: number | undefined) => void;
-  onFloorChange: (value: number | undefined) => void;
-  onMonthChange: (date: any) => void;
-  onExport: () => void;
-  exportLoading: boolean;
-}
 
 export const BillingFilters: React.FC<BillingFiltersProps> = ({
   isAdmin,

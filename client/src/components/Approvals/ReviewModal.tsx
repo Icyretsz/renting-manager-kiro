@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Button, Row, Col, Card, Image, Divider, Typography, Tag, Timeline, Popconfirm, Spin } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, HistoryOutlined } from '@ant-design/icons';
-import { MeterReading } from '@/types';
+import { ReviewModalProps } from '@/types';
 import getActorInfo from '@/utils/getActorInfo';
 import { useGetPresignedURLQuery } from '@/hooks/useFileUpload';
 
@@ -10,17 +10,6 @@ const { Text } = Typography;
 const toNumber = (value: string | number): number => {
   return typeof value === 'string' ? parseFloat(value) : value;
 };
-
-interface ReviewModalProps {
-  visible: boolean;
-  reading: MeterReading | null;
-  onClose: () => void;
-  onApprove: (readingId: string) => void;
-  onReject: (readingId: string) => void;
-  approveLoading: boolean;
-  rejectLoading: boolean;
-  getStatusColor: (status: string) => string;
-}
 
 export const ReviewModal: React.FC<ReviewModalProps> = ({
   visible,
