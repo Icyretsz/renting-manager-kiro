@@ -446,5 +446,31 @@
     "refresh": {
         "button": "Refresh",
         "cooldown": "Refresh ({{seconds}}s)"
+    },
+    "profile": {
+        "title": "Profile",
+        "myProfile": "My Profile",
+        "personalInfo": "Personal Information",
+        "accountInformation": "Account Information",
+        "tenantInformation": "Tenant Information",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "userId": "User ID",
+        "accountCreated": "Account Created",
+        "tenantName": "Tenant Name",
+        "contactEmail": "Contact Email",
+        "phone": "Phone",
+        "fingerprintId": "Fingerprint ID",
+        "permanentAddress": "Permanent Address",
+        "roomNumber": "Room Number",
+        "moveInDate": "Move-in Date",
+        "moveOutDate": "Move-out Date",
+        "status": "Status",
+        "tenantId": "Tenant ID",
+        "noTenantInformation": "No Tenant Information",
+        "noTenantInformationDesc": "Your account is not linked to a tenant record. Please contact the administrator to link your account.",
+        "linkedRoom": "Linked Room",
+        "notLinkedToRoom": "Not linked to any room"
     }
 }

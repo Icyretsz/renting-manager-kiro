@@ -446,5 +446,31 @@
     "refresh": {
         "button": "Làm mới",
         "cooldown": "Làm mới ({{seconds}}s)"
+    },
+    "profile": {
+        "title": "Hồ sơ",
+        "myProfile": "Hồ sơ của tôi",
+        "personalInfo": "Thông tin cá nhân",
+        "accountInformation": "Thông tin tài khoản",
+        "tenantInformation": "Thông tin người thuê",
+        "name": "Tên",
+        "email": "Email",
+        "role": "Vai trò",
+        "userId": "ID người dùng",
+        "accountCreated": "Tài khoản được tạo",
+        "tenantName": "Tên người thuê",
+        "contactEmail": "Email liên hệ",
+        "phone": "Số điện thoại",
+        "fingerprintId": "ID vân tay",
+        "permanentAddress": "Địa chỉ thường trú",
+        "roomNumber": "Số phòng",
+        "moveInDate": "Ngày chuyển vào",
+        "moveOutDate": "Ngày chuyển ra",
+        "status": "Trạng thái",
+        "tenantId": "ID người thuê",
+        "noTenantInformation": "Không có thông tin người thuê",
+        "noTenantInformationDesc": "Tài khoản của bạn chưa được liên kết với hồ sơ người thuê. Vui lòng liên hệ quản trị viên để liên kết tài khoản.",
+        "linkedRoom": "Phòng liên kết",
+        "notLinkedToRoom": "Chưa liên kết với phòng nào"
     }
 }

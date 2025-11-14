@@ -13,11 +13,13 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import dayjs from 'dayjs';
+import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
 const { Title, Text } = Typography;
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
+  const { t, getRole } = useTranslationHelpers();
 
   if (!user) {
     return null;
@@ -28,31 +30,31 @@ export const ProfilePage: React.FC = () => {
   return (
     <PageErrorBoundary>
       <div className="space-y-4">
-        <Title level={3}>Profile</Title>
+        <Title level={3}>{t('profile.title')}</Title>
 
         {/* Account Information */}
-        <Card title={<Space><UserOutlined /> Account Information</Space>}>
+        <Card title={<Space><UserOutlined /> {t('profile.accountInformation')}</Space>}>
           <Descriptions column={1} bordered>
-            <Descriptions.Item label="Name">
+            <Descriptions.Item label={t('profile.name')}>
               <Text strong>{user.name}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Email">
+            <Descriptions.Item label={t('profile.email')}>
               <Space>
                 <MailOutlined />
                 {user.email}
               </Space>
             </Descriptions.Item>
-            <Descriptions.Item label="Role">
+            <Descriptions.Item label={t('profile.role')}>
               <Tag color={user.role === 'ADMIN' ? 'blue' : 'green'}>
-                {user.role}
+                {getRole(user.role)}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="User ID">
+            <Descriptions.Item label={t('profile.userId')}>
               <Text type="secondary" copyable>
                 {user.id}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Account Created">
+            <Descriptions.Item label={t('profile.accountCreated')}>
               <Space>
                 <CalendarOutlined />
                 {dayjs(user.createdAt).format('MMMM D, YYYY')}
@@ -63,13 +65,13 @@ export const ProfilePage: React.FC = () => {
 
         {/* Tenant Information - Only show for USER role */}
         {user.role === 'USER' && tenant && (
-          <Card title={<Space><HomeOutlined /> Tenant Information</Space>}>
+          <Card title={<Space><HomeOutlined /> {t('profile.tenantInformation')}</Space>}>
             <Descriptions column={1} bordered>
-              <Descriptions.Item label="Tenant Name">
+              <Descriptions.Item label={t('profile.tenantName')}>
                 <Text strong>{tenant.name}</Text>
               </Descriptions.Item>
               {tenant.email && (
-                <Descriptions.Item label="Contact Email">
+                <Descriptions.Item label={t('profile.contactEmail')}>
                   <Space>
                     <MailOutlined />
                     {tenant.email}
@@ -77,7 +79,7 @@ export const ProfilePage: React.FC = () => {
                 </Descriptions.Item>
               )}
               {tenant.phone && (
-                <Descriptions.Item label="Phone">
+                <Descriptions.Item label={t('profile.phone')}>
                   <Space>
                     <PhoneOutlined />
                     {tenant.phone}
@@ -85,7 +87,7 @@ export const ProfilePage: React.FC = () => {
                 </Descriptions.Item>
               )}
               {tenant.fingerprintId && (
-                <Descriptions.Item label="Fingerprint ID">
+                <Descriptions.Item label={t('profile.fingerprintId')}>
                   <Space>
                     <SafetyOutlined />
                     <Text copyable>{tenant.fingerprintId}</Text>
@@ -93,24 +95,24 @@ export const ProfilePage: React.FC = () => {
                 </Descriptions.Item>
               )}
               {tenant.permanentAddress && (
-                <Descriptions.Item label="Permanent Address">
+                <Descriptions.Item label={t('profile.permanentAddress')}>
                   <Space>
                     <EnvironmentOutlined />
                     {tenant.permanentAddress}
                   </Space>
                 </Descriptions.Item>
               )}
-              <Descriptions.Item label="Room Number">
+              <Descriptions.Item label={t('profile.roomNumber')}>
                 <Space>
                   <HomeOutlined />
-                  <Text strong>Room {tenant.room?.roomNumber}</Text>
+                  <Text strong>{t('rooms.room')} {tenant.room?.roomNumber}</Text>
                   {tenant.room && (
-                    <Tag color="blue">Floor {tenant.room.floor}</Tag>
+                    <Tag color="blue">{t('rooms.floor')} {tenant.room.floor}</Tag>
                   )}
                 </Space>
               </Descriptions.Item>
               {tenant.moveInDate && (
-                <Descriptions.Item label="Move-in Date">
+                <Descriptions.Item label={t('profile.moveInDate')}>
                   <Space>
                     <CalendarOutlined />
                     {dayjs(tenant.moveInDate).format('MMMM D, YYYY')}
@@ -118,19 +120,19 @@ export const ProfilePage: React.FC = () => {
                 </Descriptions.Item>
               )}
               {tenant.moveOutDate && (
-                <Descriptions.Item label="Move-out Date">
+                <Descriptions.Item label={t('profile.moveOutDate')}>
                   <Space>
                     <CalendarOutlined />
                     {dayjs(tenant.moveOutDate).format('MMMM D, YYYY')}
                   </Space>
                 </Descriptions.Item>
               )}
-              <Descriptions.Item label="Status">
+              <Descriptions.Item label={t('profile.status')}>
                 <Tag color={tenant.isActive ? 'success' : 'default'}>
-                  {tenant.isActive ? 'Active' : 'Inactive'}
+                  {tenant.isActive ? t('common.active') : t('common.inactive')}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Tenant ID">
+              <Descriptions.Item label={t('profile.tenantId')}>
                 <Space>
                   <IdcardOutlined />
                   <Text type="secondary" copyable>
@@ -147,10 +149,10 @@ export const ProfilePage: React.FC = () => {
           <Card>
             <Space direction="vertical" className="w-full">
               <Text type="warning" strong>
-                No Tenant Information
+                {t('profile.noTenantInformation')}
               </Text>
               <Text type="secondary">
-                Your account is not linked to a tenant record. Please contact the administrator to link your account.
+                {t('profile.noTenantInformationDesc')}
               </Text>
             </Space>
           </Card>
