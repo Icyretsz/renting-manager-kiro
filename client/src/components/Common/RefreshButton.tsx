@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Tooltip } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { RefreshButtonProps } from '@/types';
-import { useQueryClient } from '@tantml:react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 export const RefreshButton: React.FC<RefreshButtonProps> = ({
