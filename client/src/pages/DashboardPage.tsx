@@ -1,32 +1,30 @@
 import { Card, Typography, Row, Col, Statistic } from 'antd';
-import {
-  HomeOutlined,
-  FileTextOutlined,
-} from '@ant-design/icons';
+import { HomeOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { UserRoomsPage } from './UserRoomsPage';
 import FinancialDashboardPage from './FinancialDashboardPage';
+import { CurfewQuickAccessCard } from '@/components/Curfew';
 import { useTranslation } from 'react-i18next';
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 
 export const DashboardPage = () => {
   const { user, isAdmin } = useAuth();
   const { t } = useTranslation();
 
+  const tenant = user?.tenant;
+
   return (
     <PageErrorBoundary>
       <div className="space-y-4">
         {/* Welcome Section */}
-        <div className="mb-6">
-          <Title level={3} className="mb-1">
-            {t('dashboard.welcomeBack', { name: user?.name?.split(' ')[0] })}
-          </Title>
-          <Paragraph className="text-gray-600 mb-0">
-            {isAdmin() ? t('dashboard.administrator') : t('dashboard.user')} • {user?.email}
-          </Paragraph>
-        </div>
+        <Title level={3} className="mb-4">
+          {t('dashboard.welcomeBack', { name: user?.name?.split(' ')[0] })}
+        </Title>
+
+        {/* Curfew Quick Access Card - For frequent use */}
+        {!isAdmin() && tenant && <CurfewQuickAccessCard tenant={tenant} />}
 
         {!isAdmin() && <UserRoomsPage />}
 
@@ -92,10 +90,10 @@ export const DashboardPage = () => {
                 </div>
               </div>
             </Card> */}
-            
-            <FinancialDashboardPage />
 
-            </>)}
+            <FinancialDashboardPage />
+          </>
+        )}
       </div>
     </PageErrorBoundary>
   );

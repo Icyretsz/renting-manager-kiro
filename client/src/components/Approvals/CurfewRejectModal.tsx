@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Form, Input, Button, Space } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const { TextArea } = Input;
 
@@ -18,6 +19,7 @@ export const CurfewRejectModal: React.FC<CurfewRejectModalProps> = ({
   onSubmit,
   loading
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
 
   const handleSubmit = (values: any) => {
@@ -27,7 +29,7 @@ export const CurfewRejectModal: React.FC<CurfewRejectModalProps> = ({
 
   return (
     <Modal
-      title={`Reject Curfew Request${tenantName ? ` - ${tenantName}` : ''}`}
+      title={`${t('curfew.rejectCurfewRequest')}${tenantName ? ` - ${tenantName}` : ''}`}
       open={visible}
       onCancel={onClose}
       footer={null}
@@ -40,11 +42,11 @@ export const CurfewRejectModal: React.FC<CurfewRejectModalProps> = ({
       >
         <Form.Item
           name="reason"
-          label="Reason for Rejection (Optional)"
+          label={t('curfew.reasonForRejection')}
         >
           <TextArea
             rows={4}
-            placeholder="e.g., Insufficient justification, policy violation, etc."
+            placeholder={t('curfew.rejectionPlaceholder')}
             maxLength={500}
             showCount
           />
@@ -53,14 +55,14 @@ export const CurfewRejectModal: React.FC<CurfewRejectModalProps> = ({
         <Form.Item className="mb-0">
           <Space className="w-full justify-end">
             <Button onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               danger
               htmlType="submit"
               loading={loading}
             >
-              Reject Request
+              {t('curfew.rejectRequestButton')}
             </Button>
           </Space>
         </Form.Item>

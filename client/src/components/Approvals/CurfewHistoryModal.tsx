@@ -8,6 +8,7 @@ import {
   ReloadOutlined,
   UserOutlined
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useCurfewModificationsQuery } from '@/hooks/useCurfew';
 import dayjs from 'dayjs';
 
@@ -54,32 +55,50 @@ const getModificationColor = (type: string) => {
   }
 };
 
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'NORMAL':
-      return 'Normal';
-    case 'PENDING':
-      return 'Pending';
-    case 'APPROVED_TEMPORARY':
-      return 'Approved (Temporary)';
-    case 'APPROVED_PERMANENT':
-      return 'Approved (Permanent)';
-    default:
-      return status;
-  }
-};
-
 export const CurfewHistoryModal: React.FC<CurfewHistoryModalProps> = ({
   visible,
   tenantId,
   tenantName,
   onClose
 }) => {
+  const { t } = useTranslation();
   const { data: modifications, isLoading } = useCurfewModificationsQuery(tenantId);
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'NORMAL':
+        return t('curfew.normal');
+      case 'PENDING':
+        return t('curfew.pendingApproval');
+      case 'APPROVED_TEMPORARY':
+        return t('curfew.approvedTemporary');
+      case 'APPROVED_PERMANENT':
+        return t('curfew.approvedPermanent');
+      default:
+        return status;
+    }
+  };
+
+  const getModificationTypeLabel = (type: string) => {
+    switch (type) {
+      case 'REQUEST':
+        return t('curfew.request');
+      case 'APPROVE':
+        return t('curfew.approve');
+      case 'REJECT':
+        return t('curfew.reject');
+      case 'RESET':
+        return t('curfew.reset');
+      case 'MANUAL_CHANGE':
+        return t('curfew.manualChange');
+      default:
+        return type;
+    }
+  };
 
   return (
     <Modal
-      title={`Curfew History${tenantName ? ` - ${tenantName}` : ''}`}
+      title={`${t('curfew.curfewHistory')}${tenantName ? ` - ${tenantName}` : ''}`}
       open={visible}
       onCancel={onClose}
       footer={null}
@@ -87,10 +106,10 @@ export const CurfewHistoryModal: React.FC<CurfewHistoryModalProps> = ({
     >
       {isLoading ? (
         <div className="text-center py-8">
-          <Spin tip="Loading history..." />
+          <Spin tip={t('curfew.loadingHistory')} />
         </div>
       ) : !modifications || modifications.length === 0 ? (
-        <Empty description="No modification history found" />
+        <Empty description={t('curfew.noModificationHistory')} />
       ) : (
         <Timeline
           items={modifications.map((mod: any) => ({
@@ -100,17 +119,17 @@ export const CurfewHistoryModal: React.FC<CurfewHistoryModalProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Tag color={getModificationColor(mod.modificationType)}>
-                    {mod.modificationType}
+                    {getModificationTypeLabel(mod.modificationType)}
                   </Tag>
                   {mod.isPermanent && (
-                    <Tag color="green">PERMANENT</Tag>
+                    <Tag color="green">{t('curfew.permanent').toUpperCase()}</Tag>
                   )}
                 </div>
 
                 <div className="text-sm">
                   {mod.oldStatus && (
                     <div>
-                      <Text type="secondary">Status changed: </Text>
+                      <Text type="secondary">{t('curfew.statusChanged')}: </Text>
                       <Tag color="default" className="text-xs">
                         {getStatusLabel(mod.oldStatus)}
                       </Tag>
@@ -122,7 +141,7 @@ export const CurfewHistoryModal: React.FC<CurfewHistoryModalProps> = ({
                   )}
                   {!mod.oldStatus && (
                     <div>
-                      <Text type="secondary">New status: </Text>
+                      <Text type="secondary">{t('curfew.newStatus')}: </Text>
                       <Tag color="blue" className="text-xs">
                         {getStatusLabel(mod.newStatus)}
                       </Tag>
@@ -132,14 +151,14 @@ export const CurfewHistoryModal: React.FC<CurfewHistoryModalProps> = ({
 
                 {mod.reason && (
                   <div className="text-sm bg-gray-50 p-2 rounded">
-                    <Text type="secondary">Reason: </Text>
+                    <Text type="secondary">{t('curfew.reason')}: </Text>
                     <Text>{mod.reason}</Text>
                   </div>
                 )}
 
                 <div className="text-xs text-gray-500">
                   <div>
-                    By: {mod.modifier?.name} ({mod.modifier?.role})
+                    {t('curfew.by')}: {mod.modifier?.name} ({mod.modifier?.role})
                   </div>
                   <div>
                     {dayjs(mod.modifiedAt).format('MMM DD, YYYY HH:mm:ss')}

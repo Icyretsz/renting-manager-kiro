@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal, Form, Select, Input, Button, Space, Alert, Tag } from 'antd';
 import { ClockCircleOutlined, UserOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useRoomTenantsQuery, useRequestCurfewOverrideMutation } from '@/hooks/useCurfew';
 
 const { Option } = Select;
@@ -15,6 +16,7 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
   visible,
   onClose
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const { data: roomTenants, isLoading } = useRoomTenantsQuery();
   const requestMutation = useRequestCurfewOverrideMutation();
@@ -37,7 +39,7 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
       title={
         <Space>
           <ClockCircleOutlined />
-          <span>Request Curfew Override</span>
+          <span>{t('curfew.modalTitle')}</span>
         </Space>
       }
       open={visible}
@@ -46,8 +48,8 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
       width={500}
     >
       <Alert
-        message="Curfew Policy"
-        description="Building curfew is at 12:00 AM (midnight). Override permission is valid until 6:00 AM the next day."
+        message={t('curfew.policy')}
+        description={t('curfew.policyDescription')}
         type="info"
         showIcon
         className="mb-4"
@@ -60,12 +62,12 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
       >
         <Form.Item
           name="tenantIds"
-          label="Select Tenants"
-          rules={[{ required: true, message: 'Please select at least one tenant' }]}
+          label={t('curfew.selectTenants')}
+          rules={[{ required: true, message: t('curfew.selectAtLeastOne') }]}
         >
           <Select
             mode="multiple"
-            placeholder="Select tenants who need curfew override"
+            placeholder={t('curfew.selectTenantsPlaceholder')}
             loading={isLoading}
             optionFilterProp="children"
           >
@@ -74,10 +76,10 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
                 <Space>
                   <UserOutlined />
                   <span>{tenant.name}</span>
-                  {tenant.user && <Tag color="blue">Has Account</Tag>}
-                  {tenant.curfewStatus === 'APPROVED_PERMANENT' && <Tag color="green">Permanent Approval</Tag>}
-                  {tenant.curfewStatus === 'APPROVED_TEMPORARY' && <Tag color="cyan">Approved Until 6 AM</Tag>}
-                  {tenant.curfewStatus === 'PENDING' && <Tag color="orange">Pending</Tag>}
+                  {tenant.user && <Tag color="blue">{t('curfew.hasAccount')}</Tag>}
+                  {tenant.curfewStatus === 'APPROVED_PERMANENT' && <Tag color="green">{t('curfew.permanentApproval')}</Tag>}
+                  {tenant.curfewStatus === 'APPROVED_TEMPORARY' && <Tag color="cyan">{t('curfew.approvedUntil6AM')}</Tag>}
+                  {tenant.curfewStatus === 'PENDING' && <Tag color="orange">{t('curfew.pendingApproval')}</Tag>}
                 </Space>
               </Option>
             ))}
@@ -86,11 +88,11 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
 
         <Form.Item
           name="reason"
-          label="Reason (Optional)"
+          label={t('curfew.reasonOptional')}
         >
           <TextArea
             rows={3}
-            placeholder="e.g., Late work shift, family emergency, etc."
+            placeholder={t('curfew.reasonPlaceholder')}
             maxLength={200}
             showCount
           />
@@ -99,14 +101,14 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
         <Form.Item className="mb-0">
           <Space className="w-full justify-end">
             <Button onClick={onClose}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="primary"
               htmlType="submit"
               loading={requestMutation.isPending}
             >
-              Submit Request
+              {t('curfew.submitRequest')}
             </Button>
           </Space>
         </Form.Item>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Tag, Button, Space, Popconfirm, Typography, Tooltip } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, UserOutlined, HistoryOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 
 const { Text } = Typography;
@@ -48,6 +49,7 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
   approveLoading,
   rejectLoading
 }) => {
+  const { t } = useTranslation();
   const latestRequest = request.curfewModifications[0];
 
   return (
@@ -61,19 +63,19 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
               {request.name}
             </div>
             <div className="text-sm text-gray-500">
-              Room {request.room.roomNumber} - Floor {request.room.floor}
+              {t('rooms.room')} {request.room.roomNumber} - {t('rooms.floor')} {request.room.floor}
             </div>
             <div className="text-xs text-gray-400">
-              Requested: {dayjs(request.curfewRequestedAt).format('MMM DD, YYYY HH:mm')}
+              {t('curfew.requested')}: {dayjs(request.curfewRequestedAt).format('MMM DD, YYYY HH:mm')}
             </div>
             {latestRequest?.modifier && (
               <div className="text-xs text-gray-400">
-                By: {latestRequest.modifier.name}
+                {t('curfew.by')}: {latestRequest.modifier.name}
               </div>
             )}
           </div>
           <Tag color="orange" icon={<ClockCircleOutlined />}>
-            PENDING
+            {t('curfew.pending')}
           </Tag>
         </div>
 
@@ -81,7 +83,7 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
         {latestRequest?.reason && (
           <div className="p-2 bg-gray-50 rounded">
             <Text className="text-sm">
-              <strong>Reason:</strong> {latestRequest.reason}
+              <strong>{t('curfew.reason')}:</strong> {latestRequest.reason}
             </Text>
           </div>
         )}
@@ -89,7 +91,7 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
         {/* User Account Info */}
         {request.user && (
           <div className="text-xs text-gray-500">
-            Account: {request.user.email}
+            {t('curfew.account')}: {request.user.email}
           </div>
         )}
 
@@ -101,16 +103,16 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
             size="small"
             onClick={() => onViewHistory(request.id)}
           >
-            History
+            {t('curfew.history')}
           </Button>
 
           <Space>
             <Popconfirm
-              title="Reject this request?"
-              description="The tenant will be notified."
+              title={t('curfew.rejectRequest')}
+              description={t('curfew.tenantWillBeNotified')}
               onConfirm={() => onReject(request.id)}
-              okText="Yes"
-              cancelText="No"
+              okText={t('notifications.yes')}
+              cancelText={t('notifications.no')}
             >
               <Button
                 danger
@@ -118,15 +120,15 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
                 size="small"
                 loading={rejectLoading}
               >
-                Reject
+                {t('curfew.reject')}
               </Button>
             </Popconfirm>
 
             <Popconfirm
-              title="Approve curfew override?"
+              title={t('curfew.approveCurfewOverride')}
               description={
                 <div className="space-y-2">
-                  <div>Choose approval type:</div>
+                  <div>{t('curfew.chooseApprovalType')}</div>
                   <Space direction="vertical">
                     <Button
                       type="primary"
@@ -135,7 +137,7 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
                       loading={approveLoading}
                       className="w-full"
                     >
-                      Temporary (Until 6 AM)
+                      {t('curfew.temporaryUntil6AM')}
                     </Button>
                     <Button
                       type="primary"
@@ -144,22 +146,22 @@ export const CurfewRequestCard: React.FC<CurfewRequestCardProps> = ({
                       loading={approveLoading}
                       className="w-full bg-green-600 hover:bg-green-700"
                     >
-                      Permanent
+                      {t('curfew.permanent')}
                     </Button>
                   </Space>
                 </div>
               }
               okButtonProps={{ style: { display: 'none' } }}
-              cancelText="Cancel"
+              cancelText={t('curfew.cancel')}
             >
-              <Tooltip title="Click to choose approval type">
+              <Tooltip title={t('curfew.clickToChooseType')}>
                 <Button
                   type="primary"
                   icon={<CheckCircleOutlined />}
                   size="small"
                   className="bg-green-500 hover:bg-green-600 border-green-500"
                 >
-                  Approve
+                  {t('curfew.approve')}
                 </Button>
               </Tooltip>
             </Popconfirm>

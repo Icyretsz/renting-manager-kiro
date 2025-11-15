@@ -101,7 +101,7 @@ export const UserRoomsPage: React.FC = () => {
     <PageErrorBoundary>
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between">
           <div>
             <Title level={3} className="mb-1">{`${t('meterReadings.yourRoom')}`}</Title>
             {/* <Text className="text-gray-600">Your assigned room as a tenant</Text> */}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Form, Input, Select, Button, Space, Row, Col, DatePicker, Switch } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { TenantModalProps } from '@/types';
 
 const { Option } = Select;
@@ -13,6 +14,8 @@ export const TenantModal: React.FC<TenantModalProps> = ({
   onClose,
   onSubmit
 }) => {
+  const { t } = useTranslation();
+  
   return (
     <Modal
       title={tenant ? 'Edit Tenant' : 'Create Tenant'}
@@ -123,14 +126,14 @@ export const TenantModal: React.FC<TenantModalProps> = ({
 
         <Form.Item
           name="curfewStatus"
-          label="Curfew Override Status"
+          label={t('curfew.overrideStatus')}
           initialValue="NORMAL"
         >
-          <Select placeholder="Select curfew status">
-            <Option value="NORMAL">Normal (No Override)</Option>
-            <Option value="PENDING">Pending Approval</Option>
-            <Option value="APPROVED_TEMPORARY">Approved (Until 6 AM)</Option>
-            <Option value="APPROVED_PERMANENT">Approved (Permanent)</Option>
+          <Select placeholder={t('curfew.overrideStatus')}>
+            <Option value="NORMAL">{t('curfew.normalNoOverride')}</Option>
+            <Option value="PENDING">{t('curfew.pendingApproval')}</Option>
+            <Option value="APPROVED_TEMPORARY">{t('curfew.approvedTemporaryUntil6AM')}</Option>
+            <Option value="APPROVED_PERMANENT">{t('curfew.approvedPermanent')}</Option>
           </Select>
         </Form.Item>
 
