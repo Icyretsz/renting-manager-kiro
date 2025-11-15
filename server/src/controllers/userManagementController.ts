@@ -109,7 +109,7 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
  */
 export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { auth0Id, email, name, role } = req.body;
+    const { auth0Id, email, name, role, readingsSubmitDate, readingsSubmitDueDate } = req.body;
 
     if (!auth0Id || !email || !name || !role) {
       throw new ValidationError('All fields are required: auth0Id, email, name, role');
@@ -117,6 +117,19 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 
     if (!Object.values(Role).includes(role)) {
       throw new ValidationError('Invalid role');
+    }
+
+    // Validate reading submission dates if provided
+    if (readingsSubmitDate !== undefined && readingsSubmitDate !== null) {
+      if (readingsSubmitDate < 1 || readingsSubmitDate > 31) {
+        throw new ValidationError('readingsSubmitDate must be between 1 and 31');
+      }
+    }
+
+    if (readingsSubmitDueDate !== undefined && readingsSubmitDueDate !== null) {
+      if (readingsSubmitDueDate < 1 || readingsSubmitDueDate > 31) {
+        throw new ValidationError('readingsSubmitDueDate must be between 1 and 31');
+      }
     }
 
     // Check if user already exists
@@ -138,7 +151,9 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
         auth0Id,
         email,
         name,
-        role
+        role,
+        readingsSubmitDate: readingsSubmitDate || null,
+        readingsSubmitDueDate: readingsSubmitDueDate || null
       },
       include: {
         tenant: {
@@ -146,7 +161,8 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
             id: true,
             name: true,
             roomId: true,
-            isActive: true
+            isActive: true,
+            curfewStatus: true
           }
         }
       }
@@ -168,7 +184,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 export const updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = getStringParam(req.params, 'id');
-    const { name, email, role } = req.body;
+    const { name, email, role, readingsSubmitDate, readingsSubmitDueDate } = req.body;
 
     if (!userId) {
       throw new ValidationError('User ID is required');
@@ -191,6 +207,27 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
         throw new ValidationError('Invalid role');
       }
       updateData.role = role;
+    }
+
+    // Handle reading submission dates
+    if (readingsSubmitDate !== undefined) {
+      if (readingsSubmitDate === null) {
+        updateData.readingsSubmitDate = null;
+      } else if (readingsSubmitDate < 1 || readingsSubmitDate > 31) {
+        throw new ValidationError('readingsSubmitDate must be between 1 and 31');
+      } else {
+        updateData.readingsSubmitDate = readingsSubmitDate;
+      }
+    }
+
+    if (readingsSubmitDueDate !== undefined) {
+      if (readingsSubmitDueDate === null) {
+        updateData.readingsSubmitDueDate = null;
+      } else if (readingsSubmitDueDate < 1 || readingsSubmitDueDate > 31) {
+        throw new ValidationError('readingsSubmitDueDate must be between 1 and 31');
+      } else {
+        updateData.readingsSubmitDueDate = readingsSubmitDueDate;
+      }
     }
 
     // Check if email is already taken by another user
@@ -216,7 +253,8 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
             id: true,
             name: true,
             roomId: true,
-            isActive: true
+            isActive: true,
+            curfewStatus: true
           }
         }
       }

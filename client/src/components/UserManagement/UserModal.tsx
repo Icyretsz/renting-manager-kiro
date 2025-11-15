@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Form, Input, Select, Button, Space } from 'antd';
+import { Modal, Form, Input, Select, Button, Space, InputNumber, Alert, Divider } from 'antd';
 import { UserModalProps } from '@/types';
 
 const { Option } = Select;
@@ -19,7 +19,7 @@ export const UserModal: React.FC<UserModalProps> = ({
       onCancel={onClose}
       footer={null}
       width="90%"
-      style={{ maxWidth: '500px' }}
+      style={{ maxWidth: '600px' }}
     >
       <Form
         form={form}
@@ -55,6 +55,44 @@ export const UserModal: React.FC<UserModalProps> = ({
             <Option value="ADMIN">Admin</Option>
           </Select>
         </Form.Item>
+
+        <Divider>Meter Reading Submission Settings</Divider>
+
+        <Alert
+          message="Reading Submission Window"
+          description="Set the day of month when users can start submitting readings and the deadline. Leave empty for no restrictions."
+          type="info"
+          showIcon
+          className="mb-4"
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <Form.Item
+            name="readingsSubmitDate"
+            label="Submit Start Date"
+            tooltip="Day of month (1-31) when user can start submitting readings"
+          >
+            <InputNumber
+              placeholder="e.g., 1"
+              min={1}
+              max={31}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="readingsSubmitDueDate"
+            label="Submit Due Date"
+            tooltip="Day of month (1-31) deadline for submitting readings"
+          >
+            <InputNumber
+              placeholder="e.g., 5"
+              min={1}
+              max={31}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+        </div>
 
         <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
           <Space>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Card, Descriptions, Typography, Tag, Space } from 'antd';
+import React, { useState } from 'react';
+import { Card, Descriptions, Typography, Tag, Space, Button } from 'antd';
 import {
   UserOutlined,
   MailOutlined,
@@ -9,9 +9,11 @@ import {
   IdcardOutlined,
   SafetyOutlined,
   EnvironmentOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
+import { CurfewOverrideModal } from '@/components/Curfew';
 import dayjs from 'dayjs';
 import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
@@ -20,6 +22,7 @@ const { Title, Text } = Typography;
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { t, getRole } = useTranslationHelpers();
+  const [curfewModalVisible, setCurfewModalVisible] = useState(false);
 
   if (!user) {
     return null;
@@ -60,6 +63,23 @@ export const ProfilePage: React.FC = () => {
                 {dayjs(user.createdAt).format('MMMM D, YYYY')}
               </Space>
             </Descriptions.Item>
+            {user.readingsSubmitDate && (
+              <Descriptions.Item label="Reading Submit Start">
+                <Space>
+                  <CalendarOutlined />
+                  <Text>Day {user.readingsSubmitDate} of each month</Text>
+                </Space>
+              </Descriptions.Item>
+            )}
+            {user.readingsSubmitDueDate && (
+              <Descriptions.Item label="Reading Submit Deadline">
+                <Space>
+                  <CalendarOutlined />
+                  <Text>Day {user.readingsSubmitDueDate} of each month</Text>
+                  <Tag color="orange">Due Date</Tag>
+                </Space>
+              </Descriptions.Item>
+            )}
           </Descriptions>
         </Card>
 
@@ -132,6 +152,31 @@ export const ProfilePage: React.FC = () => {
                   {tenant.isActive ? t('common.active') : t('common.inactive')}
                 </Tag>
               </Descriptions.Item>
+              <Descriptions.Item label="Curfew Override">
+                <Space>
+                  <Tag color={
+                    tenant.curfewStatus === 'APPROVED_PERMANENT' ? 'green' :
+                    tenant.curfewStatus === 'APPROVED_TEMPORARY' ? 'cyan' :
+                    tenant.curfewStatus === 'PENDING' ? 'orange' :
+                    'default'
+                  }>
+                    {tenant.curfewStatus === 'APPROVED_PERMANENT' ? 'Approved (Permanent)' :
+                     tenant.curfewStatus === 'APPROVED_TEMPORARY' ? 'Approved (Until 6 AM)' :
+                     tenant.curfewStatus === 'PENDING' ? 'Pending Approval' :
+                     'Normal'}
+                  </Tag>
+                  {tenant.curfewStatus !== 'PENDING' && (
+                    <Button
+                      type="primary"
+                      size="small"
+                      icon={<ClockCircleOutlined />}
+                      onClick={() => setCurfewModalVisible(true)}
+                    >
+                      Request Override
+                    </Button>
+                  )}
+                </Space>
+              </Descriptions.Item>
               <Descriptions.Item label={t('profile.tenantId')}>
                 <Space>
                   <IdcardOutlined />
@@ -156,6 +201,14 @@ export const ProfilePage: React.FC = () => {
               </Text>
             </Space>
           </Card>
+        )}
+
+        {/* Curfew Override Modal */}
+        {tenant && (
+          <CurfewOverrideModal
+            visible={curfewModalVisible}
+            onClose={() => setCurfewModalVisible(false)}
+          />
         )}
       </div>
     </PageErrorBoundary>

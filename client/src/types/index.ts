@@ -9,6 +9,8 @@ export interface User {
   email: string;
   name: string;
   role: 'ADMIN' | 'USER';
+  readingsSubmitDate?: number | null; // Day of month (1-31) when user can start submitting readings
+  readingsSubmitDueDate?: number | null; // Day of month (1-31) deadline for submitting readings
   tenant?: Tenant; // Optional - populated if user is also a tenant
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +29,9 @@ export interface Room {
   updatedAt: Date;
 }
 
+export type CurfewStatus = 'NORMAL' | 'PENDING' | 'APPROVED_TEMPORARY' | 'APPROVED_PERMANENT';
+export type CurfewModificationType = 'REQUEST' | 'APPROVE' | 'REJECT' | 'RESET' | 'MANUAL_CHANGE';
+
 export interface Tenant {
   id: string;
   name: string;
@@ -41,8 +46,35 @@ export interface Tenant {
   moveInDate?: Date;
   moveOutDate?: Date;
   isActive: boolean;
+  curfewStatus: CurfewStatus;
+  curfewRequestedAt?: Date | null;
+  curfewApprovedAt?: Date | null;
+  curfewApprovedBy?: string | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CurfewModification {
+  id: string;
+  tenantId: string;
+  modifiedBy: string;
+  modifiedAt: Date;
+  oldStatus?: CurfewStatus | null;
+  newStatus: CurfewStatus;
+  modificationType: CurfewModificationType;
+  reason?: string | null;
+  isPermanent: boolean;
+  modifier?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  tenant?: {
+    id: string;
+    name: string;
+    roomId: number;
+  };
 }
 
 // Meter Readings

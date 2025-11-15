@@ -8,19 +8,23 @@ datasource db {
 }
 
 model User {
-  id                   String                @id @default(cuid())
-  auth0Id              String                @unique @map("auth0_id")
-  email                String                @unique
-  name                 String
-  role                 Role                  @default(USER)
-  fcmToken             String?               @map("fcm_token")
-  createdAt            DateTime              @default(now()) @map("created_at")
-  updatedAt            DateTime              @updatedAt @map("updated_at")
-  approvedReadings     MeterReading[]        @relation("ApprovedBy")
-  submittedReadings    MeterReading[]        @relation("SubmittedBy")
-  notifications        Notification[]
-  readingModifications ReadingModification[]
-  tenant               Tenant?
+  id                    String                 @id @default(cuid())
+  auth0Id               String                 @unique @map("auth0_id")
+  email                 String                 @unique
+  name                  String
+  role                  Role                   @default(USER)
+  fcmToken              String?                @map("fcm_token")
+  readingsSubmitDate    Int?                   @map("readings_submit_date") // Day of month (1-31) when user can start submitting readings
+  readingsSubmitDueDate Int?                   @map("readings_submit_due_date") // Day of month (1-31) deadline for submitting readings
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  approvedReadings      MeterReading[]         @relation("ApprovedBy")
+  submittedReadings     MeterReading[]         @relation("SubmittedBy")
+  notifications         Notification[]
+  readingModifications  ReadingModification[]
+  curfewModifications   CurfewModification[]
+  tenant                Tenant?
+  approvedCurfews       Tenant[]               @relation("CurfewApprover")
 
   @@map("users")
 }
@@ -41,21 +45,27 @@ model Room {
 }
 
 model Tenant {
-  id               String    @id @default(cuid())
-  name             String
-  email            String?
-  phone            String?
-  fingerprintId    Int?      @map("fingerprint_id")
-  permanentAddress String?   @map("permanent_address")
-  roomId           Int       @map("room_id")
-  userId           String?   @unique @map("user_id")
-  moveInDate       DateTime? @map("move_in_date")
-  moveOutDate      DateTime? @map("move_out_date")
-  isActive         Boolean   @default(true) @map("is_active")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  room             Room      @relation(fields: [roomId], references: [id])
-  user             User?     @relation(fields: [userId], references: [id])
+  id                 String                 @id @default(cuid())
+  name               String
+  email              String?
+  phone              String?
+  fingerprintId      Int?                   @map("fingerprint_id")
+  permanentAddress   String?                @map("permanent_address")
+  roomId             Int                    @map("room_id")
+  userId             String?                @unique @map("user_id")
+  moveInDate         DateTime?              @map("move_in_date")
+  moveOutDate        DateTime?              @map("move_out_date")
+  isActive           Boolean                @default(true) @map("is_active")
+  curfewStatus       CurfewStatus           @default(NORMAL) @map("curfew_status")
+  curfewRequestedAt  DateTime?              @map("curfew_requested_at")
+  curfewApprovedAt   DateTime?              @map("curfew_approved_at")
+  curfewApprovedBy   String?                @map("curfew_approved_by")
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+  room               Room                   @relation(fields: [roomId], references: [id])
+  user               User?                  @relation(fields: [userId], references: [id])
+  approver           User?                  @relation("CurfewApprover", fields: [curfewApprovedBy], references: [id])
+  curfewModifications CurfewModification[]
 
   @@map("tenants")
 }
@@ -151,6 +161,24 @@ model Setting {
   @@map("settings")
 }
 
+model CurfewModification {
+  id               String                  @id @default(cuid())
+  tenantId         String                  @map("tenant_id")
+  modifiedBy       String                  @map("modified_by")
+  modifiedAt       DateTime                @default(now()) @map("modified_at")
+  oldStatus        CurfewStatus?           @map("old_status")
+  newStatus        CurfewStatus            @map("new_status")
+  modificationType CurfewModificationType  @map("modification_type")
+  reason           String?
+  isPermanent      Boolean                 @default(false) @map("is_permanent")
+  tenant           Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  modifier         User                    @relation(fields: [modifiedBy], references: [id])
+
+  @@index([tenantId])
+  @@index([modifiedAt])
+  @@map("curfew_modifications")
+}
+
 enum Role {
   ADMIN
   USER
@@ -173,4 +201,19 @@ enum PaymentStatus {
   UNPAID
   PAID
   OVERDUE
+}
+
+enum CurfewStatus {
+  NORMAL
+  PENDING
+  APPROVED_TEMPORARY
+  APPROVED_PERMANENT
+}
+
+enum CurfewModificationType {
+  REQUEST
+  APPROVE
+  REJECT
+  RESET
+  MANUAL_CHANGE
 }

@@ -121,6 +121,19 @@ export const TenantModal: React.FC<TenantModalProps> = ({
           <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
         </Form.Item>
 
+        <Form.Item
+          name="curfewStatus"
+          label="Curfew Override Status"
+          initialValue="NORMAL"
+        >
+          <Select placeholder="Select curfew status">
+            <Option value="NORMAL">Normal (No Override)</Option>
+            <Option value="PENDING">Pending Approval</Option>
+            <Option value="APPROVED_TEMPORARY">Approved (Until 6 AM)</Option>
+            <Option value="APPROVED_PERMANENT">Approved (Permanent)</Option>
+          </Select>
+        </Form.Item>
+
         <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
           <Space>
             <Button onClick={onClose}>

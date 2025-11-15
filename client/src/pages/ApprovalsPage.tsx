@@ -5,10 +5,14 @@ import {
   Tag,
   Typography,
   Empty,
+  Tabs,
+  Badge,
 } from 'antd';
 import {
   DownOutlined,
   RightOutlined,
+  FileTextOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -17,6 +21,12 @@ import {
   useRejectReadingMutation,
   meterReadingKeys,
 } from '@/hooks/useMeterReadings';
+import {
+  usePendingCurfewRequestsQuery,
+  useApproveCurfewOverrideMutation,
+  useRejectCurfewOverrideMutation,
+  curfewKeys,
+} from '@/hooks/useCurfew';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { RefreshButton } from '@/components/Common/RefreshButton';
@@ -25,7 +35,10 @@ import {
   StatisticsCards,
   FiltersCard,
   ReadingCard,
-  ReviewModal
+  ReviewModal,
+  CurfewRequestCard,
+  CurfewHistoryModal,
+  CurfewRejectModal,
 } from '@/components/Approvals';
 
 const { Title, Text } = Typography;
@@ -37,6 +50,9 @@ const toNumber = (value: string | number): number => {
 
 export const ApprovalsPage: React.FC = () => {
   const { isAdmin } = useAuth();
+  const [activeTab, setActiveTab] = useState<string>('readings');
+  
+  // Reading states
   const [selectedReading, setSelectedReading] = useState<MeterReading | null>(null);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -45,9 +61,21 @@ export const ApprovalsPage: React.FC = () => {
   const [collapsedRooms, setCollapsedRooms] = useState<Set<string>>(new Set());
   const [collapsedStatuses, setCollapsedStatuses] = useState<Set<string>>(new Set());
 
+  // Curfew states
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const [selectedTenantName, setSelectedTenantName] = useState<string>('');
+  const [curfewHistoryVisible, setCurfewHistoryVisible] = useState(false);
+  const [curfewRejectModalVisible, setCurfewRejectModalVisible] = useState(false);
+  const [tenantToReject, setTenantToReject] = useState<string | null>(null);
+
   const { data: allReadings, isLoading } = useAllReadingsQuery();
   const approveMutation = useApproveReadingMutation();
   const rejectMutation = useRejectReadingMutation();
+
+  // Curfew queries
+  const { data: pendingCurfewRequests, isLoading: curfewLoading } = usePendingCurfewRequestsQuery();
+  const approveCurfewMutation = useApproveCurfewOverrideMutation();
+  const rejectCurfewMutation = useRejectCurfewOverrideMutation();
 
   if (!isAdmin()) {
     return (
@@ -168,31 +196,122 @@ export const ApprovalsPage: React.FC = () => {
     setCollapsedStatuses(newCollapsed);
   };
 
+  // Curfew handlers
+  const handleApproveCurfew = async (tenantId: string, isPermanent: boolean) => {
+    try {
+      await approveCurfewMutation.mutateAsync({
+        tenantIds: [tenantId],
+        isPermanent
+      });
+    } catch (error) {
+      console.error('Failed to approve curfew:', error);
+    }
+  };
+
+  const handleRejectCurfew = (tenantId: string) => {
+    setTenantToReject(tenantId);
+    setCurfewRejectModalVisible(true);
+  };
+
+  const handleRejectCurfewSubmit = async (reason: string) => {
+    if (!tenantToReject) return;
+    
+    try {
+      await rejectCurfewMutation.mutateAsync({
+        tenantIds: [tenantToReject],
+        reason
+      });
+      setCurfewRejectModalVisible(false);
+      setTenantToReject(null);
+    } catch (error) {
+      console.error('Failed to reject curfew:', error);
+    }
+  };
+
+  const handleViewCurfewHistory = (tenantId: string, tenantName?: string) => {
+    setSelectedTenantId(tenantId);
+    setSelectedTenantName(tenantName || '');
+    setCurfewHistoryVisible(true);
+  };
+
+  // Group curfew requests by room
+  const groupedCurfewRequests = (pendingCurfewRequests || []).reduce((acc: any, request: any) => {
+    const roomNumber = request.room?.roomNumber || 'Unknown';
+    if (!acc[roomNumber]) {
+      acc[roomNumber] = [];
+    }
+    acc[roomNumber].push(request);
+    return acc;
+  }, {});
+
+  const sortedCurfewRoomNumbers = Object.keys(groupedCurfewRequests).sort((a, b) => {
+    const roomA = a === 'Unknown' ? Infinity : parseInt(a);
+    const roomB = b === 'Unknown' ? Infinity : parseInt(b);
+    return roomA - roomB;
+  });
+
   return (
     <PageErrorBoundary>
       <div className="space-y-4">
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <Title level={3} className="mb-1">Reading Approvals</Title>
+            <Title level={3} className="mb-1">Approvals</Title>
             <Text className="text-gray-600">
-              Review and approve meter reading submissions
+              Review and approve meter readings and curfew requests
             </Text>
           </div>
           <RefreshButton
-            queryKeys={[meterReadingKeys.all]}
-            tooltip="Refresh meter readings"
+            queryKeys={[meterReadingKeys.all, curfewKeys.all]}
+            tooltip="Refresh approvals"
           />
         </div>
 
-        {isLoading ? (<LoadingSpinner message="Loading readings..." />) :
-        <>
-        {/* Statistics */}
-        <StatisticsCards
-          pendingCount={pendingCount}
-          totalCount={totalCount}
-          approvedTodayCount={approvedTodayCount}
+        {/* Tabs */}
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'readings',
+              label: (
+                <span>
+                  <FileTextOutlined />
+                  Meter Readings
+                  {pendingCount > 0 && (
+                    <Badge count={pendingCount} className="ml-2" />
+                  )}
+                </span>
+              ),
+              children: null,
+            },
+            {
+              key: 'curfew',
+              label: (
+                <span>
+                  <ClockCircleOutlined />
+                  Curfew Requests
+                  {(pendingCurfewRequests?.length || 0) > 0 && (
+                    <Badge count={pendingCurfewRequests?.length} className="ml-2" />
+                  )}
+                </span>
+              ),
+              children: null,
+            },
+          ]}
         />
+
+        {/* Meter Readings Tab */}
+        {activeTab === 'readings' && (
+          <>
+            {isLoading ? (<LoadingSpinner message="Loading readings..." />) :
+            <>
+            {/* Statistics */}
+            <StatisticsCards
+              pendingCount={pendingCount}
+              totalCount={totalCount}
+              approvedTodayCount={approvedTodayCount}
+            />
 
         {/* Filters */}
         <FiltersCard
@@ -331,17 +450,130 @@ export const ApprovalsPage: React.FC = () => {
         </div>
         </>}
 
-        {/* Review Modal */}
-        <ReviewModal
-          visible={reviewModalVisible}
-          reading={selectedReading}
-          onClose={() => setReviewModalVisible(false)}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          approveLoading={approveMutation.isPending}
-          rejectLoading={rejectMutation.isPending}
-          getStatusColor={getStatusColor}
-        />
+            {/* Review Modal */}
+            <ReviewModal
+              visible={reviewModalVisible}
+              reading={selectedReading}
+              onClose={() => setReviewModalVisible(false)}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              approveLoading={approveMutation.isPending}
+              rejectLoading={rejectMutation.isPending}
+              getStatusColor={getStatusColor}
+            />
+          </>
+        )}
+
+        {/* Curfew Requests Tab */}
+        {activeTab === 'curfew' && (
+          <>
+            {curfewLoading ? (
+              <LoadingSpinner message="Loading curfew requests..." />
+            ) : (
+              <>
+                {/* Statistics */}
+                <Card>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-orange-500">
+                        {pendingCurfewRequests?.length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600">Pending Requests</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-blue-500">
+                        {sortedCurfewRoomNumbers.length}
+                      </div>
+                      <div className="text-sm text-gray-600">Rooms with Requests</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-500">
+                        {Object.values(groupedCurfewRequests).reduce((sum: number, requests: any) => sum + requests.length, 0)}
+                      </div>
+                      <div className="text-sm text-gray-600">Total Tenants</div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Curfew Requests List */}
+                <div className="space-y-6">
+                  {sortedCurfewRoomNumbers.length === 0 ? (
+                    <Card>
+                      <Empty
+                        description="No pending curfew requests"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      />
+                    </Card>
+                  ) : (
+                    sortedCurfewRoomNumbers.map((roomNumber) => {
+                      const roomRequests = groupedCurfewRequests[roomNumber];
+
+                      return (
+                        <div key={roomNumber} className="space-y-3">
+                          {/* Room Header */}
+                          <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-orange-500">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-800">
+                                  Room {roomNumber}
+                                </h3>
+                                <div className="text-sm text-gray-600">
+                                  {roomRequests.length} pending request{roomRequests.length !== 1 ? 's' : ''}
+                                </div>
+                              </div>
+                              <Tag color="orange" className="text-xs">
+                                {roomRequests.length} PENDING
+                              </Tag>
+                            </div>
+                          </div>
+
+                          {/* Request Cards */}
+                          <div className="ml-4 space-y-2">
+                            {roomRequests.map((request: any) => (
+                              <CurfewRequestCard
+                                key={request.id}
+                                request={request}
+                                onApprove={handleApproveCurfew}
+                                onReject={handleRejectCurfew}
+                                onViewHistory={(tenantId) => handleViewCurfewHistory(tenantId, request.name)}
+                                approveLoading={approveCurfewMutation.isPending}
+                                rejectLoading={rejectCurfewMutation.isPending}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Curfew History Modal */}
+                <CurfewHistoryModal
+                  visible={curfewHistoryVisible}
+                  tenantId={selectedTenantId}
+                  tenantName={selectedTenantName}
+                  onClose={() => {
+                    setCurfewHistoryVisible(false);
+                    setSelectedTenantId(null);
+                    setSelectedTenantName('');
+                  }}
+                />
+
+                {/* Curfew Reject Modal */}
+                <CurfewRejectModal
+                  visible={curfewRejectModalVisible}
+                  tenantName={pendingCurfewRequests?.find((r: any) => r.id === tenantToReject)?.name}
+                  onClose={() => {
+                    setCurfewRejectModalVisible(false);
+                    setTenantToReject(null);
+                  }}
+                  onSubmit={handleRejectCurfewSubmit}
+                  loading={rejectCurfewMutation.isPending}
+                />
+              </>
+            )}
+          </>
+        )}
       </div>
     </PageErrorBoundary>
   );

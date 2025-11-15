@@ -98,6 +98,7 @@ import billingRoutes from './routes/billing';
 import settingsRoutes from './routes/settings';
 import paymentRoutes from './routes/payments';
 import userManagementRoutes from './routes/userManagement';
+import curfewRoutes from './routes/curfew';
 
 // API routes
 app.use('/api/upload', uploadRoutes);
@@ -111,6 +112,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/user-management', userManagementRoutes);
+app.use('/api/curfew', curfewRoutes);
 
 // 404 handler for API routes only
 app.use('/api/*', (req, _res, next) => {
@@ -164,6 +166,14 @@ server.listen(PORT, async () => {
     console.log('⚙️ Default settings initialized');
   } catch (error) {
     console.error('Failed to initialize default settings:', error);
+  }
+
+  // Initialize cron jobs
+  try {
+    const { initializeCurfewResetJob } = await import('./jobs/curfewResetJob');
+    initializeCurfewResetJob();
+  } catch (error) {
+    console.error('Failed to initialize cron jobs:', error);
   }
 });
 
