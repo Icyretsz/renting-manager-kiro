@@ -213,15 +213,34 @@ export const approveCurfewOverride = async (req: Request, res: Response, next: N
 
     // Send one notification per room to the user with an account
     for (const [roomNumber, roomTenants] of tenantsByRoom) {
-      // Find the tenant with a user account in this room
-      const tenantWithAccount = roomTenants.find(t => t.user);
+      // Get the room ID from the first tenant
+      const roomId = roomTenants[0]?.room ? 
+        (await prisma.room.findFirst({ where: { roomNumber } }))?.id : 
+        null;
+      
+      if (!roomId) continue;
+
+      // Find ANY tenant with a user account in this room (not just approved ones)
+      const allRoomTenants = await prisma.tenant.findMany({
+        where: {
+          room: { roomNumber },
+          userId: { not: null }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+
+      const tenantWithAccount = allRoomTenants.find(t => t.user);
       
       if (tenantWithAccount && tenantWithAccount.user) {
-        // Get all tenant names for this room
+        // Get all approved tenant names for this room
         const tenantNames = roomTenants.map(t => t.name).join(', ');
-        
-        console.log(`📢 Sending curfew approved notification to user ${tenantWithAccount.user.id} for room ${roomNumber}`);
-        console.log(`   Approved tenants: ${tenantNames}`);
         
         try {
           await notificationService.notifyCurfewApproved(
@@ -230,12 +249,9 @@ export const approveCurfewOverride = async (req: Request, res: Response, next: N
             tenantNames,
             isPermanent
           );
-          console.log('✅ Curfew approved notification sent successfully');
         } catch (error) {
-          console.error('❌ Failed to send curfew approved notification:', error);
+          console.error('Failed to send curfew approved notification:', error);
         }
-      } else {
-        console.log(`⚠️ No user account found in room ${roomNumber} - skipping notification`);
       }
     }
 

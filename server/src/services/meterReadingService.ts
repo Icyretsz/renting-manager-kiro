@@ -332,11 +332,7 @@ export const updateMeterReading = async (id: string, data: UpdateMeterReadingDat
   });
 
   // Update billing record if admin modified an approved reading
-  console.log(`🔍 Checking notification conditions: userRole=${userRole}, status=${existingReading.status}, modifications=${modifications.length}`);
-  
   if (userRole === 'ADMIN' && existingReading.status === ReadingStatus.APPROVED && modifications.length > 0) {
-    console.log('✅ Admin modified approved reading - will send notification');
-    
     try {
       const updatedBilling = await billingService.updateBillingRecordFromReading(id);
       if (updatedBilling) {
@@ -351,7 +347,6 @@ export const updateMeterReading = async (id: string, data: UpdateMeterReadingDat
 
     // Send notification about the modification
     try {
-      console.log('📢 Attempting to send reading modified notification...');
       const { notifyReadingModified } = await import('./notificationService');
       await notifyReadingModified(
         updatedReading.roomId, 
@@ -359,13 +354,10 @@ export const updateMeterReading = async (id: string, data: UpdateMeterReadingDat
         updatedReading.month, 
         updatedReading.year
       );
-      console.log('✅ Reading modified notification sent successfully');
     } catch (error) {
-      console.error('❌ Failed to send notification for reading modification:', error);
+      console.error('Failed to send notification for reading modification:', error);
       // Don't throw error as the update was successful
     }
-  } else {
-    console.log('❌ Notification conditions not met - skipping notification');
   }
 
   // Send notification if user updated their readings (notify admins)

@@ -21,18 +21,11 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
     // Listen for new notifications
     const handleNewNotification = (notification: WebsocketNotification) => {
-      console.log('📨 Received WebSocket notification:', notification);
-      
       // Add to notification store
       addNotification(notification);
 
       // Show Ant Design notification
-      try {
-        showNotification(notification);
-        console.log('✅ Notification popup shown');
-      } catch (error) {
-        console.error('❌ Failed to show notification popup:', error);
-      }
+      showNotification(notification);
 
       if (notification.data) {
         const notificationData = notification.data;
