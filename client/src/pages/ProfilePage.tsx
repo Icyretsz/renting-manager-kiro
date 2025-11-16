@@ -165,16 +165,6 @@ export const ProfilePage: React.FC = () => {
                      tenant.curfewStatus === 'PENDING' ? 'Pending Approval' :
                      'Normal'}
                   </Tag>
-                  {tenant.curfewStatus !== 'PENDING' && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<ClockCircleOutlined />}
-                      onClick={() => setCurfewModalVisible(true)}
-                    >
-                      Request Override
-                    </Button>
-                  )}
                 </Space>
               </Descriptions.Item>
               <Descriptions.Item label={t('profile.tenantId')}>
@@ -203,13 +193,6 @@ export const ProfilePage: React.FC = () => {
           </Card>
         )}
 
-        {/* Curfew Override Modal */}
-        {tenant && (
-          <CurfewOverrideModal
-            visible={curfewModalVisible}
-            onClose={() => setCurfewModalVisible(false)}
-          />
-        )}
       </div>
     </PageErrorBoundary>
   );

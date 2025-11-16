@@ -41,7 +41,7 @@ export const CurfewQuickAccessCard: React.FC<CurfewQuickAccessCardProps> = ({ te
           borderLeftColor: tenant.curfewStatus === 'PENDING' ? '#fa8c16' : '#1890ff',
         }}
       >
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
           <div className="flex items-center gap-3">
             <ClockCircleOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
             <div>
@@ -69,6 +69,8 @@ export const CurfewQuickAccessCard: React.FC<CurfewQuickAccessCardProps> = ({ te
             size="large"
             icon={<ClockCircleOutlined />}
             onClick={() => setCurfewModalVisible(true)}
+            block
+            className="sm:w-auto"
           >
             {t('curfew.requestOverride')}
           </Button>
