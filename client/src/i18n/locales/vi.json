@@ -524,6 +524,7 @@
         "approvedTemporaryUntil6AM": "Đã phê duyệt (Đến 6 giờ sáng)",
         "request": "YÊU CẦU",
         "reset": "ĐẶT LẠI",
-        "manualChange": "THAY ĐỔI THỦ CÔNG"
+        "manualChange": "THAY ĐỔI THỦ CÔNG",
+        "alreadyApproved": "Đã được phê duyệt"
     }
 }

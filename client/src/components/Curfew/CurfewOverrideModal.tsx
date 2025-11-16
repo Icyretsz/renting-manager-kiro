@@ -71,18 +71,23 @@ export const CurfewOverrideModal: React.FC<CurfewOverrideModalProps> = ({
             loading={isLoading}
             optionFilterProp="children"
           >
-            {roomTenants?.map((tenant) => (
-              <Option key={tenant.id} value={tenant.id} disabled={tenant.curfewStatus === 'PENDING'}>
-                <Space>
-                  <UserOutlined />
-                  <span>{tenant.name}</span>
-                  {tenant.user && <Tag color="blue">{t('curfew.hasAccount')}</Tag>}
-                  {tenant.curfewStatus === 'APPROVED_PERMANENT' && <Tag color="green">{t('curfew.permanentApproval')}</Tag>}
-                  {tenant.curfewStatus === 'APPROVED_TEMPORARY' && <Tag color="cyan">{t('curfew.approvedUntil6AM')}</Tag>}
-                  {tenant.curfewStatus === 'PENDING' && <Tag color="orange">{t('curfew.pendingApproval')}</Tag>}
-                </Space>
-              </Option>
-            ))}
+            {roomTenants?.map((tenant) => {
+              // Only allow NORMAL status to be selected
+              const isSelectable = tenant.curfewStatus === 'NORMAL';
+              
+              return (
+                <Option key={tenant.id} value={tenant.id} disabled={!isSelectable}>
+                  <Space>
+                    <UserOutlined />
+                    <span>{tenant.name}</span>
+                    {tenant.user && <Tag color="blue">{t('curfew.hasAccount')}</Tag>}
+                    {tenant.curfewStatus === 'APPROVED_PERMANENT' && <Tag color="green">{t('curfew.permanentApproval')}</Tag>}
+                    {tenant.curfewStatus === 'APPROVED_TEMPORARY' && <Tag color="cyan">{t('curfew.approvedUntil6AM')}</Tag>}
+                    {tenant.curfewStatus === 'PENDING' && <Tag color="orange">{t('curfew.pendingApproval')}</Tag>}
+                  </Space>
+                </Option>
+              );
+            })}
           </Select>
         </Form.Item>
 

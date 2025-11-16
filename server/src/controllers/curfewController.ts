@@ -59,6 +59,31 @@ export const requestCurfewOverride = async (req: Request, res: Response, next: N
       throw new ValidationError('All selected tenants must be in your room');
     }
 
+    // Check if any tenant has a non-NORMAL status OR has a request today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const blockedTenants = selectedTenants.filter(t => {
+      // Block if status is not NORMAL
+      if (t.curfewStatus !== 'NORMAL') {
+        return true;
+      }
+      
+      // Block if there was a request today (even if it was approved/rejected)
+      if (t.curfewRequestedAt) {
+        const requestDate = new Date(t.curfewRequestedAt);
+        requestDate.setHours(0, 0, 0, 0);
+        return requestDate.getTime() === today.getTime();
+      }
+      
+      return false;
+    });
+
+    if (blockedTenants.length > 0) {
+      const names = blockedTenants.map(t => t.name).join(', ');
+      throw new ValidationError(`Cannot request override for these tenants today: ${names}. They either have an active status or already made a request today.`);
+    }
+
     // Update tenant status to PENDING and create modification logs
     for (const tenant of selectedTenants) {
       const oldStatus = tenant.curfewStatus;

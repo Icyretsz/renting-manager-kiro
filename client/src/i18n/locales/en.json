@@ -524,6 +524,7 @@
         "approvedTemporaryUntil6AM": "Approved (Until 6 AM)",
         "request": "REQUEST",
         "reset": "RESET",
-        "manualChange": "MANUAL_CHANGE"
+        "manualChange": "MANUAL_CHANGE",
+        "alreadyApproved": "Already approved"
     }
 }

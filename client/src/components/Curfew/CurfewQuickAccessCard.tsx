@@ -64,21 +64,14 @@ export const CurfewQuickAccessCard: React.FC<CurfewQuickAccessCardProps> = ({ te
               </Tag>
             </div>
           </div>
-          {tenant.curfewStatus !== 'PENDING' && (
-            <Button
-              type="primary"
-              size="large"
-              icon={<ClockCircleOutlined />}
-              onClick={() => setCurfewModalVisible(true)}
-            >
-              {t('curfew.requestOverride')}
-            </Button>
-          )}
-          {tenant.curfewStatus === 'PENDING' && (
-            <Text type="secondary" style={{ fontSize: '14px' }}>
-              {t('curfew.requestBeingReviewed')}
-            </Text>
-          )}
+          <Button
+            type="primary"
+            size="large"
+            icon={<ClockCircleOutlined />}
+            onClick={() => setCurfewModalVisible(true)}
+          >
+            {t('curfew.requestOverride')}
+          </Button>
         </div>
       </Card>
 
