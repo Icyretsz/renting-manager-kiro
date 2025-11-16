@@ -139,9 +139,8 @@ model BillingRecord {
 model Notification {
   id         String   @id @default(cuid())
   userId     String   @map("user_id")
-  title      String
-  message    String
   type       String
+  data       Json?
   readStatus Boolean  @default(false) @map("read_status")
   createdAt  DateTime @default(now()) @map("created_at")
   user       User     @relation(fields: [userId], references: [id])

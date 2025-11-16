@@ -3,7 +3,7 @@ import { CreatePaymentLinkRequest } from '@payos/node/lib/resources/v2/payment-r
 import { Webhook } from '@payos/node/lib/resources/webhooks/index'
 import { prisma } from '../config/database';
 import { AppError, ValidationError } from '../utils/errors';
-import { emitNotificationToUser, getSocketIO } from '../config/socket';
+import { getSocketIO } from '../config/socket';
 
 import { PaymentStatus } from '@prisma/client';
 import { notifyBillPayed } from './notificationService';
@@ -322,32 +322,11 @@ const sendPaymentSuccessNotification = async (billingRecordId: string): Promise<
 
     if (!billingRecord) return;
 
-    // Send notification to all active tenants in the room
-    for (const tenant of billingRecord.room.tenants) {
-      if (tenant.user) {
-        const notificationForUser = await prisma.notification.create({
-          data: {
-            userId: tenant.user.id,
-            title: 'Payment Confirmed',
-            message: `Your payment for Room ${billingRecord.room.roomNumber} - ${getMonthName(billingRecord.month)} ${billingRecord.year} has been confirmed. Amount: ₫${billingRecord.totalAmount.toNumber().toLocaleString()}`,
-            type: 'payment_success'
-          }
-        });
-
-        // Emit WebSocket notification to users
-        try {
-          emitNotificationToUser(tenant.user.id, notificationForUser);
-        } catch (socketError) {
-          console.error('Failed to emit WebSocket notification:', socketError);
-        }
-      }
-    }
-
-    //Send Websocket notification to admins
+    // Send notification to admins about payment received
     try {
-      notifyBillPayed(billingRecord.roomId, billingRecord.month, billingRecord.year, billingRecord.totalAmount)
-    } catch (socketError) {
-      console.error('Failed to emit WebSocket notification to Admins:', socketError);
+      await notifyBillPayed(billingRecord.room.roomNumber, billingRecord.month, billingRecord.year, billingRecord.totalAmount);
+    } catch (error) {
+      console.error('Failed to send payment notification to admins:', error);
     }
 
   } catch (error) {

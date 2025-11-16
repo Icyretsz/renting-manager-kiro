@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as payosService from '../services/payosService';
 import * as billingService from '../services/billingService';
-import { prisma } from '../config/database';
+//import { prisma } from '../config/database';
 import { AppError, ValidationError } from '../utils/errors';
 import { getStringParam } from '../utils/paramHelpers';
 
@@ -154,7 +154,7 @@ export const cancelPaymentLink = async (req: Request, res: Response, next: NextF
 /**
  * Send payment notification when readings are approved
  */
-export const sendPaymentNotification = async (billingRecordId: string, userId: string): Promise<void> => {
+export const sendPaymentNotification = async (billingRecordId: string, _userId: string): Promise<void> => {
   try {
     const billingRecord = await billingService.getBillingRecordById(billingRecordId, 'ADMIN');
     
@@ -163,14 +163,14 @@ export const sendPaymentNotification = async (billingRecordId: string, userId: s
     }
 
     // Create notification for bill ready
-    await prisma.notification.create({
-      data: {
-        userId,
-        title: 'Bill Ready for Payment',
-        message: `Your bill for Room ${billingRecord.room.roomNumber} is ready. Tap to see bill details and pay. Amount: ₫${billingRecord.totalAmount.toNumber().toLocaleString()}`,
-        type: 'bill_ready'
-      }
-    });
+    // await prisma.notification.create({
+    //   data: {
+    //     userId,
+    //     title: 'Bill Ready for Payment',
+    //     message: `Your bill for Room ${billingRecord.room.roomNumber} is ready. Tap to see bill details and pay. Amount: ₫${billingRecord.totalAmount.toNumber().toLocaleString()}`,
+    //     type: 'bill_ready'
+    //   }
+    // });
   } catch (error) {
     console.error('Failed to send payment notification:', error);
   }

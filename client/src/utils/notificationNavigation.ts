@@ -1,4 +1,4 @@
-import { NotificationDB } from '@/types';
+import { WebsocketNotification } from '@/types';
 import {
   FileTextOutlined,
   CheckCircleOutlined,
@@ -16,12 +16,11 @@ export interface NavigationResult {
   description: string;
 }
 
-export const getNotificationNavigation = (notification: NotificationDB): NavigationResult => {
+export const getNotificationNavigation = (notification: WebsocketNotification): NavigationResult => {
   const type = notification.type;
 
   switch (type) {
     // User notifications - navigate to user pages
-    case 'bill_ready':
     case 'bill_generated':
       return {
         path: '/billing',
@@ -29,8 +28,7 @@ export const getNotificationNavigation = (notification: NotificationDB): Navigat
         description: 'View and pay your bill'
       };
 
-    case 'payment_success':
-    case 'payment_confirmed':
+    case 'bill_payed':
       return {
         path: '/billing',
         shouldNavigate: true,
@@ -67,13 +65,6 @@ export const getNotificationNavigation = (notification: NotificationDB): Navigat
         description: 'Review and approve readings'
       };
 
-    case 'payment_received':
-      return {
-        path: '/financial-dashboard',
-        shouldNavigate: true,
-        description: 'View payment details'
-      };
-
     // Curfew notifications
     case 'curfew_request':
       return {
@@ -96,18 +87,17 @@ export const getNotificationNavigation = (notification: NotificationDB): Navigat
         description: 'View curfew status'
       };
 
-    // System notifications - no navigation
-    case 'system':
+    // Default - no navigation
     default:
       return {
         path: '',
         shouldNavigate: false,
-        description: 'System notification'
+        description: 'Notification'
       };
   }
 };
 
-export const getNotificationActionText = (notification: NotificationDB): string => {
+export const getNotificationActionText = (notification: WebsocketNotification): string => {
   const navigation = getNotificationNavigation(notification);
   
   if (!navigation.shouldNavigate) {
@@ -120,6 +110,7 @@ export const getNotificationActionText = (notification: NotificationDB): string 
 export const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'reading_submitted':
+    case 'reading_updated':
       return FileTextOutlined;
     case 'reading_approved':
       return CheckCircleOutlined;
@@ -127,19 +118,14 @@ export const getNotificationIcon = (type: string) => {
       return CloseCircleOutlined;
     case 'reading_modified':
       return EditOutlined;
-    case 'bill_ready':
     case 'bill_generated':
       return DollarOutlined;
-    case 'payment_success':
-    case 'payment_confirmed':
-    case 'payment_received':
+    case 'bill_payed':
       return CreditCardOutlined;
     case 'curfew_request':
     case 'curfew_approved':
     case 'curfew_rejected':
       return ClockCircleOutlined;
-    case 'system':
-      return NotificationOutlined;
     default:
       return NotificationOutlined;
   }

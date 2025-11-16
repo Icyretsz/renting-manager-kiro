@@ -1,23 +1,23 @@
 import { create } from 'zustand';
-import { NotificationDB } from '@/types';
+import { WebsocketNotification } from '@/types';
 
 interface NotificationStore {
-  notifications: NotificationDB[];
+  notifications: WebsocketNotification[];
   unreadCount: number;
-  addNotification: (notification: NotificationDB) => void;
+  addNotification: (notification: WebsocketNotification) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   removeNotification: (id: string) => void;
   clearAll: () => void;
-  setNotifications: (notifications: NotificationDB[]) => void;
-  updateNotification: (notification: NotificationDB) => void;
+  setNotifications: (notifications: WebsocketNotification[]) => void;
+  updateNotification: (notification: WebsocketNotification) => void;
 }
 
 export const useNotificationStore = create<NotificationStore>((set) => ({
   notifications: [],
   unreadCount: 0,
 
-  addNotification: (notification: NotificationDB) => {
+  addNotification: (notification: WebsocketNotification) => {
     set((state) => {
       const newNotifications = [notification, ...state.notifications];
       const unreadCount = newNotifications.filter(n => !n.readStatus).length;
@@ -71,7 +71,7 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
     });
   },
 
-  setNotifications: (notifications: NotificationDB[]) => {
+  setNotifications: (notifications: WebsocketNotification[]) => {
     const unreadCount = notifications.filter(n => !n.readStatus).length;
     set({
       notifications,
@@ -79,7 +79,7 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
     });
   },
 
-  updateNotification: (notification: NotificationDB) => {
+  updateNotification: (notification: WebsocketNotification) => {
     set((state) => {
       const updatedNotifications = state.notifications.map(n => 
         n.id === notification.id ? notification : n

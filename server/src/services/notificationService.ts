@@ -20,10 +20,8 @@ interface NotificationData {
 export type NotificationType = 'reading_submitted' | 'reading_updated' | 'reading_modified' | 'reading_approved' | 'reading_rejected' | 'bill_generated' | 'bill_payed' | 'curfew_request' | 'curfew_approved' | 'curfew_rejected'
 
 export interface NotificationTemplate {
-  title: string;
-  message: string;
   type: NotificationType;
-  data?: NotificationData;
+  data: NotificationData;
 }
 
 export interface NotificationRecipient {
@@ -35,8 +33,6 @@ export interface NotificationRecipient {
 // Notification templates for different events
 const templates = {
     READING_SUBMITTED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
-      title: 'New Meter Reading Submitted',
-      message: `Room ${roomNumber} has submitted meter readings for ${month}/${year}. Tap to review and approve.`,
       type: 'reading_submitted',
       data: {
         roomNumber: roomNumber.toString(),
@@ -47,8 +43,6 @@ const templates = {
     }),
 
     READING_UPDATED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
-      title: 'Meter Reading Updated',
-      message: `Room ${roomNumber} has updated their meter readings for ${month}/${year}. Tap to review changes.`,
       type: 'reading_updated',
       data: {
         roomNumber: roomNumber.toString(),
@@ -59,8 +53,6 @@ const templates = {
     }),
 
     READING_APPROVED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
-      title: 'Meter Reading Approved',
-      message: `Your bill for Room ${roomNumber} - ${month} ${year} is ready. Tap to see bill details and pay.`,
       type: 'reading_approved',
       data: {
         roomNumber: roomNumber.toString(),
@@ -71,8 +63,6 @@ const templates = {
     }),
 
     READING_REJECTED: (roomNumber: number, month: number, year: number, reason?: string): NotificationTemplate => ({
-      title: 'Meter Reading Rejected',
-      message: `Your meter readings for Room ${roomNumber} (${month}/${year}) have been rejected${reason ? `: ${reason}` : ''}`,
       type: 'reading_rejected',
       data: {
         roomNumber: roomNumber.toString(),
@@ -83,8 +73,6 @@ const templates = {
     }),
 
     READING_MODIFIED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
-      title: 'Meter Reading Modified',
-      message: `Meter readings for Room ${roomNumber} (${month}/${year}) have been modified by admin`,
       type: 'reading_modified',
       data: {
         roomNumber: roomNumber.toString(),
@@ -94,8 +82,6 @@ const templates = {
     }),
 
     BILL_GENERATED: (roomNumber: number, month: number, year: number, amount: number): NotificationTemplate => ({
-      title: 'Monthly Bill Generated',
-      message: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: ${amount.toFixed(2)} VNĐ. Tap to view and pay.`,
       type: 'bill_generated',
       data: {
         roomNumber: roomNumber.toString(),
@@ -107,8 +93,6 @@ const templates = {
     }),
 
     BILL_PAYED: (roomNumber: number, month: number, year: number, amount: Prisma.Decimal): NotificationTemplate => ({
-      title: 'User Payed',
-      message: `User's bill of Room ${roomNumber} (${month}/${year}) has been payed. Amount: ${amount} VNĐ`,
       type: 'bill_payed',
       data: {
         roomNumber: roomNumber.toString(),
@@ -120,8 +104,6 @@ const templates = {
     }),
 
     CURFEW_REQUEST: (requesterName: string, roomNumber: number, tenantNames: string, reason?: string): NotificationTemplate => ({
-      title: 'Curfew Override Request',
-      message: `${requesterName} (Room ${roomNumber}) requests curfew override for: ${tenantNames}${reason ? `. Reason: ${reason}` : ''}`,
       type: 'curfew_request',
       data: {
         roomNumber: roomNumber.toString(),
@@ -133,10 +115,6 @@ const templates = {
     }),
 
     CURFEW_APPROVED: (isPermanent: boolean, roomNumber: number, requestedName: string): NotificationTemplate => ({
-      title: 'Curfew Override Approved',
-      message: isPermanent 
-        ? `Your curfew override request for ${requestedName} has been approved permanently.`
-        : `Your curfew override request for ${requestedName} has been approved. Valid until 6:00 AM.`,
       type: 'curfew_approved',
       data: {
         roomNumber: roomNumber.toString(),
@@ -147,8 +125,6 @@ const templates = {
     }),
 
     CURFEW_REJECTED: (reason?: string): NotificationTemplate => ({
-      title: 'Curfew Override Rejected',
-      message: `Your curfew override request has been rejected.${reason ? ` Reason: ${reason}` : ''}`,
       type: 'curfew_rejected',
       data: {
         roomNumber: '',
@@ -217,13 +193,15 @@ export const sendToUsers = async (
       return; // WebSocket notifications already sent above
     }
 
-    // Prepare FCM message
+    // Prepare FCM message - send type and data for client-side localization
     const message = {
-      notification: {
-        title: template.title,
-        body: template.message,
+      data: {
+        type: template.type,
+        ...Object.entries(template.data).reduce((acc, [key, value]) => {
+          acc[key] = String(value);
+          return acc;
+        }, {} as Record<string, string>)
       },
-      data: template.data || {},
     };
 
     // Send via Firebase
@@ -361,6 +339,7 @@ export const notifyReadingRejected = async (
  * Notify room users about reading modification by admin
  */
 export const notifyReadingModified = async (roomId: number, roomNumber: number, month: number, year: number): Promise<void> => {
+  console.log('notified')
   const template = templates.READING_MODIFIED(roomNumber, month, year);
   await sendToRoomUsers(roomId, template);
 };
@@ -402,9 +381,8 @@ const saveNotificationHistory = async (
     try {
       const notifications = recipients.map(recipient => ({
         userId: recipient.userId,
-        title: template.title,
-        message: template.message,
-        type: template.type || 'general',
+        type: template.type,
+        data: template.data as any, // Cast to any for Prisma JSON field
         readStatus: false,
       }));
 
@@ -422,7 +400,9 @@ const saveNotificationHistory = async (
         
         if (auth0Id) {
           emitNotificationToUser(auth0Id, {
-            ...template,
+            id: notification.id,
+            type: notification.type as NotificationType,
+            data: notification.data as unknown as NotificationData,
             userId: notification.userId,
             readStatus: notification.readStatus,
             createdAt: notification.createdAt

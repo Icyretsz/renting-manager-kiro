@@ -179,7 +179,7 @@ export interface BillingRecord {
 }
 
 // Notifications
-interface NotificationData {
+export interface NotificationData {
   roomNumber: string;
   month?: string;
   year?: string;
@@ -198,20 +198,8 @@ export type NotificationType = 'reading_submitted' | 'reading_updated' | 'readin
 export interface WebsocketNotification {
   id: string;
   userId: string;
-  title: string;
-  message: string;
   type: NotificationType;
-  readStatus: boolean;
-  createdAt: Date;
-  data?: NotificationData;
-}
-
-export interface NotificationDB {
-  id: string;
-  userId: string;
-  title: string;
-  message: string;
-  type: string;
+  data: NotificationData;
   readStatus: boolean;
   createdAt: Date;
 }

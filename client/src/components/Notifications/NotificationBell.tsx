@@ -27,12 +27,13 @@ import {
   useDeleteNotificationMutation,
   useClearAllNotificationsMutation,
 } from '@/hooks/useNotifications';
-import { NotificationDB } from '@/types';
+import { WebsocketNotification } from '@/types';
 import {
   getNotificationNavigation,
   getNotificationIcon
 } from '@/utils/notificationNavigation';
 import { useTranslation } from 'react-i18next';
+import GetNotificationMessage from '@/utils/getNotificationMessage';
 
 const { Text } = Typography;
 
@@ -100,7 +101,7 @@ export const NotificationBell: React.FC = () => {
   };
 
   // Handle notification click to navigate to relevant page
-  const handleNotificationClick = (notification: NotificationDB) => {
+  const handleNotificationClick = (notification: WebsocketNotification) => {
     // Mark as read if not already read
     if (!notification.readStatus) {
       handleMarkAsRead(notification.id);
@@ -115,10 +116,11 @@ export const NotificationBell: React.FC = () => {
     }
   };
 
-  const renderNotificationItem = (notification: NotificationDB) => {
+  const renderNotificationItem = (notification: WebsocketNotification) => {
     const navigationInfo = getNotificationNavigation(notification);
     const isClickable = navigationInfo.shouldNavigate;
     const IconComponent = getNotificationIcon(notification.type);
+    const { title, message } = GetNotificationMessage(notification);
 
     return (
       <div
@@ -158,7 +160,7 @@ export const NotificationBell: React.FC = () => {
                     overflow: 'hidden'
                   }}
                 >
-                  {notification.title}
+                  {title}
                 </Text>
                 <Text
                   className={`text-xs mt-1 block ${!notification.readStatus ? 'text-gray-600' : 'text-gray-500'
@@ -170,7 +172,7 @@ export const NotificationBell: React.FC = () => {
                     overflow: 'hidden'
                   }}
                 >
-                  {notification.message}
+                  {message}
                 </Text>
                 <div className="flex items-center justify-between mt-2">
                   <Text type="secondary" className="text-xs">

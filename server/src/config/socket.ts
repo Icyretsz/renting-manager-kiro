@@ -77,7 +77,7 @@ export const emitNotificationToUser = (userId: string, notification: any) => {
         console.log(`👥 Sockets in room: ${socketsInRoom ? socketsInRoom.size : 0}`);
 
         io.to(userRoom).emit('notification:new', notification);
-        console.log(`✅ Notification sent to user ${userId}:`, notification.title);
+        console.log(`✅ Notification sent to user ${userId}:`, notification.type);
     } else {
         console.error('❌ Socket.IO not initialized when trying to emit notification');
     }
@@ -86,7 +86,7 @@ export const emitNotificationToUser = (userId: string, notification: any) => {
 export const emitNotificationToAdmins = (notification: any) => {
     if (io) {
         io.to('admins').emit('notification:new', notification);
-        console.log('Notification sent to admins:', notification.title);
+        console.log('Notification sent to admins:', notification.type);
     }
 };
 

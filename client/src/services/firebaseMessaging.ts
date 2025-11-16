@@ -1,8 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, MessagePayload } from 'firebase/messaging';
 import { useNotificationStore } from '@/stores/notificationStore';
-import type { ApiResponse, NotificationDB } from '@/types';
+import type { ApiResponse, WebsocketNotification, NotificationType, NotificationData } from '@/types';
 import { UseMutationResult } from '@tanstack/react-query';
+import GetNotificationMessage from '@/utils/getNotificationMessage';
 
 // Firebase configuration (these should be environment variables)
 const firebaseConfig = {
@@ -112,23 +113,40 @@ export const setupForegroundMessageListener = () => {
       // Handle the message and add to notification store
       const { addNotification } = useNotificationStore.getState();
       
-      if (payload.notification) {
-        const notification: NotificationDB = {
+      if (payload.data) {
+        // Parse notification data from Firebase
+        const notificationData: NotificationData = {
+          roomNumber: payload.data.roomNumber || '',
+          month: payload.data.month,
+          year: payload.data.year,
+          action: payload.data.action,
+          billId: payload.data.billId,
+          tenantId: payload.data.tenantId,
+          reason: payload.data.reason,
+          amount: payload.data.amount,
+          requesterName: payload.data.requesterName,
+          requestedName: payload.data.requestedName,
+          isPermanent: payload.data.isPermanent === 'true',
+        };
+
+        const notification: WebsocketNotification = {
           id: Date.now().toString(), // Temporary ID
           userId: '', // Will be set by the server
-          title: payload.notification.title || 'New Notification',
-          message: payload.notification.body || '',
-          type: payload.data?.type || 'system',
+          type: (payload.data.type as NotificationType) || 'reading_submitted',
+          data: notificationData,
           readStatus: false,
           createdAt: new Date(),
         };
         
         addNotification(notification);
         
+        // Get localized title and message
+        const { title, message } = GetNotificationMessage(notification);
+        
         // Show browser notification if permission is granted
         if (Notification.permission === 'granted') {
-          new Notification(notification.title, {
-            body: notification.message,
+          new Notification(title, {
+            body: message,
             icon: '/favicon.ico',
             badge: '/favicon.ico',
           });
