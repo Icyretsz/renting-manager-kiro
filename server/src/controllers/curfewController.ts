@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { AppError, ValidationError } from '../utils/errors';
+import * as notificationService from '../services/notificationService';
 
 /**
  * Request curfew override for tenant(s)
@@ -84,29 +85,16 @@ export const requestCurfewOverride = async (req: Request, res: Response, next: N
       });
     }
 
-    // Create notification for admins
+    // Send notification to admins using notification service
     const tenantNames = selectedTenants.map(t => t.name).join(', ');
-    const roomNumber = requestingUser.tenant.room.roomNumber;
+    const roomNumber = requestingUser.tenant?.room?.roomNumber || 0;
     
-    // Get all admin users
-    const admins = await prisma.user.findMany({
-      where: {
-        role: 'ADMIN'
-      },
-      select: {
-        id: true
-      }
-    });
-
-    // Create notifications for all admins
-    await prisma.notification.createMany({
-      data: admins.map(admin => ({
-        userId: admin.id,
-        title: 'Curfew Override Request',
-        message: `${requestingUser.name} (Room ${roomNumber}) requests curfew override for: ${tenantNames}${reason ? `. Reason: ${reason}` : ''}`,
-        type: 'CURFEW_REQUEST'
-      }))
-    });
+    await notificationService.notifyCurfewRequest(
+      requestingUser.name,
+      roomNumber,
+      tenantNames,
+      reason
+    );
 
     res.json({
       success: true,
@@ -189,16 +177,11 @@ export const approveCurfewOverride = async (req: Request, res: Response, next: N
 
       // Send notification to user if they have an account
       if (tenant.user) {
-        await prisma.notification.create({
-          data: {
-            userId: tenant.user.id,
-            title: 'Curfew Override Approved',
-            message: isPermanent 
-              ? `Your curfew override request has been approved permanently.`
-              : `Your curfew override request has been approved. Valid until 6:00 AM.`,
-            type: 'CURFEW_APPROVED'
-          }
-        });
+        await notificationService.notifyCurfewApproved(
+          tenant.user.id,
+          tenant.room.roomNumber,
+          isPermanent
+        );
       }
     }
 
@@ -280,14 +263,10 @@ export const rejectCurfewOverride = async (req: Request, res: Response, next: Ne
 
       // Send notification to user if they have an account
       if (tenant.user) {
-        await prisma.notification.create({
-          data: {
-            userId: tenant.user.id,
-            title: 'Curfew Override Rejected',
-            message: `Your curfew override request has been rejected. ${reason ? `Reason: ${reason}` : ''}`,
-            type: 'CURFEW_REJECTED'
-          }
-        });
+        await notificationService.notifyCurfewRejected(
+          tenant.user.id,
+          reason
+        );
       }
     }
 

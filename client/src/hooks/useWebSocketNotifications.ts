@@ -7,6 +7,7 @@ import { Notification } from '@/types';
 import { queryClient } from '@/services/queryClient';
 import { meterReadingKeys } from './useMeterReadings';
 import { billingKeys } from './useBilling';
+import { curfewKeys } from './useCurfew';
 
 export const useWebSocketNotifications = (navigate: NavigateFunction) => {
   const { socket, isConnected } = useSocket();
@@ -88,6 +89,26 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
               queryClient.invalidateQueries({ queryKey: roomQueryKeyBilling })
               queryClient.invalidateQueries({ queryKey: billingKeys.lists() })
             }
+            break;
+
+          case 'curfew_request':
+            // Admin receives notification - invalidate pending curfew requests
+            queryClient.invalidateQueries({ queryKey: [...curfewKeys.all, 'pending'] });
+            queryClient.invalidateQueries({ queryKey: curfewKeys.all });
+            break;
+
+          case 'curfew_approved':
+            // User receives notification - invalidate room tenants and user data
+            queryClient.invalidateQueries({ queryKey: curfewKeys.roomTenants() });
+            queryClient.invalidateQueries({ queryKey: curfewKeys.all });
+            queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+            break;
+
+          case 'curfew_rejected':
+            // User receives notification - invalidate room tenants and user data
+            queryClient.invalidateQueries({ queryKey: curfewKeys.roomTenants() });
+            queryClient.invalidateQueries({ queryKey: curfewKeys.all });
+            queryClient.invalidateQueries({ queryKey: ['userProfile'] });
             break;
 
           default:

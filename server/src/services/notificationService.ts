@@ -25,6 +25,7 @@ export interface NotificationTemplate {
 export interface NotificationRecipient {
   userId: string;
   fcmToken?: string | undefined;
+  auth0Id?: string | undefined;
 }
 
 // Notification templates for different events
@@ -112,22 +113,86 @@ const templates = {
         amount: amount.toString(),
         action: 'pay_bill',
       },
+    }),
+
+    CURFEW_REQUEST: (requesterName: string, roomNumber: number, tenantNames: string, reason?: string): NotificationTemplate => ({
+      title: 'Curfew Override Request',
+      message: `${requesterName} (Room ${roomNumber}) requests curfew override for: ${tenantNames}${reason ? `. Reason: ${reason}` : ''}`,
+      type: 'curfew_request',
+      data: {
+        roomNumber: roomNumber.toString(),
+        action: 'review_curfew',
+        reason: reason || '',
+      },
+    }),
+
+    CURFEW_APPROVED: (isPermanent: boolean, roomNumber: number): NotificationTemplate => ({
+      title: 'Curfew Override Approved',
+      message: isPermanent 
+        ? `Your curfew override request has been approved permanently.`
+        : `Your curfew override request has been approved. Valid until 6:00 AM.`,
+      type: 'curfew_approved',
+      data: {
+        roomNumber: roomNumber.toString(),
+        action: 'view_curfew',
+      },
+    }),
+
+    CURFEW_REJECTED: (reason?: string): NotificationTemplate => ({
+      title: 'Curfew Override Rejected',
+      message: `Your curfew override request has been rejected.${reason ? ` Reason: ${reason}` : ''}`,
+      type: 'curfew_rejected',
+      data: {
+        roomNumber: '',
+        reason: reason || '',
+        action: 'view_curfew',
+      },
     })
   };
 
 /**
  * Send notification to specific users
+ * @param recipients - Array of recipients with userId, and optionally fcmToken and auth0Id
+ * @param template - Notification template
+ * @param saveToHistory - Whether to save to database and emit WebSocket
+ * @param enrichData - Whether to fetch missing fcmToken and auth0Id from database (default: true)
  */
 export const sendToUsers = async (
   recipients: NotificationRecipient[],
   template: NotificationTemplate,
-  saveToHistory: boolean = true
+  saveToHistory: boolean = true,
+  enrichData: boolean = true
 ): Promise<void> => {
+  let enrichedRecipients = recipients;
+
+  // Only fetch from database if enrichData is true AND some recipients are missing data
+  if (enrichData) {
+    const needsEnrichment = recipients.some(r => !r.fcmToken || !r.auth0Id);
+    
+    if (needsEnrichment) {
+      const userIds = recipients.map(r => r.userId);
+      const users = await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, fcmToken: true, auth0Id: true }
+      });
+
+      // Merge FCM tokens and auth0Id with recipients
+      enrichedRecipients = recipients.map(recipient => {
+        const user = users.find(u => u.id === recipient.userId);
+        return {
+          ...recipient,
+          fcmToken: recipient.fcmToken || user?.fcmToken || undefined,
+          auth0Id: recipient.auth0Id || user?.auth0Id
+        };
+      });
+    }
+  }
+
   // Always save to history and emit WebSocket notifications first
   if (saveToHistory) {
     try {
-      await saveNotificationHistory(recipients, template);
-      console.log(`WebSocket notifications sent to ${recipients.length} users`);
+      await saveNotificationHistory(enrichedRecipients, template);
+      console.log(`WebSocket notifications sent to ${enrichedRecipients.length} users`);
     } catch (error) {
       console.error('Error saving notification history and emitting WebSocket:', error);
       // Don't throw - continue with Firebase notifications
@@ -137,7 +202,7 @@ export const sendToUsers = async (
   // Send Firebase push notifications (independent of WebSocket)
   try {
     // Filter recipients with FCM tokens
-    const validRecipients = recipients.filter(r => r.fcmToken);
+    const validRecipients = enrichedRecipients.filter(r => r.fcmToken);
     
     if (validRecipients.length === 0) {
       console.warn('No valid FCM tokens found for Firebase notification');
@@ -180,7 +245,7 @@ export const sendToUsers = async (
  */
 export const sendToAdmins = async (template: NotificationTemplate): Promise<void> => {
   try {
-    // Get all admin users (including those without FCM tokens for WebSocket)
+    // Get all admin users with fcmToken and auth0Id
     const adminUsers = await prisma.user.findMany({
       where: { 
         role: 'ADMIN'
@@ -188,16 +253,19 @@ export const sendToAdmins = async (template: NotificationTemplate): Promise<void
       select: {
         id: true,
         fcmToken: true,
+        auth0Id: true,
       },
     });
 
     const recipients: NotificationRecipient[] = adminUsers.map(user => ({
       userId: user.id,
       fcmToken: user.fcmToken || undefined,
+      auth0Id: user.auth0Id,
     }));
 
     console.log(`Sending notification to ${recipients.length} admin users`);
-    await sendToUsers(recipients, template, true);
+    // Pass enrichData: false since we already have all the data
+    await sendToUsers(recipients, template, true, false);
   } catch (error) {
     console.error('Error sending notification to admins:', error);
     throw error;
@@ -209,7 +277,7 @@ export const sendToAdmins = async (template: NotificationTemplate): Promise<void
  */
 export const sendToRoomUsers = async (roomId: number, template: NotificationTemplate): Promise<void> => {
   try {
-    // Get users who are tenants of this room (including those without FCM tokens for WebSocket)
+    // Get users who are tenants of this room with fcmToken and auth0Id
     const roomTenants = await prisma.tenant.findMany({
       where: { 
         roomId,
@@ -220,6 +288,7 @@ export const sendToRoomUsers = async (roomId: number, template: NotificationTemp
           select: {
             id: true,
             fcmToken: true,
+            auth0Id: true,
           },
         },
       },
@@ -230,10 +299,12 @@ export const sendToRoomUsers = async (roomId: number, template: NotificationTemp
       .map(tenant => ({
         userId: tenant.user!.id,
         fcmToken: tenant.user!.fcmToken || undefined,
+        auth0Id: tenant.user!.auth0Id,
       }));
 
     console.log(`Sending notification to ${recipients.length} room ${roomId} users`);
-    await sendToUsers(recipients, template, true);
+    // Pass enrichData: false since we already have all the data
+    await sendToUsers(recipients, template, true, false);
   } catch (error) {
     console.error('Error sending notification to room users:', error);
     throw error;
@@ -336,16 +407,10 @@ const saveNotificationHistory = async (
       );
 
       // Emit WebSocket events for real-time notifications
-      // Need to get Auth0 sub for each user to match socket room names
-      const userIds = [...new Set(createdNotifications.map(n => n.userId))];
-      const users = await prisma.user.findMany({
-        where: { id: { in: userIds } },
-        select: { id: true, auth0Id: true }
-      });
-
+      // Use auth0Id from enriched recipients
       createdNotifications.forEach(notification => {
-        const user = users.find(u => u.id === notification.userId);
-        const auth0Id = user?.auth0Id;
+        const recipient = recipients.find(r => r.userId === notification.userId);
+        const auth0Id = recipient?.auth0Id;
         
         if (auth0Id) {
           emitNotificationToUser(auth0Id, {
@@ -556,4 +621,40 @@ export const updateFCMToken = async (userId: string, fcmToken: string): Promise<
       console.error('Error updating FCM token:', error);
     throw error;
   }
+};
+
+/**
+ * Notify admins about new curfew override request
+ */
+export const notifyCurfewRequest = async (
+  requesterName: string,
+  roomNumber: number,
+  tenantNames: string,
+  reason?: string
+): Promise<void> => {
+  const template = templates.CURFEW_REQUEST(requesterName, roomNumber, tenantNames, reason);
+  await sendToAdmins(template);
+};
+
+/**
+ * Notify user about curfew override approval
+ */
+export const notifyCurfewApproved = async (
+  userId: string,
+  roomNumber: number,
+  isPermanent: boolean
+): Promise<void> => {
+  const template = templates.CURFEW_APPROVED(isPermanent, roomNumber);
+  await sendToUsers([{ userId }], template, true);
+};
+
+/**
+ * Notify user about curfew override rejection
+ */
+export const notifyCurfewRejected = async (
+  userId: string,
+  reason?: string
+): Promise<void> => {
+  const template = templates.CURFEW_REJECTED(reason);
+  await sendToUsers([{ userId }], template, true);
 };

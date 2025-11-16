@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
-import { ApiResponse } from '@/types';
+import { ApiResponse, User } from '@/types';
 import { message } from 'antd';
 
 // Query keys
@@ -56,12 +56,60 @@ export const useRequestCurfewOverrideMutation = () => {
       const response = await api.post<ApiResponse<any>>('/curfew/request', data);
       return response.data;
     },
+    // Optimistic update
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: curfewKeys.roomTenants() });
+      await queryClient.cancelQueries({ queryKey: ['userProfile'] });
+
+      // Snapshot the previous values
+      const previousRoomTenants = queryClient.getQueryData(curfewKeys.roomTenants());
+      const previousUserProfile = queryClient.getQueryData(['userProfile']);
+
+      // Optimistically update room tenants
+      queryClient.setQueryData<RoomTenant[]>(curfewKeys.roomTenants(), (old) => {
+        if (!old) return old;
+        return old.map((tenant) =>
+          variables.tenantIds.includes(tenant.id)
+            ? { ...tenant, curfewStatus: 'PENDING' as const, curfewRequestedAt: new Date() }
+            : tenant
+        );
+      });
+
+      // Optimistically update user profile (if user is requesting for themselves)
+      queryClient.setQueryData(['userProfile'], (old: User) => {
+        if (!old?.tenant) return old;
+        if (variables.tenantIds.includes(old.tenant.id)) {
+          return {
+            ...old,
+            tenant: {
+              ...old.tenant,
+              curfewStatus: 'PENDING',
+              curfewRequestedAt: new Date(),
+            },
+          };
+        }
+        return old;
+      });
+
+      // Return context with previous values
+      return { previousRoomTenants, previousUserProfile };
+    },
     onSuccess: () => {
       message.success('Curfew override request sent to admins');
+      // Invalidate to get the actual server data
       queryClient.invalidateQueries({ queryKey: curfewKeys.roomTenants() });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
       message.error(error.response?.data?.message || 'Failed to request curfew override');
+      // Rollback on error
+      if (context?.previousRoomTenants) {
+        queryClient.setQueryData(curfewKeys.roomTenants(), context.previousRoomTenants);
+      }
+      if (context?.previousUserProfile) {
+        queryClient.setQueryData(['userProfile'], context.previousUserProfile);
+      }
     },
   });
 };
@@ -71,17 +119,37 @@ export const useApproveCurfewOverrideMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CurfewApprovalData) => {
+    mutationFn: async (data: CurfewApprovalData & { isPermanent?: boolean }) => {
       const response = await api.post<ApiResponse<any>>('/curfew/approve', data);
       return response.data;
+    },
+    // Optimistic update
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [...curfewKeys.all, 'pending'] });
+
+      // Snapshot the previous value
+      const previousPending = queryClient.getQueryData([...curfewKeys.all, 'pending']);
+
+      // Optimistically remove from pending list
+      queryClient.setQueryData<any[]>([...curfewKeys.all, 'pending'], (old) => {
+        if (!old) return old;
+        return old.filter((tenant) => !variables.tenantIds.includes(tenant.id));
+      });
+
+      return { previousPending };
     },
     onSuccess: () => {
       message.success('Curfew override approved');
       queryClient.invalidateQueries({ queryKey: curfewKeys.all });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
       message.error(error.response?.data?.message || 'Failed to approve curfew override');
+      // Rollback on error
+      if (context?.previousPending) {
+        queryClient.setQueryData([...curfewKeys.all, 'pending'], context.previousPending);
+      }
     },
   });
 };
@@ -95,13 +163,33 @@ export const useRejectCurfewOverrideMutation = () => {
       const response = await api.post<ApiResponse<any>>('/curfew/reject', data);
       return response.data;
     },
+    // Optimistic update
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [...curfewKeys.all, 'pending'] });
+
+      // Snapshot the previous value
+      const previousPending = queryClient.getQueryData([...curfewKeys.all, 'pending']);
+
+      // Optimistically remove from pending list
+      queryClient.setQueryData<any[]>([...curfewKeys.all, 'pending'], (old) => {
+        if (!old) return old;
+        return old.filter((tenant) => !variables.tenantIds.includes(tenant.id));
+      });
+
+      return { previousPending };
+    },
     onSuccess: () => {
       message.success('Curfew override rejected');
       queryClient.invalidateQueries({ queryKey: curfewKeys.all });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
-    onError: (error: any) => {
+    onError: (error: any, _variables, context) => {
       message.error(error.response?.data?.message || 'Failed to reject curfew override');
+      // Rollback on error
+      if (context?.previousPending) {
+        queryClient.setQueryData([...curfewKeys.all, 'pending'], context.previousPending);
+      }
     },
   });
 };

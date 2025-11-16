@@ -7,6 +7,7 @@ import {
   DollarOutlined,
   CreditCardOutlined,
   NotificationOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 
 export interface NavigationResult {
@@ -73,6 +74,28 @@ export const getNotificationNavigation = (notification: NotificationDB): Navigat
         description: 'View payment details'
       };
 
+    // Curfew notifications
+    case 'curfew_request':
+      return {
+        path: '/approvals',
+        shouldNavigate: true,
+        description: 'Review curfew override request'
+      };
+
+    case 'curfew_approved':
+      return {
+        path: '/profile',
+        shouldNavigate: true,
+        description: 'View curfew status'
+      };
+
+    case 'curfew_rejected':
+      return {
+        path: '/profile',
+        shouldNavigate: true,
+        description: 'View curfew status'
+      };
+
     // System notifications - no navigation
     case 'system':
     default:
@@ -111,6 +134,10 @@ export const getNotificationIcon = (type: string) => {
     case 'payment_confirmed':
     case 'payment_received':
       return CreditCardOutlined;
+    case 'curfew_request':
+    case 'curfew_approved':
+    case 'curfew_rejected':
+      return ClockCircleOutlined;
     case 'system':
       return NotificationOutlined;
     default:
