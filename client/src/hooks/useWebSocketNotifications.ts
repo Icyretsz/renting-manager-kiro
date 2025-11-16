@@ -21,11 +21,18 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
     // Listen for new notifications
     const handleNewNotification = (notification: WebsocketNotification) => {
+      console.log('📨 Received WebSocket notification:', notification);
+      
       // Add to notification store
       addNotification(notification);
 
       // Show Ant Design notification
-      showNotification(notification);
+      try {
+        showNotification(notification);
+        console.log('✅ Notification popup shown');
+      } catch (error) {
+        console.error('❌ Failed to show notification popup:', error);
+      }
 
       if (notification.data) {
         const notificationData = notification.data;
@@ -39,6 +46,8 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             break;
 
           case 'reading_updated':
+            // Invalidate all meter reading queries for admin view
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
             if (notificationData.roomNumber) {
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
@@ -50,6 +59,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
 
           case 'reading_modified':
             if (notificationData.roomNumber) {
+              console.log('modified')
               const roomQueryKey = meterReadingKeys.byRoom(Number(notificationData.roomNumber));
               queryClient.invalidateQueries({ queryKey: roomQueryKey });
               const roomQueryKeyBilling = billingKeys.byRoom(Number(notificationData.roomNumber))

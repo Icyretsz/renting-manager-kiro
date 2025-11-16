@@ -12,26 +12,36 @@ export const useAntNotification = (navigate: NavigateFunction) => {
   const [api, contextHolder] = notification.useNotification();
 
   const showNotification = useCallback((notificationData: WebsocketNotification) => {
-    const navigationInfo = getNotificationNavigation(notificationData);
-    const IconComponent = getNotificationIcon(notificationData.type);
-    const {title, message} = getNotificationMessage(notificationData)
+    console.log('🔔 showNotification called with:', notificationData);
+    
+    try {
+      const navigationInfo = getNotificationNavigation(notificationData);
+      const IconComponent = getNotificationIcon(notificationData.type);
+      const {title, message} = getNotificationMessage(notificationData);
+      
+      console.log('📝 Notification content:', { title, message });
 
-    api.open({
-      message: title,
-      description: message,
-      icon: <IconComponent style={{ color: '#1890ff' }} />,
-      placement: 'topRight',
-      duration: 6,
-      onClick: navigationInfo.shouldNavigate ? () => {
-        navigate(navigationInfo.path);
-        api.destroy();
-      } : undefined,
-      style: {
-        cursor: navigationInfo.shouldNavigate ? 'pointer' : 'default',
-        borderLeft: '4px solid #1890ff',
-      },
-      className: navigationInfo.shouldNavigate ? 'notification-clickable' : '',
-    });
+      api.open({
+        message: title,
+        description: message,
+        icon: <IconComponent style={{ color: '#1890ff' }} />,
+        placement: 'topRight',
+        duration: 6,
+        onClick: navigationInfo.shouldNavigate ? () => {
+          navigate(navigationInfo.path);
+          api.destroy();
+        } : undefined,
+        style: {
+          cursor: navigationInfo.shouldNavigate ? 'pointer' : 'default',
+          borderLeft: '4px solid #1890ff',
+        },
+        className: navigationInfo.shouldNavigate ? 'notification-clickable' : '',
+      });
+      
+      console.log('✅ Notification popup opened');
+    } catch (error) {
+      console.error('❌ Error in showNotification:', error);
+    }
   }, [api, navigate]);
 
   const showSuccessNotification = useCallback((title: string, description: string) => {

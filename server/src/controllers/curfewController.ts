@@ -175,6 +175,16 @@ export const approveCurfewOverride = async (req: Request, res: Response, next: N
 
     const newStatus = isPermanent ? 'APPROVED_PERMANENT' : 'APPROVED_TEMPORARY';
 
+    // Group tenants by room to send one notification per room
+    const tenantsByRoom = new Map<number, typeof tenants>();
+    for (const tenant of tenants) {
+      const roomNumber = tenant.room.roomNumber;
+      if (!tenantsByRoom.has(roomNumber)) {
+        tenantsByRoom.set(roomNumber, []);
+      }
+      tenantsByRoom.get(roomNumber)!.push(tenant);
+    }
+
     // Update each tenant and create modification logs
     for (const tenant of tenants) {
       const oldStatus = tenant.curfewStatus;
@@ -199,15 +209,33 @@ export const approveCurfewOverride = async (req: Request, res: Response, next: N
           isPermanent: isPermanent
         }
       });
+    }
 
-      // Send notification to user if they have an account
-      if (tenant.user) {
-        await notificationService.notifyCurfewApproved(
-          tenant.user.id,
-          tenant.room.roomNumber,
-          tenant.name,
-          isPermanent
-        );
+    // Send one notification per room to the user with an account
+    for (const [roomNumber, roomTenants] of tenantsByRoom) {
+      // Find the tenant with a user account in this room
+      const tenantWithAccount = roomTenants.find(t => t.user);
+      
+      if (tenantWithAccount && tenantWithAccount.user) {
+        // Get all tenant names for this room
+        const tenantNames = roomTenants.map(t => t.name).join(', ');
+        
+        console.log(`📢 Sending curfew approved notification to user ${tenantWithAccount.user.id} for room ${roomNumber}`);
+        console.log(`   Approved tenants: ${tenantNames}`);
+        
+        try {
+          await notificationService.notifyCurfewApproved(
+            tenantWithAccount.user.id,
+            roomNumber,
+            tenantNames,
+            isPermanent
+          );
+          console.log('✅ Curfew approved notification sent successfully');
+        } catch (error) {
+          console.error('❌ Failed to send curfew approved notification:', error);
+        }
+      } else {
+        console.log(`⚠️ No user account found in room ${roomNumber} - skipping notification`);
       }
     }
 

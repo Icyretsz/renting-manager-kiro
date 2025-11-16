@@ -147,11 +147,13 @@ export const sendToUsers = async (
   saveToHistory: boolean = true,
   enrichData: boolean = true
 ): Promise<void> => {
+  console.log(`📤 sendToUsers called with ${recipients.length} recipients, type: ${template.type}`);
   let enrichedRecipients = recipients;
 
   // Only fetch from database if enrichData is true AND some recipients are missing data
   if (enrichData) {
     const needsEnrichment = recipients.some(r => !r.fcmToken || !r.auth0Id);
+    console.log(`🔍 Needs enrichment: ${needsEnrichment}`);
     
     if (needsEnrichment) {
       const userIds = recipients.map(r => r.userId);
@@ -159,6 +161,8 @@ export const sendToUsers = async (
         where: { id: { in: userIds } },
         select: { id: true, fcmToken: true, auth0Id: true }
       });
+
+      console.log(`📊 Found ${users.length} users in database`);
 
       // Merge FCM tokens and auth0Id with recipients
       enrichedRecipients = recipients.map(recipient => {
@@ -169,6 +173,12 @@ export const sendToUsers = async (
           auth0Id: recipient.auth0Id || user?.auth0Id
         };
       });
+
+      console.log(`✅ Enriched recipients:`, enrichedRecipients.map(r => ({ 
+        userId: r.userId, 
+        hasAuth0Id: !!r.auth0Id, 
+        hasFcmToken: !!r.fcmToken 
+      })));
     }
   }
 
@@ -339,7 +349,7 @@ export const notifyReadingRejected = async (
  * Notify room users about reading modification by admin
  */
 export const notifyReadingModified = async (roomId: number, roomNumber: number, month: number, year: number): Promise<void> => {
-  console.log('notified')
+  console.log(`📢 Notifying reading modified for room ${roomNumber} (roomId: ${roomId})`);
   const template = templates.READING_MODIFIED(roomNumber, month, year);
   await sendToRoomUsers(roomId, template);
 };
@@ -392,13 +402,18 @@ const saveNotificationHistory = async (
         )
       );
 
+      console.log(`💾 Saved ${createdNotifications.length} notifications to database`);
+
       // Emit WebSocket events for real-time notifications
       // Use auth0Id from enriched recipients
       createdNotifications.forEach(notification => {
         const recipient = recipients.find(r => r.userId === notification.userId);
         const auth0Id = recipient?.auth0Id;
         
+        console.log(`🔍 Emitting notification ${notification.id} to user ${notification.userId}, auth0Id: ${auth0Id || 'MISSING'}`);
+        
         if (auth0Id) {
+          console.log(`📡 Emitting WebSocket notification to auth0Id: ${auth0Id}`);
           emitNotificationToUser(auth0Id, {
             id: notification.id,
             type: notification.type as NotificationType,
@@ -407,6 +422,7 @@ const saveNotificationHistory = async (
             readStatus: notification.readStatus,
             createdAt: notification.createdAt
           });
+          console.log(`✅ WebSocket notification emitted successfully`);
         } else {
           console.warn(`No Auth0 ID found for user ${notification.userId}`);
         }
@@ -633,8 +649,9 @@ export const notifyCurfewApproved = async (
   requestedName: string,
   isPermanent: boolean
 ): Promise<void> => {
+  console.log(`📢 Notifying curfew approved for user ${userId}, room ${roomNumber}, permanent: ${isPermanent}`);
   const template = templates.CURFEW_APPROVED(isPermanent, roomNumber, requestedName);
-  await sendToUsers([{ userId }], template, true);
+  await sendToUsers([{ userId }], template, true, true);
 };
 
 /**
