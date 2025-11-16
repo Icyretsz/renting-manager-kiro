@@ -5,18 +5,20 @@ import {
   getNotificationNavigation, 
   getNotificationIcon 
 } from '@/utils/notificationNavigation';
-import { Notification } from '@/types';
+import { WebsocketNotification } from '@/types';
+import getNotificationMessage from '@/utils/getNotificationMessage.ts';
 
 export const useAntNotification = (navigate: NavigateFunction) => {
   const [api, contextHolder] = notification.useNotification();
 
-  const showNotification = useCallback((notificationData: Notification) => {
+  const showNotification = useCallback((notificationData: WebsocketNotification) => {
     const navigationInfo = getNotificationNavigation(notificationData);
     const IconComponent = getNotificationIcon(notificationData.type);
+    const {title, message} = getNotificationMessage(notificationData)
 
     api.open({
-      message: notificationData.title,
-      description: notificationData.message,
+      message: title,
+      description: message,
       icon: <IconComponent style={{ color: '#1890ff' }} />,
       placement: 'topRight',
       duration: 6,

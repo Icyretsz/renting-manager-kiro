@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
-import { Notification, ApiResponse } from '@/types';
+import { WebsocketNotification, ApiResponse } from '@/types';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -23,8 +23,8 @@ export const useNotificationsQuery = () => {
 
   return useQuery({
     queryKey: notificationKeys.lists(),
-    queryFn: async (): Promise<Notification[]> => {
-      const response = await api.get<ApiResponse<Notification[]>>('/notifications');
+    queryFn: async (): Promise<WebsocketNotification[]> => {
+      const response = await api.get<ApiResponse<WebsocketNotification[]>>('/notifications');
       const notifications = response.data.data || [];
       
       // Update the store with fetched notifications
@@ -63,7 +63,7 @@ export const useMarkNotificationReadMutation = () => {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      const response = await api.put<ApiResponse<Notification>>(`/notifications/${notificationId}/read`);
+      const response = await api.put<ApiResponse<WebsocketNotification>>(`/notifications/${notificationId}/read`);
       return response.data.data;
     },
     onSuccess: (_, notificationId) => {

@@ -3,7 +3,7 @@ import { useSocket } from './useSocket';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAntNotification } from './useAntNotification';
 import { NavigateFunction } from 'react-router-dom';
-import { Notification } from '@/types';
+import { WebsocketNotification } from '@/types';
 import { queryClient } from '@/services/queryClient';
 import { meterReadingKeys } from './useMeterReadings';
 import { billingKeys } from './useBilling';
@@ -20,7 +20,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
     }
 
     // Listen for new notifications
-    const handleNewNotification = (notification: Notification) => {
+    const handleNewNotification = (notification: WebsocketNotification) => {
       // Add to notification store
       addNotification(notification);
 

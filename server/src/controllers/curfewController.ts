@@ -205,6 +205,7 @@ export const approveCurfewOverride = async (req: Request, res: Response, next: N
         await notificationService.notifyCurfewApproved(
           tenant.user.id,
           tenant.room.roomNumber,
+          tenant.name,
           isPermanent
         );
       }

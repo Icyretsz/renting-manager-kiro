@@ -13,12 +13,16 @@ interface NotificationData {
   tenantId?: string;
   reason?: string;
   amount?: string;
+  requesterName?: string;
+  requestedName?: string;
+  isPermanent?: boolean;
 }
+export type NotificationType = 'reading_submitted' | 'reading_updated' | 'reading_modified' | 'reading_approved' | 'reading_rejected' | 'bill_generated' | 'bill_payed' | 'curfew_request' | 'curfew_approved' | 'curfew_rejected'
 
 export interface NotificationTemplate {
   title: string;
   message: string;
-  type: string;
+  type: NotificationType;
   data?: NotificationData;
 }
 
@@ -91,7 +95,7 @@ const templates = {
 
     BILL_GENERATED: (roomNumber: number, month: number, year: number, amount: number): NotificationTemplate => ({
       title: 'Monthly Bill Generated',
-      message: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: ₫${amount.toFixed(2)}. Tap to view and pay.`,
+      message: `Your bill for Room ${roomNumber} (${month}/${year}) is ready: ${amount.toFixed(2)} VNĐ. Tap to view and pay.`,
       type: 'bill_generated',
       data: {
         roomNumber: roomNumber.toString(),
@@ -104,7 +108,7 @@ const templates = {
 
     BILL_PAYED: (roomNumber: number, month: number, year: number, amount: Prisma.Decimal): NotificationTemplate => ({
       title: 'User Payed',
-      message: `User's bill of Room ${roomNumber} (${month}/${year}) has been payed. Amount: ₫${amount}`,
+      message: `User's bill of Room ${roomNumber} (${month}/${year}) has been payed. Amount: ${amount} VNĐ`,
       type: 'bill_payed',
       data: {
         roomNumber: roomNumber.toString(),
@@ -123,18 +127,22 @@ const templates = {
         roomNumber: roomNumber.toString(),
         action: 'review_curfew',
         reason: reason || '',
+          requesterName: requesterName,
+          requestedName: tenantNames
       },
     }),
 
-    CURFEW_APPROVED: (isPermanent: boolean, roomNumber: number): NotificationTemplate => ({
+    CURFEW_APPROVED: (isPermanent: boolean, roomNumber: number, requestedName: string): NotificationTemplate => ({
       title: 'Curfew Override Approved',
       message: isPermanent 
-        ? `Your curfew override request has been approved permanently.`
-        : `Your curfew override request has been approved. Valid until 6:00 AM.`,
+        ? `Your curfew override request for ${requestedName} has been approved permanently.`
+        : `Your curfew override request for ${requestedName} has been approved. Valid until 6:00 AM.`,
       type: 'curfew_approved',
       data: {
         roomNumber: roomNumber.toString(),
         action: 'view_curfew',
+        requestedName: requestedName,
+          isPermanent: isPermanent,
       },
     }),
 
@@ -642,9 +650,10 @@ export const notifyCurfewRequest = async (
 export const notifyCurfewApproved = async (
   userId: string,
   roomNumber: number,
+  requestedName: string,
   isPermanent: boolean
 ): Promise<void> => {
-  const template = templates.CURFEW_APPROVED(isPermanent, roomNumber);
+  const template = templates.CURFEW_APPROVED(isPermanent, roomNumber, requestedName);
   await sendToUsers([{ userId }], template, true);
 };
 

@@ -188,14 +188,19 @@ interface NotificationData {
   tenantId?: string;
   reason?: string;
   amount?: string;
+  requesterName?: string;
+  requestedName?: string;
+  isPermanent?: boolean;
 }
 
-export interface Notification {
+export type NotificationType = 'reading_submitted' | 'reading_updated' | 'reading_modified' | 'reading_approved' | 'reading_rejected' | 'bill_generated' | 'bill_payed' | 'curfew_request' | 'curfew_approved' | 'curfew_rejected'
+
+export interface WebsocketNotification {
   id: string;
   userId: string;
   title: string;
   message: string;
-  type: string;
+  type: NotificationType;
   readStatus: boolean;
   createdAt: Date;
   data?: NotificationData;
