@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Card, Descriptions, Typography, Tag, Space, Button } from 'antd';
+import React from 'react';
+import { Card, Descriptions, Typography, Tag, Space } from 'antd';
 import {
   UserOutlined,
   MailOutlined,
@@ -9,11 +9,9 @@ import {
   IdcardOutlined,
   SafetyOutlined,
   EnvironmentOutlined,
-  ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
-import { CurfewOverrideModal } from '@/components/Curfew';
 import dayjs from 'dayjs';
 import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 
@@ -22,7 +20,6 @@ const { Title, Text } = Typography;
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { t, getRole } = useTranslationHelpers();
-  const [curfewModalVisible, setCurfewModalVisible] = useState(false);
 
   if (!user) {
     return null;

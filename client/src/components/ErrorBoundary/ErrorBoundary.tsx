@@ -4,7 +4,7 @@ import { ReloadOutlined, HomeOutlined } from '@ant-design/icons';
 import { ErrorBoundaryProps, ErrorBoundaryState } from '@/types';
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: Props) {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }

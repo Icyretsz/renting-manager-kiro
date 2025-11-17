@@ -1,7 +1,7 @@
 import React from 'react';
 import { Collapse, Avatar, Typography, Badge } from 'antd';
 import { HomeOutlined } from '@ant-design/icons';
-import { TenantGroupsListProps } from '@/types';
+import { Tenant, TenantGroupsListProps } from '@/types';
 import { TenantCard } from './TenantCard';
 
 const { Panel } = Collapse;

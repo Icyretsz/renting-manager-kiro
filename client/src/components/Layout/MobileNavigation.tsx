@@ -10,42 +10,44 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { NavItem } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 export const MobileNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   const navItems: NavItem[] = [
     {
       key: 'dashboard',
       icon: <DashboardOutlined />,
-      label: 'Dashboard',
+      label: `${t('navigation.dashboard')}`,
       path: '/',
     },
     {
       key: 'readings',
       icon: <FileTextOutlined />,
-      label: 'Readings',
+      label: `${t('navigation.readings')}`,
       path: '/meter-readings',
     },
     {
       key: 'billing',
       icon: <DollarOutlined />,
-      label: 'Billing',
+      label: `${t('navigation.billings')}`,
       path: '/billing',
     },
     ...(isAdmin() ? [
       {
         key: 'rooms',
         icon: <HomeOutlined />,
-        label: 'Rooms',
+        label: `${t('navigation.rooms')}`,
         path: isAdmin() ? '/rooms' : '/my-rooms',
       },
       {
         key: 'approvals',
         icon: <CheckCircleOutlined />,
-        label: 'Approvals',
+        label: `${t('navigation.approvals')}`,
         path: '/approvals',
         adminOnly: true,
         badge: 0, // This would be populated with pending approvals count
@@ -53,7 +55,7 @@ export const MobileNavigation: React.FC = () => {
       {
         key: 'tenants',
         icon: <CheckCircleOutlined />,
-        label: 'Users',
+        label: `${t('navigation.userManagement')}`,
         path: '/user-management',
         adminOnly: true,
       }

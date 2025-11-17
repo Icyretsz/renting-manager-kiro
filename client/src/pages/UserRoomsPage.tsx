@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card, Row, Col, Typography, Empty } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Row, Col, Typography, Empty } from 'antd';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoomsQuery, useRoomQuery, roomKeys } from '@/hooks/useRooms';
 import { useSettingValue } from '@/hooks/useSettings';
@@ -120,19 +119,19 @@ export const UserRoomsPage: React.FC = () => {
         />
 
         {/* Info Card for Regular Users */}
-        <Card className="bg-blue-50 border-blue-200">
-          <div className="flex items-start space-x-3">
-            <InfoCircleOutlined className="text-blue-500 mt-1" />
-            <div>
-              <Text className="text-sm font-medium text-blue-800">
-                Room Access Information
-              </Text>
-              <div className="text-xs text-blue-700 mt-1">
-                You can view and manage meter readings, billing information, and tenant details for your assigned room. Contact your administrator if you need access to additional rooms.
-              </div>
-            </div>
-          </div>
-        </Card>
+        {/*<Card className="bg-blue-50 border-blue-200">*/}
+        {/*  <div className="flex items-start space-x-3">*/}
+        {/*    <InfoCircleOutlined className="text-blue-500 mt-1" />*/}
+        {/*    <div>*/}
+        {/*      <Text className="text-sm font-medium text-blue-800">*/}
+        {/*        Room Access Information*/}
+        {/*      </Text>*/}
+        {/*      <div className="text-xs text-blue-700 mt-1">*/}
+        {/*        You can view and manage meter readings, billing information, and tenant details for your assigned room. Contact your administrator if you need access to additional rooms.*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*  </div>*/}
+        {/*</Card>*/}
       </div>
     </PageErrorBoundary>
   );

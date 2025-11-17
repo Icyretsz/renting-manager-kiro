@@ -1,4 +1,4 @@
-import { User } from './index';
+import { CurfewStatus, User } from './index';
 
 // User Management Types
 export interface UserWithTenant extends User {
@@ -11,6 +11,7 @@ export interface UserWithTenant extends User {
     moveOutDate?: Date;
     createdAt: Date;
     updatedAt: Date;
+    curfewStatus: CurfewStatus
   };
 }
 

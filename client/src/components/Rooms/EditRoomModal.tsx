@@ -76,6 +76,7 @@ export const EditRoomModal: React.FC<EditRoomModalProps> = ({
         roomId: room.id,
         isActive: true,
         moveInDate: new Date(),
+        curfewStatus: 'NORMAL'
       });
       
       if (newTenant) {
