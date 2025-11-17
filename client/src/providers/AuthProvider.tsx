@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { useAuthStore } from '@/stores/authStore';
 import { auth0Config } from '@/config/auth0';
@@ -10,11 +10,11 @@ interface AuthProviderProps {
 }
 
 // Helper to decode JWT and check expiry
-const isTokenExpired = (token: string): boolean => {
+const isTokenExpired = (token: string, bufferMinutes: number = 5): boolean => {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const expiryTime = payload.exp * 1000; // Convert to milliseconds
-    const bufferTime = 5 * 60 * 1000; // 5 minute buffer before actual expiry
+    const bufferTime = bufferMinutes * 60 * 1000;
     return Date.now() >= (expiryTime - bufferTime);
   } catch (error) {
     console.error('Error decoding token:', error);
@@ -25,10 +25,11 @@ const isTokenExpired = (token: string): boolean => {
 // Auth0 integration component to sync tokens
 const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, user, getAccessTokenSilently, isLoading } = useAuth0();
-  const { login, logout, setToken, token: storedToken } = useAuthStore();
+  const { login, logout, setToken } = useAuthStore();
   const syncInProgressRef = useRef(false);
   const hasInitializedRef = useRef(false);
-  
+  const lastRefreshTimeRef = useRef(0);
+
   // Initialize Firebase messaging when user is authenticated
   useFirebaseMessaging();
 
@@ -41,10 +42,12 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
   }, [getAccessTokenSilently]);
 
   // Main auth sync effect - handles both fresh logins and session restoration
+  // REMOVED storedToken from dependencies to prevent loop
   useEffect(() => {
     const syncAuthState = async () => {
       // Prevent concurrent syncs
       if (syncInProgressRef.current) {
+        console.log('Auth0Integration: Sync already in progress, skipping...');
         return;
       }
 
@@ -54,77 +57,58 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
+      // Skip if already initialized and authenticated
+      if (hasInitializedRef.current && isAuthenticated) {
+        console.log('Auth0Integration: Already initialized, skipping sync');
+        return;
+      }
+
       if (isAuthenticated && user) {
         syncInProgressRef.current = true;
-        
-        try {
-          // Check if we have a stored token and if it's still valid
-          const hasValidStoredToken = storedToken && !isTokenExpired(storedToken);
-          
-          if (hasValidStoredToken) {
-            // We already have a valid token, just ensure user is synced
-            console.log('Auth0Integration: Using valid cached token');
-            
-            const appUser: User = {
-              id: user.sub || '',
-              auth0Id: user.sub || '',
-              email: user.email || '',
-              name: user.name || user.nickname || '',
-              role: (user.roleType?.[0] === 'ADMIN' ? 'ADMIN' : 'USER') as 'ADMIN' | 'USER',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
-            
-            login(storedToken, appUser);
-            hasInitializedRef.current = true;
-          } else {
-            // Need to fetch a fresh token
-            console.log('Auth0Integration: Fetching fresh token...', {
-              hasStoredToken: !!storedToken,
-              isExpired: storedToken ? isTokenExpired(storedToken) : 'N/A',
-              hasInitialized: hasInitializedRef.current
-            });
-            
-            const token = await getAccessTokenSilently({
-              cacheMode: 'cache-only', // Try cache first for PWA performance
-            }).catch(async (cacheError) => {
-              // If cache fails, force a fresh token
-              console.log('Auth0Integration: Cache miss, fetching from network', cacheError);
-              return await getAccessTokenSilently({
-                cacheMode: 'off',
-              });
-            });
-            
-            if (!token) {
-              console.error('Auth0Integration: No token received');
-              logout();
-              syncInProgressRef.current = false;
-              return;
-            }
-            
-            console.log('Auth0Integration: Token fetched successfully');
-            
-            const appUser: User = {
-              id: user.sub || '',
-              auth0Id: user.sub || '',
-              email: user.email || '',
-              name: user.name || user.nickname || '',
-              role: (user.roleType?.[0] === 'ADMIN' ? 'ADMIN' : 'USER') as 'ADMIN' | 'USER',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
 
-            login(token, appUser);
-            hasInitializedRef.current = true;
+        try {
+          console.log('Auth0Integration: Syncing auth state...');
+
+          // Always fetch a fresh token on initial auth sync
+          const token = await getAccessTokenSilently({
+            cacheMode: 'cache-only', // Try cache first for PWA performance
+          }).catch(async (cacheError) => {
+            console.log('Auth0Integration: Cache miss, fetching from network', cacheError);
+            return await getAccessTokenSilently({
+              cacheMode: 'off',
+            });
+          });
+
+          if (!token) {
+            console.error('Auth0Integration: No token received');
+            logout();
+            return;
           }
+
+          console.log('Auth0Integration: Token fetched successfully');
+
+          const appUser: User = {
+            id: user.sub || '',
+            auth0Id: user.sub || '',
+            email: user.email || '',
+            name: user.name || user.nickname || '',
+            role: (user.roleType?.[0] === 'ADMIN' ? 'ADMIN' : 'USER') as 'ADMIN' | 'USER',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          login(token, appUser);
+          lastRefreshTimeRef.current = Date.now();
+          hasInitializedRef.current = true;
+
         } catch (error) {
           console.error('Error during auth sync:', error);
           const errorMessage = error instanceof Error ? error.message : String(error);
-          
+
           // Only logout on definitive auth failures
-          if (errorMessage.includes('login_required') || 
-              errorMessage.includes('consent_required') ||
-              errorMessage.includes('invalid_grant')) {
+          if (errorMessage.includes('login_required') ||
+            errorMessage.includes('consent_required') ||
+            errorMessage.includes('invalid_grant')) {
             console.log('Auth session expired, logging out:', errorMessage);
             logout();
             hasInitializedRef.current = false;
@@ -138,68 +122,80 @@ const Auth0Integration = ({ children }: { children: React.ReactNode }) => {
         console.log('Auth0Integration: User not authenticated');
         logout();
         hasInitializedRef.current = false;
+        syncInProgressRef.current = false;
       }
     };
 
     syncAuthState();
-  }, [isAuthenticated, user, getAccessTokenSilently, login, logout, isLoading, storedToken]);
+  }, [isAuthenticated, user, getAccessTokenSilently, login, logout, isLoading]); // REMOVED storedToken
 
-  // Token refresh before expiry
+  // Single unified token refresh mechanism
   useEffect(() => {
-    if (!isAuthenticated || isLoading || !storedToken) return;
+    if (!isAuthenticated || isLoading || !hasInitializedRef.current) {
+      return;
+    }
 
-    const refreshToken = async () => {
-      // Check if token needs refresh
-      if (isTokenExpired(storedToken)) {
-        console.log('Auth0Integration: Token expired/expiring soon, refreshing...');
+    const checkAndRefreshToken = async () => {
+      // Prevent too frequent refresh attempts (minimum 1 minute between refreshes)
+      const timeSinceLastRefresh = Date.now() - lastRefreshTimeRef.current;
+      if (timeSinceLastRefresh < 60 * 1000) {
+        console.log('Auth0Integration: Skipping refresh, too soon since last refresh');
+        return;
+      }
+
+      // Get current token from store
+      const currentToken = useAuthStore.getState().token;
+      if (!currentToken) {
+        console.log('Auth0Integration: No token in store');
+        return;
+      }
+
+      // Check if token needs refresh (10 minutes before expiry)
+      if (isTokenExpired(currentToken, 10)) {
+        console.log('Auth0Integration: Token expiring soon, refreshing...');
+
+        if (syncInProgressRef.current) {
+          console.log('Auth0Integration: Refresh already in progress');
+          return;
+        }
+
+        syncInProgressRef.current = true;
+
         try {
-          const freshToken = await getAccessTokenSilently({ 
-            cacheMode: 'off' 
+          const freshToken = await getAccessTokenSilently({
+            cacheMode: 'off'
           });
+
           setToken(freshToken);
+          lastRefreshTimeRef.current = Date.now();
           console.log('Auth0Integration: Token refreshed successfully');
+
         } catch (error) {
           console.error('Auth0Integration: Token refresh failed:', error);
           const errorMessage = error instanceof Error ? error.message : String(error);
-          
-          if (errorMessage.includes('invalid_grant') || 
-              errorMessage.includes('login_required')) {
+
+          if (errorMessage.includes('invalid_grant') ||
+            errorMessage.includes('login_required')) {
             console.log('Refresh token invalid, logging out');
             logout();
+            hasInitializedRef.current = false;
           }
+        } finally {
+          syncInProgressRef.current = false;
         }
+      } else {
+        console.log('Auth0Integration: Token still valid, no refresh needed');
       }
     };
 
     // Check immediately
-    refreshToken();
+    checkAndRefreshToken();
 
     // Then check every 5 minutes
-    const refreshInterval = setInterval(refreshToken, 5 * 60 * 1000);
-    
+    const refreshInterval = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
+
     return () => clearInterval(refreshInterval);
-  }, [isAuthenticated, isLoading, storedToken, getAccessTokenSilently, setToken, logout]);
-
-  // Proactive token refresh at 45 minutes (before 1-hour expiry)
-  useEffect(() => {
-    if (!isAuthenticated || isLoading) return;
-
-    const proactiveRefresh = setInterval(async () => {
-      console.log('Auth0Integration: Proactive token refresh');
-      try {
-        const token = await getAccessTokenSilently({ 
-          cacheMode: 'off' 
-        });
-        setToken(token);
-        console.log('Auth0Integration: Proactive refresh successful');
-      } catch (error) {
-        console.error('Proactive refresh error:', error);
-        // Don't logout on proactive refresh errors - let the expiry check handle it
-      }
-    }, 45 * 60 * 1000); // 45 minutes
-
-    return () => clearInterval(proactiveRefresh);
-  }, [isAuthenticated, isLoading, getAccessTokenSilently, setToken]);
+  }, [isAuthenticated, isLoading, getAccessTokenSilently, setToken, logout]);
 
   return <>{children}</>;
 };
