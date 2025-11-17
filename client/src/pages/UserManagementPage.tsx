@@ -225,9 +225,9 @@ const UserManagementPage: React.FC = () => {
     return matchesSearch && matchesRoom && matchesStatus;
   }) || [];
 
-  // Get available tenants for linking (not already linked to another user)
+  // Get available tenants for linking (not already linked to another user and is active)
   const availableTenantsForLinking = tenants?.filter(tenant =>
-    !tenant.userId || tenant.userId === selectedUser?.id
+    tenant.isActive && (!tenant.userId || tenant.userId === selectedUser?.id)
   ) || [];
 
   const items: TabsProps['items'] = [
