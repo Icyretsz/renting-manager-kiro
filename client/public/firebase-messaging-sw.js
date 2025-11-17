@@ -46,24 +46,75 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
+// Helper function to get navigation path based on notification type
+function getNavigationPath(notificationData) {
+  const type = notificationData?.type;
+  const roomNumber = notificationData?.roomNumber;
+
+  switch (type) {
+    case 'reading_submitted':
+    case 'reading_updated':
+    case 'curfew_request':
+      return '/approvals';
+    
+    case 'reading_approved':
+    case 'bill_generated':
+      return '/billing';
+    
+    case 'reading_rejected':
+    case 'reading_modified':
+      return '/meter-readings';
+    
+    case 'bill_payed':
+      return '/billing';
+    
+    case 'curfew_approved':
+    case 'curfew_rejected':
+      return '/';
+    
+    default:
+      return '/';
+  }
+}
+
 // Handle notification click events
 self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event);
-
+  
   event.notification.close();
 
-  if (event.action === 'view') {
-    // Open the app or navigate to specific page
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  } else if (event.action === 'dismiss') {
+  // Get notification data
+  const notificationData = event.notification.data;
+  
+  if (event.action === 'dismiss') {
     // Just close the notification
     return;
-  } else {
-    // Default action - open the app
-    event.waitUntil(
-      clients.openWindow('/')
-    );
   }
+
+  // Get the appropriate navigation path
+  const targetPath = getNavigationPath(notificationData);
+  const urlToOpen = new URL(targetPath, self.location.origin).href;
+
+  // Try to focus existing window or open new one
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    }).then((clientList) => {
+      // Check if there's already a window open
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          // Focus the existing window and navigate to the target path
+          return client.focus().then(() => {
+            return client.navigate(urlToOpen);
+          });
+        }
+      }
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
 });

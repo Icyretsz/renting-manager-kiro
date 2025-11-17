@@ -30,6 +30,73 @@ export interface NotificationRecipient {
   auth0Id?: string | undefined;
 }
 
+// Helper function to generate notification title and message for Firebase background notifications
+// Uses Vietnamese translations matching client-side i18n
+// In-app notifications will use client-side i18n for proper localization
+const getNotificationContent = (template: NotificationTemplate): { title: string; body: string } => {
+  const { type, data } = template;
+  
+  switch (type) {
+    case 'reading_submitted':
+      return {
+        title: 'Có chỉ số mới',
+        body: `Phòng ${data.roomNumber} đã đăng chỉ số đồng hồ cho tháng ${data.month}/${data.year}. Nhấn để xem.`
+      };
+    case 'reading_updated':
+      return {
+        title: 'Chỉ số được cập nhật',
+        body: `Phòng ${data.roomNumber} đã cập nhật chỉ số đồng hồ của tháng ${data.month}/${data.year}. Nhấn để xem.`
+      };
+    case 'reading_approved':
+      return {
+        title: 'Hóa đơn mới',
+        body: `Hóa đơn cho phòng ${data.roomNumber}, kỳ ${data.month}/${data.year} đã sẵn sàng. Nhấn vào đây để đến trang thanh toán.`
+      };
+    case 'reading_rejected':
+      return {
+        title: 'Chỉ số bị từ chối',
+        body: `Chỉ số đồng hồ phòng ${data.roomNumber}, kỳ ${data.month}/${data.year} bị từ chối.${data.reason ? ` Lý do: ${data.reason}` : ''}`
+      };
+    case 'reading_modified':
+      return {
+        title: 'Chỉ số được cập nhật',
+        body: `Chỉ số đồng hồ phòng ${data.roomNumber}, kỳ ${data.month}/${data.year} vừa được chỉnh sửa bởi quản trị viên.`
+      };
+    case 'bill_generated':
+      return {
+        title: 'Hóa đơn mới',
+        body: `Hóa đơn cho phòng ${data.roomNumber}, kỳ ${data.month}/${data.year} đã sẵn sàng. Nhấn vào đây để đến trang thanh toán.`
+      };
+    case 'bill_payed':
+      return {
+        title: 'Hóa đơn đã thanh toán',
+        body: `Hóa đơn phòng ${data.roomNumber}, kỳ ${data.month}/${data.year} đã được thanh toán. Số tiền: ${data.amount} VNĐ.`
+      };
+    case 'curfew_request':
+      return {
+        title: 'Yêu cầu về trễ mới',
+        body: `${data.requesterName} Phòng ${data.roomNumber} vừa yêu cầu về trễ cho: ${data.requestedName}.${data.reason ? ` Lý do: ${data.reason}.` : ''}`
+      };
+    case 'curfew_approved':
+      return {
+        title: 'Yêu cầu về trễ được duyệt',
+        body: data.isPermanent 
+          ? `Yêu cầu về trễ cho ${data.requestedName} đã được duyệt vĩnh viễn.`
+          : `Yêu cầu về trễ cho ${data.requestedName} đã được duyệt. Hiệu lực đến 6 giờ sáng hôm sau.`
+      };
+    case 'curfew_rejected':
+      return {
+        title: 'Yêu cầu về trễ bị từ chối',
+        body: `Yêu cầu về trễ của bạn bị từ chối.${data.reason ? ` Lý do: ${data.reason}.` : ''}`
+      };
+    default:
+      return {
+        title: 'Thông báo',
+        body: 'Bạn có thông báo mới'
+      };
+  }
+};
+
 // Notification templates for different events
 const templates = {
     READING_SUBMITTED: (roomNumber: number, month: number, year: number): NotificationTemplate => ({
@@ -193,8 +260,16 @@ export const sendToUsers = async (
       return; // WebSocket notifications already sent above
     }
 
-    // Prepare FCM message - send type and data for client-side localization
+    // Get notification content for Firebase
+    const { title, body } = getNotificationContent(template);
+    
+    // Prepare FCM message with notification payload for background notifications
+    // and data payload for foreground handling
     const message = {
+      notification: {
+        title,
+        body,
+      },
       data: {
         type: template.type,
         ...Object.entries(template.data).reduce((acc, [key, value]) => {
