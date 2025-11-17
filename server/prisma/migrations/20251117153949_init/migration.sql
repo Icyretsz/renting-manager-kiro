@@ -132,9 +132,8 @@ CREATE TABLE "billing_records" (
 CREATE TABLE "notifications" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "message" TEXT NOT NULL,
     "type" TEXT NOT NULL,
+    "data" JSONB,
     "read_status" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
