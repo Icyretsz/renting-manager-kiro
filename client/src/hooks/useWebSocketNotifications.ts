@@ -8,11 +8,25 @@ import { queryClient } from '@/services/queryClient';
 import { meterReadingKeys } from './useMeterReadings';
 import { billingKeys } from './useBilling';
 import { curfewKeys } from './useCurfew';
+import { setupForegroundMessageListener } from '@/services/firebaseMessaging';
 
 export const useWebSocketNotifications = (navigate: NavigateFunction) => {
   const { socket, isConnected } = useSocket();
-  const { addNotification, markAsRead, markAllAsRead, updateNotification } = useNotificationStore();
+  const addNotification = useNotificationStore(state => state.addNotification);
+  const markAsRead = useNotificationStore(state => state.markAsRead);
+  const markAllAsRead = useNotificationStore(state => state.markAllAsRead);
   const { showNotification, contextHolder } = useAntNotification(navigate);
+
+  // Set up Firebase foreground message listener with in-app notification callback
+  useEffect(() => {
+    const handleFirebaseNotification = (notification: WebsocketNotification) => {
+      // Add to store and show in-app notification
+      addNotification(notification);
+      showNotification(notification);
+    };
+
+    setupForegroundMessageListener(handleFirebaseNotification);
+  }, [addNotification, showNotification]);
 
   useEffect(() => {
     if (!socket || !isConnected) {
@@ -62,6 +76,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             break;
 
           case 'reading_approved':
+            console.log('approved')
             // Invalidate all meter reading queries
             queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
             // Specifically invalidate the room's readings if roomNumber is available
@@ -149,7 +164,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
       socket.off('notification:update', handleNotificationUpdate);
       socket.off('notification:bulk_update', handleBulkUpdate);
     };
-  }, [socket, isConnected, addNotification, markAsRead, markAllAsRead, updateNotification]);
+  }, [socket, isConnected, addNotification, markAsRead, markAllAsRead, showNotification]);
 
   return {
     isConnected,

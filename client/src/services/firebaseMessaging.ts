@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, MessagePayload } from 'firebase/messaging';
-import { useNotificationStore } from '@/stores/notificationStore';
 import type { ApiResponse, WebsocketNotification, NotificationType, NotificationData } from '@/types';
 import { UseMutationResult } from '@tanstack/react-query';
 import GetNotificationMessage from '@/utils/getNotificationMessage';
@@ -98,8 +97,8 @@ export const getCurrentFCMToken = async (): Promise<string | null> => {
   }
 };
 
-// Set up foreground message listener
-export const setupForegroundMessageListener = () => {
+// Set up foreground message listener with callback for in-app notifications
+export const setupForegroundMessageListener = (onNotification?: (notification: WebsocketNotification) => void) => {
   try {
     const { messaging } = initializeFirebase();
     if (!messaging) {
@@ -108,10 +107,10 @@ export const setupForegroundMessageListener = () => {
     }
 
     onMessage(messaging, (payload: MessagePayload) => {
-      console.log('Foreground message received:', payload);
+      console.log('Foreground Firebase message received:', payload);
       
-      // Handle the message and add to notification store
-      const { addNotification } = useNotificationStore.getState();
+      // Note: WebSocket already handles notifications when connected
+      // Firebase foreground messages are a fallback for when WebSocket is disconnected
       
       if (payload.data) {
         // Parse notification data from Firebase
@@ -138,18 +137,21 @@ export const setupForegroundMessageListener = () => {
           createdAt: new Date(),
         };
         
-        addNotification(notification);
-        
-        // Get localized title and message
-        const { title, message } = GetNotificationMessage(notification);
-        
-        // Show browser notification if permission is granted
-        if (Notification.permission === 'granted') {
-          new Notification(title, {
-            body: message,
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
-          });
+        // Check if user is on the page (document is visible)
+        if (document.visibilityState === 'visible' && onNotification) {
+          // User is on the page - show in-app notification via callback
+          onNotification(notification);
+        } else {
+          // User is not on the page or callback not provided - show browser notification
+          const { title, message } = GetNotificationMessage(notification);
+          
+          if (Notification.permission === 'granted') {
+            new Notification(title, {
+              body: message,
+              icon: '/favicon.ico',
+              badge: '/favicon.ico',
+            });
+          }
         }
       }
     });
@@ -223,7 +225,7 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
       // Don't return false here - we still want to set up the listener
     }
 
-    // Set up message listener
+    // Set up message listener (will be called again with callback from useWebSocketNotifications)
     setupForegroundMessageListener();
 
     // Set up token refresh listener (returns cleanup function)
