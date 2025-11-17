@@ -111,6 +111,3 @@ build/
 
 # Uploads directory
 uploads/
-
-# Prisma
-prisma/migrations/
