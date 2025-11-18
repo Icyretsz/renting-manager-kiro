@@ -99,6 +99,7 @@ import settingsRoutes from './routes/settings';
 import paymentRoutes from './routes/payments';
 import userManagementRoutes from './routes/userManagement';
 import curfewRoutes from './routes/curfew';
+import requestRoutes from './routes/requestRoutes';
 
 // API routes
 app.use('/api/upload', uploadRoutes);
@@ -113,6 +114,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/user-management', userManagementRoutes);
 app.use('/api/curfew', curfewRoutes);
+app.use('/api/requests', requestRoutes);
 
 // 404 handler for API routes only
 app.use('/api/*', (req, _res, next) => {

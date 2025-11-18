@@ -110,6 +110,37 @@ const GetNotificationMessage = (notification: WebsocketNotification): {title: st
         })
       }
 
+    case "request_submitted":
+      const description = notification.data.description;
+      const descriptionPreview = description 
+        ? ` Mô tả: ${description.substring(0, 50)}${description.length > 50 ? '...' : ''}`
+        : '';
+      return {
+        title: t('notifications.requestSubmittedTitle'),
+        message: t('notifications.requestSubmittedNoti', {
+          requesterName: notification.data.requesterName,
+          roomNumber: notification.data.roomNumber,
+          requestType: notification.data.action
+        }) + descriptionPreview
+      }
+
+    case "request_approved":
+      return {
+        title: t('notifications.requestApprovedTitle'),
+        message: t('notifications.requestApprovedNoti', {
+          requestType: notification.data.action
+        })
+      }
+
+    case "request_rejected":
+      return {
+        title: t('notifications.requestRejectedTitle'),
+        message: t('notifications.requestRejectedNoti', {
+          requestType: notification.data.action,
+          reason: notification.data.reason || ''
+        })
+      }
+
     default:
       return {
         title: t('notifications.unknownTitle'),

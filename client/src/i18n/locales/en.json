@@ -230,7 +230,6 @@
     "pending": "Pending",
     "rejected": "Rejected",
     "updated": "Updated",
-
     "submittedBy": "Submitted By",
     "submittedAt": "Submitted At",
     "approvedBy": "Approved By",
@@ -568,6 +567,16 @@
     "requestDescription": "Description",
     "descriptionPlaceholder": "Enter request description (optional)",
     "emptyRequestTypeError": "Please select a request type",
-    "viewRequestHistory": "View request history"
+    "viewRequestHistory": "View request history",
+    "submitRequest": "Submit Request",
+    "uploadPhotos": "Upload images (optional)",
+    "uploadPhoto": "Upload Image",
+    "maxPhotos": "Max 3 images",
+    "createSuccess": "Request sent",
+    "createError": "Can't send request",
+    "approveSuccess": "Request approved",
+    "approveError": "Can't approve request",
+    "rejectSuccess": "Request rejected",
+    "rejectError": "Can't reject request"
   }
 }

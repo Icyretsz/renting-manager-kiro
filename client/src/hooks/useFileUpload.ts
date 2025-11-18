@@ -1,20 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import api from '@/services/api';
-import { ApiResponse, ImageUploadPresignedURLType } from '@/types';
-type PresignedURLOperation = 'get' | 'put'
-
-interface PresignedURLParams {
-  operation: PresignedURLOperation
-  roomNumber: string
-  contentType?: string,
-  meterType?: string,
-  fileName: string
-}
-
-interface UploadToS3Params {
-  presignedUrl: string
-  file: File
-}
+import { ApiResponse, ImageUploadPresignedURLType, PresignedURLParams, UploadToS3Params } from '@/types';
 
 const fileUploadKeys = {
   all: ['fileUpload'] as const,
@@ -57,11 +43,11 @@ export const useGetPresignedURLMutation = () => {
       operation,
       roomNumber,
       contentType,
-      meterType,
+      imageType,
       fileName,
     }: PresignedURLParams): Promise<ImageUploadPresignedURLType> => {
       // Build query params safely
-      const params: Record<string, string | undefined> = { operation, roomNumber, contentType, meterType, fileName }
+      const params: Record<string, string | undefined> = { operation, roomNumber, contentType, imageType, fileName }
 
       const response = await api.get<ApiResponse<ImageUploadPresignedURLType>>(
         '/upload/get-presigned',
@@ -84,7 +70,7 @@ export const useGetPresignedURLMutation = () => {
 //Get presigned url (query for GET operations - with caching)
 export const useGetPresignedURLQuery = (params: PresignedURLParams | null) => {
   return useQuery({
-    queryKey: [...fileUploadKeys.all, 'presigned', params?.operation, params?.roomNumber, params?.meterType, params?.fileName],
+    queryKey: [...fileUploadKeys.all, 'presigned', params?.operation, params?.roomNumber, params?.imageType, params?.fileName],
     queryFn: async (): Promise<ImageUploadPresignedURLType> => {
       if (!params) throw new Error('No params provided');
       
@@ -92,7 +78,7 @@ export const useGetPresignedURLQuery = (params: PresignedURLParams | null) => {
         operation: params.operation, 
         roomNumber: params.roomNumber, 
         contentType: params.contentType, 
-        meterType: params.meterType, 
+        imageType: params.imageType, 
         fileName: params.fileName 
       }
 

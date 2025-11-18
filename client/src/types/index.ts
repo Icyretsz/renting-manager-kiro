@@ -191,9 +191,10 @@ export interface NotificationData {
   requesterName?: string;
   requestedName?: string;
   isPermanent?: boolean;
+  description?: string;
 }
 
-export type NotificationType = 'reading_submitted' | 'reading_updated' | 'reading_modified' | 'reading_approved' | 'reading_rejected' | 'bill_generated' | 'bill_payed' | 'curfew_request' | 'curfew_approved' | 'curfew_rejected'
+export type NotificationType = 'reading_submitted' | 'reading_updated' | 'reading_modified' | 'reading_approved' | 'reading_rejected' | 'bill_generated' | 'bill_payed' | 'curfew_request' | 'curfew_approved' | 'curfew_rejected' | 'request_submitted' | 'request_approved' | 'request_rejected'
 
 export interface WebsocketNotification {
   id: string;
@@ -215,8 +216,64 @@ export interface Setting {
   createdAt: Date;
 }
 
+// Request System
+export type RequestType = 'CURFEW' | 'REPAIR' | 'OTHER';
+export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface Request {
+  id: string;
+  userId: string;
+  roomId: number;
+  requestType: RequestType;
+  status: RequestStatus;
+  description?: string;
+  photoUrls: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  approvedBy?: string;
+  approvedAt?: Date;
+  rejectionReason?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  room?: {
+    roomNumber: number;
+    floor: number;
+  };
+  approver?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  curfewRequest?: CurfewRequest;
+}
+
+export interface CurfewRequest {
+  id: string;
+  requestId: string;
+  tenantIds: string[];
+  reason?: string;
+}
+
 // Utility Types
 export type MeterType = 'water' | 'electricity';
+export type ImageType = MeterType | 'repair'
+export type PresignedURLOperation = 'get' | 'put'
+
+export interface PresignedURLParams {
+  operation: PresignedURLOperation
+  roomNumber: string
+  contentType?: string,
+  imageType?: ImageType,
+  fileName: string
+}
+
+export interface UploadToS3Params {
+  presignedUrl: string
+  file: File
+}
 
 // ============================================
 // RE-EXPORTS

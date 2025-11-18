@@ -241,14 +241,17 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
         </Form>
       </Card>
 
-      <Modal
-        open={previewOpen}
-        title={previewTitle}
-        footer={null}
-        onCancel={() => setPreviewOpen(false)}
-      >
-        <Image alt="preview" style={{ width: '100%' }} src={previewImage} />
-      </Modal>
+      {previewImage && (
+        <Image
+          wrapperStyle={{ display: 'none' }}
+          preview={{
+            visible: previewOpen,
+            onVisibleChange: (visible) => setPreviewOpen(visible),
+            afterOpenChange: (visible) => !visible && setPreviewImage(''),
+          }}
+          src={previewImage}
+        />
+      )}
     </>
   );
 };

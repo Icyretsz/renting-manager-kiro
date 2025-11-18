@@ -8,6 +8,7 @@ import {
   CreditCardOutlined,
   NotificationOutlined,
   ClockCircleOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 
 export interface NavigationResult {
@@ -87,6 +88,22 @@ export const getNotificationNavigation = (notification: WebsocketNotification): 
         description: 'View curfew status'
       };
 
+    // General request notifications
+    case 'request_submitted':
+      return {
+        path: '/approvals',
+        shouldNavigate: true,
+        description: 'Review request'
+      };
+
+    case 'request_approved':
+    case 'request_rejected':
+      return {
+        path: '/requests',
+        shouldNavigate: true,
+        description: 'View request status'
+      };
+
     // Default - no navigation
     default:
       return {
@@ -126,6 +143,10 @@ export const getNotificationIcon = (type: string) => {
     case 'curfew_approved':
     case 'curfew_rejected':
       return ClockCircleOutlined;
+    case 'request_submitted':
+    case 'request_approved':
+    case 'request_rejected':
+      return ToolOutlined;
     default:
       return NotificationOutlined;
   }

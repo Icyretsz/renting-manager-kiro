@@ -5,7 +5,7 @@ import prisma from '../config/database';
 import { s3Client } from '../config/awsSDK'
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
-import { MeterType, Operation } from '@/types';
+import { ImageType, Operation } from '@/types';
 
 export interface FileInfo {
   filename: string;
@@ -46,11 +46,11 @@ ensureDirectoriesExist();
 /**
  * Generate secure filename for meter photos
  */
-export const generateMeterPhotoFilename = (roomId: number, meterType: MeterType, originalName: string): string => {
+export const generateMeterPhotoFilename = (roomId: number, ImageType: ImageType, originalName: string): string => {
   const timestamp = Date.now();
   const ext = path.extname(originalName).toLowerCase();
   const randomSuffix = Math.random().toString(36).substring(2, 8);
-  return `room${roomId}_${meterType}_${timestamp}_${randomSuffix}${ext}`;
+  return `room${roomId}_${ImageType}_${timestamp}_${randomSuffix}${ext}`;
 };
 
 /**
@@ -299,17 +299,17 @@ export const createPresignedUrlWithClient = async (
   roomNumber: string,
   fileName: string,
   contentType?: string,
-  meterType?: MeterType,
+  imageType?: ImageType,
 ): Promise<{ url: string, fileName: string } | null> => {
   const bucket = process.env['AWS_BUCKET_NAME']
 
   let command
 
   try {
-    if (operation === 'put' && meterType) {
+    if (operation === 'put' && imageType) {
       const generatedFilename = generateMeterPhotoFilename(
         Number(roomNumber),
-        meterType,
+        imageType,
         fileName
       );
       command = new PutObjectCommand({

@@ -5,7 +5,7 @@ import { ValidationError, AppError } from '../utils/errors';
 import { authenticateToken } from '../middleware/auth';
 import * as fileStorageService from '../services/fileStorageService';
 import prisma from '../config/database';
-import { MeterType, Operation } from '@/types';
+import { ImageType, MeterType, Operation } from '@/types';
 
 const router = express.Router();
 
@@ -298,7 +298,7 @@ router.get('/get-presigned',
       throw new AppError('User not authenticated', 401);
     }
 
-    const { operation, roomNumber, contentType, meterType, fileName } = req.query
+    const { operation, roomNumber, contentType, imageType, fileName } = req.query
 
     if (Number.isInteger(roomNumber)) {
       throw new AppError('Room number is not an integer', 400);
@@ -308,7 +308,7 @@ router.get('/get-presigned',
       throw new AppError('Missing parameters', 400);
     }
 
-    const result = await fileStorageService.createPresignedUrlWithClient(operation as Operation, roomNumber as string, fileName as string, contentType as string | undefined, meterType as MeterType | undefined)
+    const result = await fileStorageService.createPresignedUrlWithClient(operation as Operation, roomNumber as string, fileName as string, contentType as string | undefined, imageType as ImageType | undefined)
 
     if (result) {
       res.json({

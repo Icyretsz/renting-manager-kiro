@@ -20,6 +20,7 @@ import { UploadFile } from 'antd/es/upload';
 import { meterReadingKeys } from '@/hooks/useMeterReadings';
 import { roomKeys } from '@/hooks/useRooms';
 import { useTranslation } from 'react-i18next';
+import { ImageType } from '@/types';
 
 const { Title, Text } = Typography;
 
@@ -99,7 +100,7 @@ export const MeterReadingsPage: React.FC = () => {
     operation: 'get' as const,
     roomNumber: selectedRoomId.toString(),
     contentType: undefined,
-    meterType: 'water' as const,
+    imageType: 'water' as const,
     fileName: currentMonthReading.waterPhotoUrl
   } : null;
 
@@ -107,7 +108,7 @@ export const MeterReadingsPage: React.FC = () => {
     operation: 'get' as const,
     roomNumber: selectedRoomId.toString(),
     contentType: undefined,
-    meterType: 'electricity' as const,
+    imageType: 'electricity' as const,
     fileName: currentMonthReading.electricityPhotoUrl
   } : null;
 
@@ -209,7 +210,7 @@ export const MeterReadingsPage: React.FC = () => {
     }
   };
 
-  const handlePhotoUpload = async (file: File, type: 'water' | 'electricity'): Promise<boolean> => {
+  const handlePhotoUpload = async (file: File, imageType: ImageType): Promise<boolean> => {
     if (!selectedRoomId) {
       console.error('No room selected');
       return false;
@@ -221,7 +222,7 @@ export const MeterReadingsPage: React.FC = () => {
         operation: 'put',
         roomNumber: selectedRoomId.toString(),
         contentType: file.type,
-        meterType: type,
+        imageType: imageType,
         fileName: file.name
       });
       
@@ -235,7 +236,7 @@ export const MeterReadingsPage: React.FC = () => {
         // Store the filename from the presigned URL response
         const fileName = presignedURL.fileName;
         
-        if (type === 'water') {
+        if (imageType === 'water') {
           setWaterPhotoName(fileName);
           setWaterPhotoList([{
             uid: fileName,

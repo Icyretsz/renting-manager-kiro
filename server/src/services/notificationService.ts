@@ -16,8 +16,9 @@ interface NotificationData {
   requesterName?: string;
   requestedName?: string;
   isPermanent?: boolean;
+  description?: string;
 }
-export type NotificationType = 'reading_submitted' | 'reading_updated' | 'reading_modified' | 'reading_approved' | 'reading_rejected' | 'bill_generated' | 'bill_payed' | 'curfew_request' | 'curfew_approved' | 'curfew_rejected'
+export type NotificationType = 'reading_submitted' | 'reading_updated' | 'reading_modified' | 'reading_approved' | 'reading_rejected' | 'bill_generated' | 'bill_payed' | 'curfew_request' | 'curfew_approved' | 'curfew_rejected' | 'request_submitted' | 'request_approved' | 'request_rejected'
 
 export interface NotificationTemplate {
   type: NotificationType;
@@ -88,6 +89,21 @@ const getNotificationContent = (template: NotificationTemplate): { title: string
       return {
         title: 'Yêu cầu về trễ bị từ chối',
         body: `Yêu cầu về trễ của bạn bị từ chối.${data.reason ? ` Lý do: ${data.reason}.` : ''}`
+      };
+    case 'request_submitted':
+      return {
+        title: 'Yêu cầu mới',
+        body: `${data.requesterName} Phòng ${data.roomNumber} vừa gửi yêu cầu ${data.action}.${data.description ? ` Mô tả: ${data.description.substring(0, 50)}${data.description.length > 50 ? '...' : ''}` : ''}`
+      };
+    case 'request_approved':
+      return {
+        title: 'Yêu cầu được duyệt',
+        body: `Yêu cầu ${data.action} của bạn đã được duyệt.`
+      };
+    case 'request_rejected':
+      return {
+        title: 'Yêu cầu bị từ chối',
+        body: `Yêu cầu ${data.action} của bạn bị từ chối.${data.reason ? ` Lý do: ${data.reason}.` : ''}`
       };
     default:
       return {
@@ -197,6 +213,33 @@ const templates = {
         roomNumber: '',
         reason: reason || '',
         action: 'view_curfew',
+      },
+    }),
+
+    REQUEST_SUBMITTED: (requesterName: string, roomNumber: number, requestType: string, description?: string): NotificationTemplate => ({
+      type: 'request_submitted',
+      data: {
+        roomNumber: roomNumber.toString(),
+        action: requestType.toLowerCase(),
+        requesterName: requesterName,
+        ...(description && { description }),
+      },
+    }),
+
+    REQUEST_APPROVED: (roomNumber: number, requestType: string): NotificationTemplate => ({
+      type: 'request_approved',
+      data: {
+        roomNumber: roomNumber.toString(),
+        action: requestType.toLowerCase(),
+      },
+    }),
+
+    REQUEST_REJECTED: (roomNumber: number, requestType: string, reason?: string): NotificationTemplate => ({
+      type: 'request_rejected',
+      data: {
+        roomNumber: roomNumber.toString(),
+        action: requestType.toLowerCase(),
+        reason: reason || '',
       },
     })
   };
@@ -720,4 +763,42 @@ export const notifyCurfewRejected = async (
 ): Promise<void> => {
   const template = templates.CURFEW_REJECTED(reason);
   await sendToUsers([{ userId }], template, true);
+};
+
+/**
+ * Notify admins about new general request (repair/other)
+ */
+export const notifyGeneralRequest = async (
+  requesterName: string,
+  roomNumber: number,
+  requestType: string,
+  description: string
+): Promise<void> => {
+  const template = templates.REQUEST_SUBMITTED(requesterName, roomNumber, requestType, description);
+  await sendToAdmins(template);
+};
+
+/**
+ * Notify user about request approval
+ */
+export const notifyRequestApproved = async (
+  userId: string,
+  roomNumber: number,
+  requestType: string
+): Promise<void> => {
+  const template = templates.REQUEST_APPROVED(roomNumber, requestType);
+  await sendToUsers([{ userId }], template, true, true);
+};
+
+/**
+ * Notify user about request rejection
+ */
+export const notifyRequestRejected = async (
+  userId: string,
+  roomNumber: number,
+  requestType: string,
+  reason?: string
+): Promise<void> => {
+  const template = templates.REQUEST_REJECTED(roomNumber, requestType, reason);
+  await sendToUsers([{ userId }], template, true, true);
 };

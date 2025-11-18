@@ -1,9 +1,10 @@
-import { Form, Button, Select, Alert, Space, Tag, FormInstance } from 'antd';
+import { Form, Button, Select, Alert, Space, Tag, FormInstance, Upload, UploadFile, Image, UploadProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import TextArea from 'antd/es/input/TextArea';
-import { SaveOutlined, UserOutlined } from '@ant-design/icons';
+import { SaveOutlined, UserOutlined, UploadOutlined } from '@ant-design/icons';
 import { RoomTenant } from '@/hooks/useCurfew.ts';
 import { useState } from 'react';
+import getBase64 from '@/utils/getBase64';
 
 type FieldType = {
   requestType: string;
@@ -18,6 +19,10 @@ interface RequestFormProps {
   onFinish: (values: FieldType) => void;
   form: FormInstance;
   isRequestMutationPending: boolean;
+  repairPhotoList: UploadFile[];
+  setRepairPhotoList: (list: UploadFile[]) => void;
+  onPhotoUpload: (file: File) => Promise<boolean>;
+  uploadLoading: boolean;
 }
 
 const RequestForm = ({
@@ -26,12 +31,36 @@ const RequestForm = ({
   onFinish,
   form,
   isRequestMutationPending,
+  repairPhotoList,
+  setRepairPhotoList,
+  onPhotoUpload,
+  uploadLoading,
 }: RequestFormProps) => {
   const { t } = useTranslation();
   const [requestType, setRequestType] = useState<
     'curfew' | 'repair' | 'other' | ''
   >('');
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
   const { Option } = Select;
+
+  const handlePhotoRemove = (file: UploadFile) => {
+    setRepairPhotoList(repairPhotoList.filter(f => f.uid !== file.uid));
+  };
+
+  const handlePreview = async (file: UploadFile) => {
+    if (!file.url && !file.preview) {
+      file.preview = await getBase64(file.originFileObj as File);
+    }
+
+    setPreviewImage(file.url || (file.preview as string));
+    setPreviewOpen(true);
+    setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
+  };
+
+    const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) =>
+    setRepairPhotoList(newFileList);
 
   return (
     <>
@@ -59,15 +88,66 @@ const RequestForm = ({
         </Form.Item>
 
         {requestType !== 'curfew' && requestType !== '' && (
-          <Form.Item
-            name="requestDescription"
-            label={t('request.requestDescription')}
-          >
-            <TextArea
-              className="w-full"
-              placeholder={t('request.descriptionPlaceholder')}
-            />
-          </Form.Item>
+          <>
+            <Form.Item
+              name="requestDescription"
+              label={t('request.requestDescription')}
+              rules={[
+                { required: true, message: t('request.descriptionRequired') },
+              ]}
+            >
+              <TextArea
+                className="w-full"
+                placeholder={t('request.descriptionPlaceholder')}
+                rows={4}
+                maxLength={500}
+                showCount
+              />
+            </Form.Item>
+
+            {requestType === 'repair' && (
+              <>
+                <Form.Item label={t('request.uploadPhotos')}>
+                  <Upload
+                    listType="picture-card"
+                    fileList={repairPhotoList}
+                    beforeUpload={(file) => {
+                      onPhotoUpload(file);
+                      return false;
+                    }}
+                    onRemove={handlePhotoRemove}
+                    maxCount={3}
+                    accept="image/*"
+                    onPreview={handlePreview}
+                    onChange={handleChange}
+                  >
+                    {repairPhotoList.length < 3 && (
+                      <div>
+                        <UploadOutlined />
+                        <div style={{ marginTop: 8 }}>
+                          {t('request.uploadPhoto')}
+                        </div>
+                      </div>
+                    )}
+                  </Upload>
+                  <div className="text-xs text-gray-500 mt-2">
+                    {t('request.maxPhotos')}
+                  </div>
+                </Form.Item>
+                {previewImage && (
+                  <Image
+                    wrapperStyle={{ display: 'none' }}
+                    preview={{
+                      visible: previewOpen,
+                      onVisibleChange: (visible) => setPreviewOpen(visible),
+                      afterOpenChange: (visible) => !visible && setPreviewImage(''),
+                    }}
+                    src={previewImage}
+                  />
+                )}
+              </>
+            )}
+          </>
         )}
 
         {requestType === 'curfew' && (
@@ -148,9 +228,9 @@ const RequestForm = ({
             className="w-full"
             size="large"
             disabled={requestType === ''}
-            loading={isRequestMutationPending}
+            loading={isRequestMutationPending || uploadLoading}
           >
-              {`${t('request.title')}`}
+            {`${t('request.submitRequest')}`}
           </Button>
         </Form.Item>
       </Form>
