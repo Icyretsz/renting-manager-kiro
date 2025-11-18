@@ -25,6 +25,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { useTranslation } from 'react-i18next';
 import CommunicationButtons from '@/components/Common/CommunicationButtons.tsx';
+import UserRequestPage from '@/pages/UserRequestPage.tsx';
 
 // Main app content that requires authentication
 const AppContent = () => {
@@ -206,6 +207,16 @@ const AppContent = () => {
             ) : (
               <Navigate to="/unauthorized" replace />
             )
+          }
+        />
+        <Route
+          path="/requests"
+          element={
+            <ProtectedRoute requireTenantLink={userRole !== 'ADMIN'}>
+              <MainLayout>
+                <UserRequestPage />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route

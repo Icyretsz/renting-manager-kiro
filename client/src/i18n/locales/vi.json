@@ -554,6 +554,20 @@
       "billings": "Hóa đơn",
       "rooms": "Phòng",
       "userManagement": "Người dùng",
-      "approvals": "Duyệt"
+      "approvals": "Duyệt",
+      "requests": "Gửi yêu cầu"
+    },
+    "request": {
+      "title": "Gửi yêu cầu",
+      "description": "Gửi các yêu cầu như: yêu cầu về trễ, yêu cầu sửa chữa... tại đây",
+      "request": "Yêu cầu",
+      "chooseRequest": "Chọn yêu cầu",
+      "curfewRequest": "Yêu cầu về trễ",
+      "repairRequest": "Yêu cầu sửa chữa",
+      "otherRequest": "Yêu cầu khác",
+      "requestDescription": "Mô tả",
+      "descriptionPlaceholder": "Nhập mô tả yêu cầu (tùy chọn)",
+      "emptyRequestTypeError": "Vui lòng chọn 1 loại yêu cầu",
+      "viewRequestHistory": "Xem lịch sử yêu cầu"
     }
 }

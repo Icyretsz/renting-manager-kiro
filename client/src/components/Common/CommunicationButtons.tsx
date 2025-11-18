@@ -3,7 +3,7 @@ const CommunicationButtons = () => {
     <>
       <a
         href="tel:+84972935140"
-        className="fixed bottom-36 right-3 w-[45px] h-[45px] bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-[1000]"
+        className="fixed bottom-36 right-5 w-[45px] h-[45px] bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-[1000]"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -27,7 +27,7 @@ const CommunicationButtons = () => {
         href="https://zalo.me/84972935140"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-20 right-3 w-[45px] h-[45px] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-[1000]"
+        className="fixed bottom-20 right-5 w-[45px] h-[45px] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-[1000]"
       >
         <img
           src="/zalo_logo.png"

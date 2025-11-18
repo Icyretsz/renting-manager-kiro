@@ -6,6 +6,7 @@ import {
   FileTextOutlined,
   DollarOutlined,
   CheckCircleOutlined,
+  SendOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -59,7 +60,14 @@ export const MobileNavigation: React.FC = () => {
         path: '/user-management',
         adminOnly: true,
       }
-    ] : []),
+    ] : [
+      {
+        key: 'requests',
+        icon: <SendOutlined />,
+        label: `${t('navigation.requests')}`,
+        path: '/requests',
+      }
+    ]),
   ];
 
   const handleNavigation = (path: string) => {
