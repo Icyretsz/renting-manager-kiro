@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Form, InputNumber, Button, Upload, Divider, Alert, Modal, Image, UploadFile } from 'antd';
+import { Card, Form, InputNumber, Button, Upload, Divider, Alert, Image, UploadFile } from 'antd';
 import { SaveOutlined, PlusOutlined } from '@ant-design/icons';
 import { MeterReadingFormProps } from '@/types';
 import { BillCalculationCard } from './BillCalculationCard';
@@ -37,7 +37,7 @@ export const MeterReadingForm: React.FC<MeterReadingFormProps> = ({
   const { t } = useTranslation();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
-  const [previewTitle, setPreviewTitle] = useState('');
+  const [_previewTitle, setPreviewTitle] = useState('');
 
   const handlePreview = async (file: UploadFile) => {
     if (!file.url && !file.preview) {

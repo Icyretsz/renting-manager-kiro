@@ -571,6 +571,88 @@ export const getCurfewModifications = async (req: Request, res: Response, next: 
 };
 
 /**
+ * Get current user's curfew modification history
+ */
+export const getMyCurfewModifications = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    // Get user's tenant
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        tenant: true
+      }
+    });
+
+    if (!user?.tenant) {
+      // User has no tenant, return empty array
+      res.json({
+        success: true,
+        data: []
+      });
+      return;
+    }
+
+    // Get all tenants in the same room
+    const roomTenants = await prisma.tenant.findMany({
+      where: {
+        roomId: user.tenant.roomId,
+        isActive: true
+      },
+      select: {
+        id: true
+      }
+    });
+
+    const tenantIds = roomTenants.map(t => t.id);
+
+    // Get modifications for all tenants in the room
+    const modifications = await prisma.curfewModification.findMany({
+      where: {
+        tenantId: { in: tenantIds }
+      },
+      include: {
+        modifier: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        },
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            roomId: true,
+            room: {
+              select: {
+                roomNumber: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        modifiedAt: 'desc'
+      }
+    });
+
+    res.json({
+      success: true,
+      data: modifications
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Manually change tenant curfew status (Admin only)
  * For direct admin control in TenantModal
  */

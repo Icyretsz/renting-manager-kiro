@@ -2,11 +2,13 @@ import { PageErrorBoundary } from '@/components/ErrorBoundary';
 import { Button, Card, Form, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import RequestForm from '@/components/Requests/RequestForm.tsx';
-import { useRoomTenantsQuery } from '@/hooks/useCurfew.ts';
+import { RequestHistoryModal } from '@/components/Requests/RequestHistoryModal';
+import { useRoomTenantsQuery, useRequestCurfewOverrideMutation } from '@/hooks/useCurfew.ts';
 import { LoadingSpinner } from '@/components/Loading';
-import type { FormProps, UploadProps } from 'antd';
+import type { FormProps } from 'antd';
 import { HistoryOutlined } from '@ant-design/icons';
 import { useCreateRequestMutation } from '@/hooks/useRequests';
+import { useAllUserRequestsQuery } from '@/hooks/useAllUserRequests';
 import { useState } from 'react';
 import { UploadFile } from 'antd/es/upload';
 import { useGetPresignedURLMutation, useUploadToS3Mutation } from '@/hooks/useFileUpload';
@@ -25,7 +27,14 @@ const UserRequestPage = () => {
   const { user } = useAuth();
   const { data: roomTenants, isLoading: isTenantsLoading } = useRoomTenantsQuery();
   const createRequestMutation = useCreateRequestMutation();
+  const curfewRequestMutation = useRequestCurfewOverrideMutation();
+  const { data: allRequests, isLoading: isRequestsLoading } = useAllUserRequestsQuery();
   const [form] = Form.useForm();
+
+  console.log(allRequests)
+
+  // Modal states
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   // Photo upload states
   const [repairPhotoList, setRepairPhotoList] = useState<UploadFile[]>([]);
@@ -76,14 +85,15 @@ const UserRequestPage = () => {
       if (values.requestType === 'curfew') {
         if (!values.tenantIds || values.tenantIds.length === 0) return;
         
-        await createRequestMutation.mutateAsync({
-          requestType: 'CURFEW',
+        // Use old curfew route for curfew requests
+        await curfewRequestMutation.mutateAsync({
           tenantIds: values.tenantIds,
           reason: values.curfewReason,
         });
       } else if (values.requestType === 'repair') {
         if (!values.requestDescription) return;
         
+        // Use new request route for repair requests
         await createRequestMutation.mutateAsync({
           requestType: 'REPAIR',
           description: values.requestDescription,
@@ -96,6 +106,7 @@ const UserRequestPage = () => {
       } else if (values.requestType === 'other') {
         if (!values.requestDescription) return;
         
+        // Use new request route for other requests
         await createRequestMutation.mutateAsync({
           requestType: 'OTHER',
           description: values.requestDescription,
@@ -123,17 +134,26 @@ const UserRequestPage = () => {
           <Button
             icon={<HistoryOutlined />}
             className="w-full"
+            onClick={() => setShowHistoryModal(true)}
+            loading={isRequestsLoading}
           >
             {`${t('request.viewRequestHistory')}`}
           </Button>
         </Card>
+
+        <RequestHistoryModal
+          visible={showHistoryModal}
+          onClose={() => setShowHistoryModal(false)}
+          requests={allRequests || []}
+          loading={isRequestsLoading}
+        />
         <Card size="small">
           <RequestForm
             roomTenants={roomTenants ? roomTenants : []}
             isTenantsLoading={isTenantsLoading}
             onFinish={onFinish}
             form={form}
-            isRequestMutationPending={createRequestMutation.isPending}
+            isRequestMutationPending={createRequestMutation.isPending || curfewRequestMutation.isPending}
             repairPhotoList={repairPhotoList}
             setRepairPhotoList={setRepairPhotoList}
             onPhotoUpload={handlePhotoUpload}

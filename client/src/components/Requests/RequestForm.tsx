@@ -42,7 +42,7 @@ const RequestForm = ({
   >('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
-  const [previewTitle, setPreviewTitle] = useState('');
+  const [_previewTitle, setPreviewTitle] = useState('');
   const { Option } = Select;
 
   const handlePhotoRemove = (file: UploadFile) => {
@@ -59,7 +59,7 @@ const RequestForm = ({
     setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
   };
 
-    const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) =>
+  const handleChange: UploadProps['onChange'] = ({ fileList: newFileList }) =>
     setRepairPhotoList(newFileList);
 
   return (
@@ -107,6 +107,13 @@ const RequestForm = ({
 
             {requestType === 'repair' && (
               <>
+                <Alert
+                  message={t('common.note')}
+                  description={t('request.repairRequestTut')}
+                  type="info"
+                  showIcon
+                  className="mb-4"
+                />
                 <Form.Item label={t('request.uploadPhotos')}>
                   <Upload
                     listType="picture-card"

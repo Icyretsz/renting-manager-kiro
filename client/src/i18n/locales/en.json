@@ -30,7 +30,8 @@
     "date": "Date",
     "time": "Time",
     "more": "More",
-    "pleaseWait": "Please wait {{seconds}}s before refreshing again"
+    "pleaseWait": "Please wait {{seconds}}s before refreshing again",
+    "note": "Lưu ý"
   },
   "auth": {
     "signIn": "Sign In",
@@ -577,6 +578,21 @@
     "approveSuccess": "Request approved",
     "approveError": "Can't approve request",
     "rejectSuccess": "Request rejected",
-    "rejectError": "Can't reject request"
+    "rejectError": "Can't reject request",
+    "requestHistory": "View request history",
+      "type": "Type",
+      "photos": "Images",
+      "status": "Status",
+      "createdAt": "Creation Date",
+      "approvedAt": "Approved On",
+      "reason": "Reason",
+      "statusPending": "Pending",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "curfewFor": "Curfew override requested for",
+      "tenants": "tenant",
+      "requests": "requests",
+      "noRequests": "No request found",
+      "repairRequestTut": "When there is a repair request, please describe what needs to be repaired and take photos if necessary. Someone will come up to inspect for you. If there are any replacements required, the cost of replacement materials will be added to your room bill."
   }
 }

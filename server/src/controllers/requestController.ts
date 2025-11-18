@@ -4,12 +4,12 @@ import { AppError, ValidationError } from '../utils/errors';
 import * as notificationService from '../services/notificationService';
 
 /**
- * Create a new request (curfew, repair, or other)
+ * Create a new request (repair or other only - curfew uses separate endpoint)
  */
 export const createRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const { requestType, description, photoUrls, tenantIds, reason } = req.body;
+    const { requestType, description, photoUrls } = req.body;
 
     if (!userId) {
       throw new AppError('Unauthorized', 401);
@@ -34,159 +34,48 @@ export const createRequest = async (req: Request, res: Response, next: NextFunct
     const userRoomId = requestingUser.tenant.roomId;
     const roomNumber = requestingUser.tenant.room?.roomNumber || 0;
 
-    // Validate request type
-    if (!['CURFEW', 'REPAIR', 'OTHER'].includes(requestType)) {
-      throw new ValidationError('Invalid request type');
+    // Validate request type - only REPAIR and OTHER allowed here
+    if (!['REPAIR', 'OTHER'].includes(requestType)) {
+      throw new ValidationError('Invalid request type. Use /api/curfew/request for curfew requests.');
     }
 
-    // Handle curfew-specific validation
-    if (requestType === 'CURFEW') {
-      if (!tenantIds || !Array.isArray(tenantIds) || tenantIds.length === 0) {
-        throw new ValidationError('At least one tenant must be selected for curfew requests');
-      }
+    // Validate description is provided
+    if (!description || description.trim().length === 0) {
+      throw new ValidationError('Description is required for repair and other requests');
+    }
 
-      // Verify all selected tenants are in the same room
-      const selectedTenants = await prisma.tenant.findMany({
-        where: {
-          id: { in: tenantIds },
-          roomId: userRoomId
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
-          }
-        }
-      });
-
-      if (selectedTenants.length !== tenantIds.length) {
-        throw new ValidationError('All selected tenants must be in your room');
-      }
-
-      // Check if any tenant has a non-NORMAL status OR has a request today
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const blockedTenants = selectedTenants.filter(t => {
-        if (t.curfewStatus !== 'NORMAL') {
-          return true;
-        }
-        
-        if (t.curfewRequestedAt) {
-          const requestDate = new Date(t.curfewRequestedAt);
-          requestDate.setHours(0, 0, 0, 0);
-          return requestDate.getTime() === today.getTime();
-        }
-        
-        return false;
-      });
-
-      if (blockedTenants.length > 0) {
-        const names = blockedTenants.map(t => t.name).join(', ');
-        throw new ValidationError(`Cannot request override for these tenants today: ${names}. They either have an active status or already made a request today.`);
-      }
-
-      // Create request with curfew details
-      const request = await prisma.request.create({
-        data: {
-          userId,
-          roomId: userRoomId,
-          requestType: 'CURFEW',
-          status: 'PENDING',
-          description: reason || null,
-          curfewRequest: {
-            create: {
-              tenantIds,
-              reason: reason || null
-            }
-          }
-        },
-        include: {
-          curfewRequest: true
-        }
-      });
-
-      // Update tenant status to PENDING
-      for (const tenant of selectedTenants) {
-        const oldStatus = tenant.curfewStatus;
-        
-        await prisma.tenant.update({
-          where: { id: tenant.id },
-          data: {
-            curfewStatus: 'PENDING',
-            curfewRequestedAt: new Date()
-          }
-        });
-
-        // Create modification log
-        await prisma.curfewModification.create({
-          data: {
-            tenantId: tenant.id,
-            modifiedBy: userId,
-            oldStatus: oldStatus,
-            newStatus: 'PENDING',
-            modificationType: 'REQUEST',
-            reason: reason || null,
-            isPermanent: false
-          }
-        });
-      }
-
-      // Send notification to admins
-      const tenantNames = selectedTenants.map(t => t.name).join(', ');
-      await notificationService.notifyCurfewRequest(
-        requestingUser.name,
-        roomNumber,
-        tenantNames,
-        reason
-      );
-
-      res.json({
-        success: true,
-        message: 'Curfew request created successfully',
-        data: request
-      });
-    } else {
-      // Handle repair/other requests
-      if (!description || description.trim().length === 0) {
-        throw new ValidationError('Description is required for repair and other requests');
-      }
-
-      const request = await prisma.request.create({
-        data: {
-          userId,
-          roomId: userRoomId,
-          requestType,
-          status: 'PENDING',
-          description,
-          photoUrls: photoUrls || []
-        }
-      });
-
-      // Send notification to admins
-      await notificationService.notifyGeneralRequest(
-        requestingUser.name,
-        roomNumber,
+    // Create request
+    const request = await prisma.request.create({
+      data: {
+        userId,
+        roomId: userRoomId,
         requestType,
-        description
-      );
+        status: 'PENDING',
+        description,
+        photoUrls: photoUrls || []
+      }
+    });
 
-      res.json({
-        success: true,
-        message: `${requestType.toLowerCase()} request created successfully`,
-        data: request
-      });
-    }
+    // Send notification to admins
+    await notificationService.notifyGeneralRequest(
+      requestingUser.name,
+      roomNumber,
+      requestType,
+      description
+    );
+
+    res.json({
+      success: true,
+      message: `${requestType.toLowerCase()} request created successfully`,
+      data: request
+    });
   } catch (error) {
     next(error);
   }
 };
 
 /**
- * Get all requests for the current user
+ * Get all requests for the current user (REPAIR and OTHER only)
  */
 export const getUserRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -198,7 +87,10 @@ export const getUserRequests = async (req: Request, res: Response, next: NextFun
 
     const requests = await prisma.request.findMany({
       where: {
-        userId
+        userId,
+        requestType: {
+          in: ['REPAIR', 'OTHER']
+        }
       },
       include: {
         room: {
@@ -207,7 +99,6 @@ export const getUserRequests = async (req: Request, res: Response, next: NextFun
             floor: true
           }
         },
-        curfewRequest: true,
         approver: {
           select: {
             id: true,
@@ -231,13 +122,16 @@ export const getUserRequests = async (req: Request, res: Response, next: NextFun
 };
 
 /**
- * Get all pending requests (Admin only)
+ * Get all pending requests (Admin only - REPAIR and OTHER only)
  */
 export const getPendingRequests = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const requests = await prisma.request.findMany({
       where: {
-        status: 'PENDING'
+        status: 'PENDING',
+        requestType: {
+          in: ['REPAIR', 'OTHER']
+        }
       },
       include: {
         user: {
@@ -252,8 +146,7 @@ export const getPendingRequests = async (_req: Request, res: Response, next: Nex
             roomNumber: true,
             floor: true
           }
-        },
-        curfewRequest: true
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -270,19 +163,23 @@ export const getPendingRequests = async (_req: Request, res: Response, next: Nex
 };
 
 /**
- * Get all requests (Admin only)
+ * Get all requests (Admin only - REPAIR and OTHER only)
  */
 export const getAllRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { status, requestType, roomId } = req.query;
 
-    const where: any = {};
+    const where: any = {
+      requestType: {
+        in: ['REPAIR', 'OTHER']
+      }
+    };
     
     if (status) {
       where.status = status;
     }
     
-    if (requestType) {
+    if (requestType && ['REPAIR', 'OTHER'].includes(requestType as string)) {
       where.requestType = requestType;
     }
     
@@ -306,7 +203,6 @@ export const getAllRequests = async (req: Request, res: Response, next: NextFunc
             floor: true
           }
         },
-        curfewRequest: true,
         approver: {
           select: {
             id: true,
@@ -330,16 +226,19 @@ export const getAllRequests = async (req: Request, res: Response, next: NextFunc
 };
 
 /**
- * Approve a request (Admin only)
+ * Approve a request (Admin only - repair/other only)
  */
 export const approveRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const adminId = req.user?.id;
     const { requestId } = req.params;
-    const { isPermanent = false } = req.body;
 
     if (!adminId) {
       throw new AppError('Unauthorized', 401);
+    }
+
+    if (!requestId) {
+      throw new ValidationError('Request ID is required');
     }
 
     const request = await prisma.request.findUnique({
@@ -355,8 +254,7 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
           select: {
             roomNumber: true
           }
-        },
-        curfewRequest: true
+        }
       }
     });
 
@@ -366,6 +264,11 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
 
     if (request.status !== 'PENDING') {
       throw new ValidationError('Only pending requests can be approved');
+    }
+
+    // Only handle REPAIR and OTHER types
+    if (request.requestType === 'CURFEW') {
+      throw new ValidationError('Use /api/curfew/approve for curfew requests');
     }
 
     // Update request status
@@ -378,71 +281,13 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
       }
     });
 
-    // Handle curfew-specific approval
-    if (request.requestType === 'CURFEW' && request.curfewRequest) {
-      const tenantIds = request.curfewRequest.tenantIds;
-      const newStatus = isPermanent ? 'APPROVED_PERMANENT' : 'APPROVED_TEMPORARY';
-
-      // Get tenant details
-      const tenants = await prisma.tenant.findMany({
-        where: {
-          id: { in: tenantIds }
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true
-            }
-          }
-        }
-      });
-
-      // Update each tenant
-      for (const tenant of tenants) {
-        const oldStatus = tenant.curfewStatus;
-        
-        await prisma.tenant.update({
-          where: { id: tenant.id },
-          data: {
-            curfewStatus: newStatus,
-            curfewApprovedAt: new Date(),
-            curfewApprovedBy: adminId
-          }
-        });
-
-        // Create modification log
-        await prisma.curfewModification.create({
-          data: {
-            tenantId: tenant.id,
-            modifiedBy: adminId,
-            oldStatus: oldStatus,
-            newStatus: newStatus,
-            modificationType: 'APPROVE',
-            isPermanent: isPermanent
-          }
-        });
-      }
-
-      // Send notification to user
-      const tenantNames = tenants.map(t => t.name).join(', ');
-      if (request.user) {
-        await notificationService.notifyCurfewApproved(
-          request.user.id,
-          request.room.roomNumber,
-          tenantNames,
-          isPermanent
-        );
-      }
-    } else {
-      // Send notification for repair/other requests
-      if (request.user) {
-        await notificationService.notifyRequestApproved(
-          request.user.id,
-          request.room.roomNumber,
-          request.requestType
-        );
-      }
+    // Send notification to user
+    if (request.user) {
+      await notificationService.notifyRequestApproved(
+        request.user.id,
+        request.room.roomNumber,
+        request.requestType
+      );
     }
 
     res.json({
@@ -455,7 +300,7 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
 };
 
 /**
- * Reject a request (Admin only)
+ * Reject a request (Admin only - repair/other only)
  */
 export const rejectRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -465,6 +310,10 @@ export const rejectRequest = async (req: Request, res: Response, next: NextFunct
 
     if (!adminId) {
       throw new AppError('Unauthorized', 401);
+    }
+
+    if (!requestId) {
+      throw new ValidationError('Request ID is required');
     }
 
     const request = await prisma.request.findUnique({
@@ -480,8 +329,7 @@ export const rejectRequest = async (req: Request, res: Response, next: NextFunct
           select: {
             roomNumber: true
           }
-        },
-        curfewRequest: true
+        }
       }
     });
 
@@ -491,6 +339,11 @@ export const rejectRequest = async (req: Request, res: Response, next: NextFunct
 
     if (request.status !== 'PENDING') {
       throw new ValidationError('Only pending requests can be rejected');
+    }
+
+    // Only handle REPAIR and OTHER types
+    if (request.requestType === 'CURFEW') {
+      throw new ValidationError('Use /api/curfew/reject for curfew requests');
     }
 
     // Update request status
@@ -504,62 +357,14 @@ export const rejectRequest = async (req: Request, res: Response, next: NextFunct
       }
     });
 
-    // Handle curfew-specific rejection
-    if (request.requestType === 'CURFEW' && request.curfewRequest) {
-      const tenantIds = request.curfewRequest.tenantIds;
-
-      // Get tenant details
-      const tenants = await prisma.tenant.findMany({
-        where: {
-          id: { in: tenantIds }
-        }
-      });
-
-      // Update each tenant back to NORMAL
-      for (const tenant of tenants) {
-        const oldStatus = tenant.curfewStatus;
-        
-        await prisma.tenant.update({
-          where: { id: tenant.id },
-          data: {
-            curfewStatus: 'NORMAL',
-            curfewRequestedAt: null,
-            curfewApprovedAt: null,
-            curfewApprovedBy: null
-          }
-        });
-
-        // Create modification log
-        await prisma.curfewModification.create({
-          data: {
-            tenantId: tenant.id,
-            modifiedBy: adminId,
-            oldStatus: oldStatus,
-            newStatus: 'NORMAL',
-            modificationType: 'REJECT',
-            reason: reason || null,
-            isPermanent: false
-          }
-        });
-      }
-
-      // Send notification to user
-      if (request.user) {
-        await notificationService.notifyCurfewRejected(
-          request.user.id,
-          reason
-        );
-      }
-    } else {
-      // Send notification for repair/other requests
-      if (request.user) {
-        await notificationService.notifyRequestRejected(
-          request.user.id,
-          request.room.roomNumber,
-          request.requestType,
-          reason
-        );
-      }
+    // Send notification to user
+    if (request.user) {
+      await notificationService.notifyRequestRejected(
+        request.user.id,
+        request.room.roomNumber,
+        request.requestType,
+        reason
+      );
     }
 
     res.json({

@@ -7,6 +7,9 @@ import {
   Empty,
   Tabs,
   Badge,
+  Image,
+  Space,
+  Spin,
 } from 'antd';
 import {
   DownOutlined,
@@ -27,6 +30,13 @@ import {
   useRejectCurfewOverrideMutation,
   curfewKeys,
 } from '@/hooks/useCurfew';
+import {
+  usePendingRequestsQuery,
+  useApproveRequestMutation,
+  useRejectRequestMutation,
+  requestKeys,
+} from '@/hooks/useRequests';
+import { useGetPresignedURLQuery } from '@/hooks/useFileUpload';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { RefreshButton } from '@/components/Common/RefreshButton';
@@ -40,6 +50,7 @@ import {
   CurfewHistoryModal,
   CurfewRejectModal,
 } from '@/components/Approvals';
+import { ToolOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -76,6 +87,11 @@ export const ApprovalsPage: React.FC = () => {
   const { data: pendingCurfewRequests, isLoading: curfewLoading } = usePendingCurfewRequestsQuery();
   const approveCurfewMutation = useApproveCurfewOverrideMutation();
   const rejectCurfewMutation = useRejectCurfewOverrideMutation();
+
+  // General requests queries
+  const { data: pendingRequests, isLoading: requestsLoading } = usePendingRequestsQuery();
+  const approveRequestMutation = useApproveRequestMutation();
+  const rejectRequestMutation = useRejectRequestMutation();
 
   if (!isAdmin()) {
     return (
@@ -234,6 +250,114 @@ export const ApprovalsPage: React.FC = () => {
     setCurfewHistoryVisible(true);
   };
 
+  // Component for rendering a request card with photo fetching
+  const RequestCard: React.FC<{ request: any }> = ({ request }) => {
+    // Fetch presigned URLs for photos
+    const photoQueries = (request.photoUrls || []).map((fileName: string) =>
+      useGetPresignedURLQuery(
+        fileName ? {
+          operation: 'get',
+          roomNumber: request.room?.roomNumber?.toString() || request.roomId.toString(),
+          contentType: undefined,
+          imageType: 'repair',
+          fileName: fileName
+        } : null
+      )
+    );
+
+    const isLoadingPhotos = photoQueries.some((q: { isLoading: boolean; }) => q.isLoading);
+    const photoURLs = photoQueries.map((q: { data: { url: string; }; }) => q.data?.url).filter(Boolean);
+
+    return (
+      <Card key={request.id} size="small" className="hover:shadow-md transition-shadow">
+        <div className="space-y-3">
+          {/* Header */}
+          <div className="flex justify-between items-start flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Tag color={request.requestType === 'REPAIR' ? 'orange' : 'purple'}>
+                {request.requestType}
+              </Tag>
+              <span className="text-sm text-gray-600">
+                Room {request.room?.roomNumber}
+              </span>
+            </div>
+            <Tag color="orange">PENDING</Tag>
+          </div>
+
+          {/* User Info */}
+          <div className="text-sm">
+            <span className="text-gray-600">Requested by: </span>
+            <span className="font-medium">{request.user?.name}</span>
+          </div>
+
+          {/* Description */}
+          <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
+            {request.description}
+          </div>
+
+          {/* Photos */}
+          {request.photoUrls && request.photoUrls.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-2">Attached photos:</div>
+              {isLoadingPhotos ? (
+                <div className="flex justify-center py-2">
+                  <Spin size="small" />
+                </div>
+              ) : (
+                <Image.PreviewGroup>
+                  <Space size={8}>
+                    {photoURLs.map((url : string, index : number) => (
+                      <Image
+                        key={index}
+                        width={80}
+                        height={80}
+                        src={url}
+                        alt={`Photo ${index + 1}`}
+                        style={{ objectFit: 'cover', borderRadius: 4 }}
+                      />
+                    ))}
+                  </Space>
+                </Image.PreviewGroup>
+              )}
+            </div>
+          )}
+
+          {/* Date */}
+          <div className="text-xs text-gray-500">
+            Submitted: {new Date(request.createdAt).toLocaleString()}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2 border-t">
+            <Button
+              type="primary"
+              size="small"
+              onClick={() => approveRequestMutation.mutate({ requestId: request.id })}
+              loading={approveRequestMutation.isPending}
+              className="flex-1"
+            >
+              Approve
+            </Button>
+            <Button
+              danger
+              size="small"
+              onClick={() => {
+                const reason = prompt('Enter rejection reason (optional):');
+                if (reason !== null) {
+                  rejectRequestMutation.mutate({ requestId: request.id, reason: reason || undefined });
+                }
+              }}
+              loading={rejectRequestMutation.isPending}
+              className="flex-1"
+            >
+              Reject
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
   // Group curfew requests by room
   const groupedCurfewRequests = (pendingCurfewRequests || []).reduce((acc: any, request: any) => {
     const roomNumber = request.room?.roomNumber || 'Unknown';
@@ -262,7 +386,7 @@ export const ApprovalsPage: React.FC = () => {
             </Text>
           </div>
           <RefreshButton
-            queryKeys={[meterReadingKeys.all, curfewKeys.all]}
+            queryKeys={[meterReadingKeys.all, curfewKeys.all, requestKeys.all]}
             tooltip="Refresh approvals"
           />
         </div>
@@ -293,6 +417,19 @@ export const ApprovalsPage: React.FC = () => {
                   Curfew Requests
                   {(pendingCurfewRequests?.length || 0) > 0 && (
                     <Badge count={pendingCurfewRequests?.length} className="ml-2" />
+                  )}
+                </span>
+              ),
+              children: null,
+            },
+            {
+              key: 'requests',
+              label: (
+                <span>
+                  <ToolOutlined />
+                  General Requests
+                  {(pendingRequests?.length || 0) > 0 && (
+                    <Badge count={pendingRequests?.length} className="ml-2" />
                   )}
                 </span>
               ),
@@ -570,6 +707,57 @@ export const ApprovalsPage: React.FC = () => {
                   onSubmit={handleRejectCurfewSubmit}
                   loading={rejectCurfewMutation.isPending}
                 />
+              </>
+            )}
+          </>
+        )}
+
+        {/* General Requests Tab */}
+        {activeTab === 'requests' && (
+          <>
+            {requestsLoading ? (
+              <LoadingSpinner message="Loading requests..." />
+            ) : (
+              <>
+                {/* Statistics */}
+                <Card>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-orange-500">
+                        {pendingRequests?.length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600">Pending Requests</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-orange-500">
+                        {pendingRequests?.filter(r => r.requestType === 'REPAIR').length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600">Repair Requests</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-purple-500">
+                        {pendingRequests?.filter(r => r.requestType === 'OTHER').length || 0}
+                      </div>
+                      <div className="text-sm text-gray-600">Other Requests</div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Requests List */}
+                <div className="space-y-3">
+                  {(pendingRequests?.length || 0) === 0 ? (
+                    <Card>
+                      <Empty
+                        description="No pending requests"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      />
+                    </Card>
+                  ) : (
+                    pendingRequests?.map((request) => (
+                      <RequestCard key={request.id} request={request} />
+                    ))
+                  )}
+                </div>
               </>
             )}
           </>

@@ -194,7 +194,7 @@ model Request {
   approvedBy      String?        @map("approved_by")
   approvedAt      DateTime?      @map("approved_at")
   rejectionReason String?        @map("rejection_reason")
-  curfewRequest   CurfewRequest?
+  curfewRequest   CurfewRequest? // Kept for backward compatibility
   approver        User?          @relation("RequestApprover", fields: [approvedBy], references: [id])
   room            Room           @relation(fields: [roomId], references: [id])
   user            User           @relation(fields: [userId], references: [id])
@@ -257,7 +257,7 @@ enum CurfewModificationType {
 }
 
 enum RequestType {
-  CURFEW
+  CURFEW // Kept for backward compatibility, but not used in new requests
   REPAIR
   OTHER
 }

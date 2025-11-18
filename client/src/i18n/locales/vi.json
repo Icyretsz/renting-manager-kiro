@@ -18,19 +18,20 @@
         "submit": "Gửi",
         "search": "Tìm kiếm",
         "filter": "Lọc",
+        "total": "Tổng",
         "export": "Xuất",
         "active": "Hoạt động",
         "inactive": "Không hoạt động",
         "status": "Trạng thái",
         "actions": "Hành động",
         "details": "Chi tiết",
-        "total": "Tổng cộng",
         "month": "Tháng",
         "year": "Năm",
         "date": "Ngày",
         "time": "Thời gian",
         "more": "Xem thêm",
-        "pleaseWait": "Vui lòng đợi {{seconds}}s trước khi làm mới lại"
+        "pleaseWait": "Vui lòng đợi {{seconds}}s trước khi làm mới lại",
+        "note": "Lưu ý"
     },
     "auth": {
         "signIn": "Đăng nhập",
@@ -585,6 +586,21 @@
       "approveSuccess": "Yêu cầu đã được phê duyệt",
       "approveError": "Không thể phê duyệt yêu cầu",
       "rejectSuccess": "Yêu cầu đã bị từ chối",
-      "rejectError": "Không thể từ chối yêu cầu"
+      "rejectError": "Không thể từ chối yêu cầu",
+      "requestHistory": "Lịch sử yêu cầu",
+      "type": "Loại",
+      "photos": "Ảnh",
+      "status": "Trạng thái",
+      "createdAt": "Ngày tạo",
+      "approvedAt": "Ngày duyệt",
+      "reason": "Lý do",
+      "statusPending": "Đang chờ",
+      "statusApproved": "Đã duyệt",
+      "statusRejected": "Đã từ chối",
+      "curfewFor": "Yêu cầu cho",
+      "tenants": "người",
+      "requests": "yêu cầu",
+      "noRequests": "Chưa có yêu cầu nào",
+      "repairRequestTut": "Khi có yêu cầu sửa chữa, hãy mô tả những gì cần sửa chữa và chụp ảnh nếu cần. Sẽ có người lên kiểm tra cho bạn. Nếu có phát sinh thay thế, tiền mua vật tư thay thế sẽ tính vào hóa đơn tiền phòng của bạn."
     }
 }

@@ -8,6 +8,7 @@ import { queryClient } from '@/services/queryClient';
 import { meterReadingKeys } from './useMeterReadings';
 import { billingKeys } from './useBilling';
 import { curfewKeys } from './useCurfew';
+import { requestKeys } from './useRequests';
 import { setupForegroundMessageListener } from '@/services/firebaseMessaging';
 
 export const useWebSocketNotifications = (navigate: NavigateFunction) => {
@@ -60,6 +61,15 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
           case 'curfew_approved':
           case 'curfew_rejected':
             targetPath = '/profile';
+            break;
+          
+          case 'request_submitted':
+            targetPath = '/approvals';
+            break;
+          
+          case 'request_approved':
+          case 'request_rejected':
+            targetPath = '/requests';
             break;
         }
         
@@ -117,6 +127,20 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             queryClient.invalidateQueries({ queryKey: curfewKeys.roomTenants() });
             queryClient.invalidateQueries({ queryKey: curfewKeys.all });
             queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+            break;
+
+          case 'request_submitted':
+            // Admin receives notification - invalidate pending requests
+            queryClient.invalidateQueries({ queryKey: requestKeys.pending() });
+            queryClient.invalidateQueries({ queryKey: requestKeys.all });
+            break;
+
+          case 'request_approved':
+          case 'request_rejected':
+            // User receives notification - invalidate user's requests
+            queryClient.invalidateQueries({ queryKey: requestKeys.myRequests() });
+            queryClient.invalidateQueries({ queryKey: requestKeys.all });
+            queryClient.invalidateQueries({ queryKey: ['allUserRequests'] });
             break;
 
           default:
@@ -231,6 +255,20 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
             queryClient.invalidateQueries({ queryKey: curfewKeys.roomTenants() });
             queryClient.invalidateQueries({ queryKey: curfewKeys.all });
             queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+            break;
+
+          case 'request_submitted':
+            // Admin receives notification - invalidate pending requests
+            queryClient.invalidateQueries({ queryKey: requestKeys.pending() });
+            queryClient.invalidateQueries({ queryKey: requestKeys.all });
+            break;
+
+          case 'request_approved':
+          case 'request_rejected':
+            // User receives notification - invalidate user's requests
+            queryClient.invalidateQueries({ queryKey: requestKeys.myRequests() });
+            queryClient.invalidateQueries({ queryKey: requestKeys.all });
+            queryClient.invalidateQueries({ queryKey: ['allUserRequests'] });
             break;
 
           default:

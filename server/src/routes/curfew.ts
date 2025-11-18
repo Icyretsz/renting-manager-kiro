@@ -9,7 +9,8 @@ import {
   resetCurfewOverrides,
   getPendingCurfewRequests,
   getCurfewModifications,
-  manualChangeCurfewStatus
+  manualChangeCurfewStatus,
+  getMyCurfewModifications
 } from '../controllers/curfewController';
 
 const router = Router();
@@ -17,6 +18,7 @@ const router = Router();
 // User routes (authenticated)
 router.get('/room-tenants', authenticate, getRoomTenants);
 router.post('/request', authenticate, requestCurfewOverride);
+router.get('/my-modifications', authenticate, getMyCurfewModifications);
 
 // Admin routes
 router.get('/pending', authenticate, requireAdmin, getPendingCurfewRequests);

@@ -149,7 +149,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
         operation: 'get',
         roomNumber: reading.roomId.toString(),
         contentType: undefined,
-        meterType: 'water',
+        imageType: 'water',
         fileName: reading.waterPhotoUrl
       } : null
     );
@@ -159,7 +159,7 @@ export const ReadingHistoryModal: React.FC<ReadingHistoryModalProps> = ({
         operation: 'get',
         roomNumber: reading.roomId.toString(),
         contentType: undefined,
-        meterType: 'electricity',
+        imageType: 'electricity',
         fileName: reading.electricityPhotoUrl
       } : null
     );

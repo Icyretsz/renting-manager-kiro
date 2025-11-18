@@ -254,6 +254,7 @@ export interface CurfewRequest {
   id: string;
   requestId: string;
   tenantIds: string[];
+  tenantNames?: string[]; // For display purposes in history
   reason?: string;
 }
 
