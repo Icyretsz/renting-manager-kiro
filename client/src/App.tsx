@@ -24,6 +24,7 @@ import './styles/notifications.css';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { useTranslation } from 'react-i18next';
+import CommunicationButtons from '@/components/Common/CommunicationButtons.tsx';
 
 // Main app content that requires authentication
 const AppContent = () => {
@@ -57,6 +58,7 @@ const AppContent = () => {
   return (
     <>
       {contextHolder}
+      <CommunicationButtons/>
       {/* <InvalidateQueriesButton /> */}
       <Routes>
         {/* Public routes */}
