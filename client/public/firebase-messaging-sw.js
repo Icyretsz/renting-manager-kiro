@@ -46,37 +46,6 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Helper function to get navigation path based on notification type
-function getNavigationPath(notificationData) {
-  const type = notificationData?.type;
-  const roomNumber = notificationData?.roomNumber;
-
-  switch (type) {
-    case 'reading_submitted':
-    case 'reading_updated':
-    case 'curfew_request':
-      return '/approvals';
-    
-    case 'reading_approved':
-    case 'bill_generated':
-      return '/billing';
-    
-    case 'reading_rejected':
-    case 'reading_modified':
-      return '/meter-readings';
-    
-    case 'bill_payed':
-      return '/billing';
-    
-    case 'curfew_approved':
-    case 'curfew_rejected':
-      return '/';
-    
-    default:
-      return '/';
-  }
-}
-
 // Handle notification click events
 self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event);
@@ -91,10 +60,6 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // Get the appropriate navigation path
-  const targetPath = getNavigationPath(notificationData);
-  const urlToOpen = new URL(targetPath, self.location.origin).href;
-
   // Try to focus existing window or open new one
   event.waitUntil(
     clients.matchAll({
@@ -105,15 +70,21 @@ self.addEventListener('notificationclick', (event) => {
       for (let i = 0; i < clientList.length; i++) {
         const client = clientList[i];
         if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          // Focus the existing window and navigate to the target path
-          return client.focus().then(() => {
-            return client.navigate(urlToOpen);
+          // Send message to the React app to handle navigation and query invalidation
+          client.postMessage({
+            type: 'NOTIFICATION_CLICKED',
+            notificationType: notificationData?.type,
+            notificationData: notificationData
           });
+          
+          // Focus the existing window (React app will handle navigation)
+          return client.focus();
         }
       }
-      // If no window is open, open a new one
+      // If no window is open, open a new one at the home page
+      // The React app will handle navigation once it loads
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(self.location.origin);
       }
     })
   );

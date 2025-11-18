@@ -12,7 +12,7 @@ interface CurfewQuickAccessCardProps {
   tenant: Tenant;
 }
 
-export const CurfewQuickAccessCard: React.FC<CurfewQuickAccessCardProps> = ({ tenant }) => {
+export const CurfewQuickAccessCard: React.FC<CurfewQuickAccessCardProps> = () => {
   const [curfewModalVisible, setCurfewModalVisible] = useState(false);
   const { t } = useTranslation();
   const { data: roomTenants, isLoading } = useRoomTenantsQuery();

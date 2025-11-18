@@ -28,6 +28,110 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
     setupForegroundMessageListener(handleFirebaseNotification);
   }, [addNotification, showNotification]);
 
+  // Listen for messages from service worker (when Firebase background notification is clicked)
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'NOTIFICATION_CLICKED') {
+        const { notificationType, notificationData } = event.data;
+        
+        // Navigate to appropriate page based on notification type
+        let targetPath = '/';
+        switch (notificationType) {
+          case 'reading_submitted':
+          case 'reading_updated':
+          case 'curfew_request':
+            targetPath = '/approvals';
+            break;
+          
+          case 'reading_approved':
+          case 'bill_generated':
+            targetPath = '/billing';
+            break;
+          
+          case 'reading_rejected':
+          case 'reading_modified':
+            targetPath = '/meter-readings';
+            break;
+          
+          case 'bill_payed':
+            targetPath = '/financial-dashboard';
+            break;
+          
+          case 'curfew_approved':
+          case 'curfew_rejected':
+            targetPath = '/profile';
+            break;
+        }
+        
+        // Navigate to the target path
+        navigate(targetPath);
+        
+        // Invalidate queries based on notification type (same logic as WebSocket notifications)
+        switch (notificationType) {
+          case 'reading_submitted':
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            queryClient.invalidateQueries({ queryKey: [...meterReadingKeys.all, 'admin-all'] });
+            break;
+
+          case 'reading_updated':
+          case 'reading_modified':
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            if (notificationData?.roomNumber) {
+              queryClient.invalidateQueries({ queryKey: meterReadingKeys.byRoom(Number(notificationData.roomNumber)) });
+              queryClient.invalidateQueries({ queryKey: billingKeys.byRoom(Number(notificationData.roomNumber)) });
+              queryClient.invalidateQueries({ queryKey: billingKeys.lists() });
+            }
+            break;
+
+          case 'reading_approved':
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            if (notificationData?.roomNumber) {
+              queryClient.invalidateQueries({ queryKey: meterReadingKeys.byRoom(Number(notificationData.roomNumber)) });
+              queryClient.invalidateQueries({ queryKey: billingKeys.byRoom(Number(notificationData.roomNumber)) });
+              queryClient.invalidateQueries({ queryKey: billingKeys.lists() });
+            }
+            break;
+
+          case 'reading_rejected':
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+            if (notificationData?.roomNumber) {
+              queryClient.invalidateQueries({ queryKey: meterReadingKeys.byRoom(Number(notificationData.roomNumber)) });
+            }
+            break;
+
+          case 'bill_payed':
+            queryClient.invalidateQueries({ queryKey: billingKeys.all });
+            if (notificationData?.roomNumber) {
+              queryClient.invalidateQueries({ queryKey: billingKeys.byRoom(Number(notificationData.roomNumber)) });
+              queryClient.invalidateQueries({ queryKey: billingKeys.lists() });
+            }
+            break;
+
+          case 'curfew_request':
+            queryClient.invalidateQueries({ queryKey: [...curfewKeys.all, 'pending'] });
+            queryClient.invalidateQueries({ queryKey: curfewKeys.all });
+            break;
+
+          case 'curfew_approved':
+          case 'curfew_rejected':
+            queryClient.invalidateQueries({ queryKey: curfewKeys.roomTenants() });
+            queryClient.invalidateQueries({ queryKey: curfewKeys.all });
+            queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+            break;
+
+          default:
+            queryClient.invalidateQueries({ queryKey: meterReadingKeys.all });
+        }
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
+    };
+  }, [navigate]);
+
   useEffect(() => {
     if (!socket || !isConnected) {
       return;
