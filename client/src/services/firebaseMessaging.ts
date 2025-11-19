@@ -3,7 +3,7 @@ import { getMessaging, getToken, onMessage, MessagePayload } from 'firebase/mess
 import type { ApiResponse, WebsocketNotification, NotificationType, NotificationData } from '@/types';
 import { UseMutationResult } from '@tanstack/react-query';
 import GetNotificationMessage from '@/utils/getNotificationMessage';
-
+//firebaseMessaging.ts
 // Firebase configuration (these should be environment variables)
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_APIKEY,
@@ -226,7 +226,7 @@ export const initializePushNotifications = async (fcmTokenMutation: UseMutationR
     }
 
     // Set up message listener (will be called again with callback from useWebSocketNotifications)
-    setupForegroundMessageListener();
+    //setupForegroundMessageListener();
 
     // Set up token refresh listener (returns cleanup function)
     //const cleanupTokenListener = setupTokenRefreshListener(fcmTokenMutation);

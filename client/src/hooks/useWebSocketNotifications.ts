@@ -9,7 +9,6 @@ import { meterReadingKeys } from './useMeterReadings';
 import { billingKeys } from './useBilling';
 import { curfewKeys } from './useCurfew';
 import { requestKeys } from './useRequests';
-import { setupForegroundMessageListener } from '@/services/firebaseMessaging';
 
 export const useWebSocketNotifications = (navigate: NavigateFunction) => {
   const { socket, isConnected } = useSocket();
@@ -19,15 +18,16 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
   const { showNotification, contextHolder } = useAntNotification(navigate);
 
   // Set up Firebase foreground message listener with in-app notification callback
-  useEffect(() => {
-    const handleFirebaseNotification = (notification: WebsocketNotification) => {
-      // Add to store and show in-app notification
-      addNotification(notification);
-      showNotification(notification);
-    };
-
-    setupForegroundMessageListener(handleFirebaseNotification);
-  }, [addNotification, showNotification]);
+  // useEffect(() => {
+  //   const handleFirebaseNotification = (notification: WebsocketNotification) => {
+  //     // Add to store and show in-app notification
+  //     console.log('Firebase notification received!')
+  //     addNotification(notification);
+  //     showNotification(notification);
+  //   };
+  //
+  //   setupForegroundMessageListener(handleFirebaseNotification);
+  // }, [addNotification, showNotification]);
 
   // Listen for messages from service worker (when Firebase background notification is clicked)
   useEffect(() => {
@@ -167,7 +167,7 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
       addNotification(notification);
 
       // Show Ant Design notification
-      showNotification(notification);
+      if (document.visibilityState === 'visible') showNotification(notification);
 
       if (notification.data) {
         const notificationData = notification.data;
