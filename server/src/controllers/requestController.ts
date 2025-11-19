@@ -6,7 +6,11 @@ import * as notificationService from '../services/notificationService';
 /**
  * Create a new request (repair or other only - curfew uses separate endpoint)
  */
-export const createRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const userId = req.user?.id;
     const { requestType, description, photoUrls } = req.body;
@@ -21,14 +25,17 @@ export const createRequest = async (req: Request, res: Response, next: NextFunct
       include: {
         tenant: {
           include: {
-            room: true
-          }
-        }
-      }
+            room: true,
+          },
+        },
+      },
     });
 
     if (!requestingUser?.tenant) {
-      throw new AppError('You must be linked to a tenant to create a request', 403);
+      throw new AppError(
+        'You must be linked to a tenant to create a request',
+        403
+      );
     }
 
     const userRoomId = requestingUser.tenant.roomId;
@@ -36,12 +43,16 @@ export const createRequest = async (req: Request, res: Response, next: NextFunct
 
     // Validate request type - only REPAIR and OTHER allowed here
     if (!['REPAIR', 'OTHER'].includes(requestType)) {
-      throw new ValidationError('Invalid request type. Use /api/curfew/request for curfew requests.');
+      throw new ValidationError(
+        'Invalid request type. Use /api/curfew/request for curfew requests.'
+      );
     }
 
     // Validate description is provided
     if (!description || description.trim().length === 0) {
-      throw new ValidationError('Description is required for repair and other requests');
+      throw new ValidationError(
+        'Description is required for repair and other requests'
+      );
     }
 
     // Create request
@@ -52,8 +63,8 @@ export const createRequest = async (req: Request, res: Response, next: NextFunct
         requestType,
         status: 'PENDING',
         description,
-        photoUrls: photoUrls || []
-      }
+        photoUrls: photoUrls || [],
+      },
     });
 
     // Send notification to admins
@@ -67,7 +78,7 @@ export const createRequest = async (req: Request, res: Response, next: NextFunct
     res.json({
       success: true,
       message: `${requestType.toLowerCase()} request created successfully`,
-      data: request
+      data: request,
     });
   } catch (error) {
     next(error);
@@ -77,7 +88,11 @@ export const createRequest = async (req: Request, res: Response, next: NextFunct
 /**
  * Get all requests for the current user (REPAIR and OTHER only)
  */
-export const getUserRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getUserRequests = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const userId = req.user?.id;
 
@@ -89,32 +104,32 @@ export const getUserRequests = async (req: Request, res: Response, next: NextFun
       where: {
         userId,
         requestType: {
-          in: ['REPAIR', 'OTHER']
-        }
+          in: ['REPAIR', 'OTHER'],
+        },
       },
       include: {
         room: {
           select: {
             roomNumber: true,
-            floor: true
-          }
+            floor: true,
+          },
         },
         approver: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     });
 
     res.json({
       success: true,
-      data: requests
+      data: requests,
     });
   } catch (error) {
     next(error);
@@ -124,38 +139,42 @@ export const getUserRequests = async (req: Request, res: Response, next: NextFun
 /**
  * Get all pending requests (Admin only - REPAIR and OTHER only)
  */
-export const getPendingRequests = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getPendingRequests = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const requests = await prisma.request.findMany({
       where: {
         status: 'PENDING',
         requestType: {
-          in: ['REPAIR', 'OTHER']
-        }
+          in: ['REPAIR', 'OTHER'],
+        },
       },
       include: {
         user: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         room: {
           select: {
             roomNumber: true,
-            floor: true
-          }
-        }
+            floor: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     });
 
     res.json({
       success: true,
-      data: requests
+      data: requests,
     });
   } catch (error) {
     next(error);
@@ -165,24 +184,28 @@ export const getPendingRequests = async (_req: Request, res: Response, next: Nex
 /**
  * Get all requests (Admin only - REPAIR and OTHER only)
  */
-export const getAllRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getAllRequests = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { status, requestType, roomId } = req.query;
 
     const where: any = {
       requestType: {
-        in: ['REPAIR', 'OTHER']
-      }
+        in: ['REPAIR', 'OTHER'],
+      },
     };
-    
+
     if (status) {
       where.status = status;
     }
-    
+
     if (requestType && ['REPAIR', 'OTHER'].includes(requestType as string)) {
       where.requestType = requestType;
     }
-    
+
     if (roomId) {
       where.roomId = parseInt(roomId as string);
     }
@@ -194,31 +217,31 @@ export const getAllRequests = async (req: Request, res: Response, next: NextFunc
           select: {
             id: true,
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         room: {
           select: {
             roomNumber: true,
-            floor: true
-          }
+            floor: true,
+          },
         },
         approver: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     });
 
     res.json({
       success: true,
-      data: requests
+      data: requests,
     });
   } catch (error) {
     next(error);
@@ -228,7 +251,11 @@ export const getAllRequests = async (req: Request, res: Response, next: NextFunc
 /**
  * Approve a request (Admin only - repair/other only)
  */
-export const approveRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const approveRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const adminId = req.user?.id;
     const { requestId } = req.params;
@@ -247,15 +274,15 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
         user: {
           select: {
             id: true,
-            name: true
-          }
+            name: true,
+          },
         },
         room: {
           select: {
-            roomNumber: true
-          }
-        }
-      }
+            roomNumber: true,
+          },
+        },
+      },
     });
 
     if (!request) {
@@ -277,8 +304,8 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
       data: {
         status: 'APPROVED',
         approvedBy: adminId,
-        approvedAt: new Date()
-      }
+        approvedAt: new Date(),
+      },
     });
 
     // Send notification to user
@@ -292,7 +319,7 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
 
     res.json({
       success: true,
-      message: 'Request approved successfully'
+      message: 'Request approved successfully',
     });
   } catch (error) {
     next(error);
@@ -302,7 +329,11 @@ export const approveRequest = async (req: Request, res: Response, next: NextFunc
 /**
  * Reject a request (Admin only - repair/other only)
  */
-export const rejectRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const rejectRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const adminId = req.user?.id;
     const { requestId } = req.params;
@@ -322,15 +353,15 @@ export const rejectRequest = async (req: Request, res: Response, next: NextFunct
         user: {
           select: {
             id: true,
-            name: true
-          }
+            name: true,
+          },
         },
         room: {
           select: {
-            roomNumber: true
-          }
-        }
-      }
+            roomNumber: true,
+          },
+        },
+      },
     });
 
     if (!request) {
@@ -353,8 +384,8 @@ export const rejectRequest = async (req: Request, res: Response, next: NextFunct
         status: 'REJECTED',
         approvedBy: adminId,
         approvedAt: new Date(),
-        rejectionReason: reason || null
-      }
+        rejectionReason: reason || null,
+      },
     });
 
     // Send notification to user
@@ -369,7 +400,7 @@ export const rejectRequest = async (req: Request, res: Response, next: NextFunct
 
     res.json({
       success: true,
-      message: 'Request rejected successfully'
+      message: 'Request rejected successfully',
     });
   } catch (error) {
     next(error);

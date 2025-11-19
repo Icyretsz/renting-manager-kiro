@@ -99,7 +99,7 @@ import settingsRoutes from './routes/settings';
 import paymentRoutes from './routes/payments';
 import userManagementRoutes from './routes/userManagement';
 import curfewRoutes from './routes/curfew';
-import requestRoutes from './routes/requestRoutes';
+import requestRoutes from './routes/requests';
 
 // API routes
 app.use('/api/upload', uploadRoutes);
