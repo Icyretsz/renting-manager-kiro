@@ -43,7 +43,13 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
         socket.on('connect', () => {
             console.log('Socket connected:', socket.id);
+            console.log('Socket auth token present:', !!token);
             set({ isConnected: true, socket });
+            
+            // Send a ping to verify the connection works
+            socket.emit('ping', (response: string) => {
+                console.log('Ping response:', response);
+            });
         });
 
         socket.on('disconnect', (reason) => {

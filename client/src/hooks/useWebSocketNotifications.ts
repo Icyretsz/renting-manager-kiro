@@ -156,18 +156,30 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
     };
   }, [navigate]);
 
-  useEffect(() => {
+    useEffect(() => {
     if (!socket || !isConnected) {
+      console.log('🔌 WebSocket not connected, skipping notification listeners');
       return;
     }
 
+    console.log('🔌 Setting up WebSocket notification listeners');
+
     // Listen for new notifications
     const handleNewNotification = (notification: WebsocketNotification) => {
+      console.log('🔔 WebSocket notification received:', notification);
+      console.log('🔍 Notification type:', notification.type);
+      console.log('🔍 Notification data:', notification.data);
+      
       // Add to notification store
       addNotification(notification);
 
       // Show Ant Design notification
-      if (document.visibilityState === 'visible') showNotification(notification);
+      if (document.visibilityState === 'visible') {
+        console.log('📱 Showing in-app notification');
+        showNotification(notification);
+      } else {
+        console.log('📱 Page not visible, skipping in-app notification');
+      }
 
       if (notification.data) {
         const notificationData = notification.data;
@@ -296,12 +308,19 @@ export const useWebSocketNotifications = (navigate: NavigateFunction) => {
     };
 
     // Set up event listeners
+    console.log('🔧 Registering WebSocket event listeners');
     socket.on('notification:new', handleNewNotification);
     socket.on('notification:update', handleNotificationUpdate);
     socket.on('notification:bulk_update', handleBulkUpdate);
 
+    // Test connection
+    socket.emit('ping', (response: string) => {
+      console.log('🏓 WebSocket ping test:', response);
+    });
+
     // Cleanup listeners on unmount or socket change
     return () => {
+      console.log('🧹 Cleaning up WebSocket event listeners');
       socket.off('notification:new', handleNewNotification);
       socket.off('notification:update', handleNotificationUpdate);
       socket.off('notification:bulk_update', handleBulkUpdate);

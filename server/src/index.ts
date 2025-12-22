@@ -100,6 +100,7 @@ import paymentRoutes from './routes/payments';
 import userManagementRoutes from './routes/userManagement';
 import curfewRoutes from './routes/curfew';
 import requestRoutes from './routes/requests';
+import debugRoutes from './routes/debug';
 
 // API routes
 app.use('/api/upload', uploadRoutes);
@@ -115,6 +116,11 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/user-management', userManagementRoutes);
 app.use('/api/curfew', curfewRoutes);
 app.use('/api/requests', requestRoutes);
+
+// Debug routes (only in development)
+if (process.env['NODE_ENV'] !== 'production') {
+  app.use('/api/debug', debugRoutes);
+}
 
 // 404 handler for API routes only
 app.use('/api/*', (req, _res, next) => {

@@ -400,13 +400,30 @@ export const sendToRoomUsers = async (roomId: number, template: NotificationTemp
 
     const recipients: NotificationRecipient[] = roomTenants
       .filter(tenant => tenant.user) // Ensure user exists
-      .map(tenant => ({
-        userId: tenant.user!.id,
-        fcmToken: tenant.user!.fcmToken || undefined,
-        auth0Id: tenant.user!.auth0Id,
-      }));
+      .map(tenant => {
+        const recipient = {
+          userId: tenant.user!.id,
+          fcmToken: tenant.user!.fcmToken || undefined,
+          auth0Id: tenant.user!.auth0Id,
+        };
+        
+        console.log(`🔍 Room ${roomId} tenant recipient:`, {
+          userId: recipient.userId,
+          hasAuth0Id: !!recipient.auth0Id,
+          auth0Id: recipient.auth0Id
+        });
+        
+        return recipient;
+      });
 
     console.log(`Sending notification to ${recipients.length} room ${roomId} users`);
+    
+    // Validate that all recipients have auth0Id
+    const missingAuth0Id = recipients.filter(r => !r.auth0Id);
+    if (missingAuth0Id.length > 0) {
+      console.warn(`⚠️ ${missingAuth0Id.length} recipients missing auth0Id:`, 
+        missingAuth0Id.map(r => r.userId));
+    }
     // Pass enrichData: false since we already have all the data
     await sendToUsers(recipients, template, true, false);
   } catch (error) {
@@ -515,17 +532,24 @@ const saveNotificationHistory = async (
         const recipient = recipients.find(r => r.userId === notification.userId);
         const auth0Id = recipient?.auth0Id;
         
+        console.log(`🔍 Processing notification for user ${notification.userId}`);
+        console.log(`🔍 Found auth0Id: ${auth0Id}`);
+        
         if (auth0Id) {
-          emitNotificationToUser(auth0Id, {
+          const notificationPayload = {
             id: notification.id,
             type: notification.type as NotificationType,
             data: notification.data as unknown as NotificationData,
             userId: notification.userId,
             readStatus: notification.readStatus,
             createdAt: notification.createdAt
-          });
+          };
+          
+          console.log(`📤 Emitting WebSocket notification to auth0Id: ${auth0Id}`);
+          emitNotificationToUser(auth0Id, notificationPayload);
         } else {
-          console.warn(`No Auth0 ID found for user ${notification.userId}`);
+          console.warn(`⚠️ No Auth0 ID found for user ${notification.userId}`);
+          console.warn(`🔍 Available recipient data:`, recipient);
         }
       });
 

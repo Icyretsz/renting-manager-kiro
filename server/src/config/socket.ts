@@ -47,6 +47,10 @@ export const initializeSocket = (httpServer: HTTPServer) => {
             console.log(`👑 Admin ${socket.userId} joined admins room`);
         }
 
+        // Verify room membership after joining
+        const roomsAfterJoin = Array.from(socket.rooms);
+        console.log(`🔍 Socket ${socket.id} is in rooms: ${roomsAfterJoin.join(', ')}`);
+
         socket.on('disconnect', (reason) => {
             console.log(`User disconnected: ${socket.id} (reason: ${reason})`);
         });
@@ -54,6 +58,12 @@ export const initializeSocket = (httpServer: HTTPServer) => {
         // Handle notification acknowledgment
         socket.on('notification:read', (notificationId) => {
             console.log(`Notification ${notificationId} marked as read by user ${socket.userId}`);
+        });
+
+        // Add a ping handler for connection testing
+        socket.on('ping', (callback) => {
+            console.log(`🏓 Ping received from user ${socket.userId}`);
+            if (callback) callback('pong');
         });
     });
 
@@ -70,16 +80,27 @@ export const getSocketIO = (): Server => {
 
 // Notification event emitters
 export const emitNotificationToUser = (userId: string, notification: any) => {
-    if (io) {
-        const userRoom = `user:${userId}`;
-        const socketsInRoom = io.sockets.adapter.rooms.get(userRoom);
-        console.log(`📤 Emitting notification to room: ${userRoom}`);
-        console.log(`👥 Sockets in room: ${socketsInRoom ? socketsInRoom.size : 0}`);
+    if (!io) {
+        console.error('❌ Socket.IO not initialized when trying to emit notification');
+        return;
+    }
 
+    const userRoom = `user:${userId}`;
+    const socketsInRoom = io.sockets.adapter.rooms.get(userRoom);
+    
+    console.log(`📤 Emitting notification to room: ${userRoom}`);
+    console.log(`👥 Sockets in room: ${socketsInRoom ? socketsInRoom.size : 0}`);
+    console.log(`🔍 Notification type: ${notification.type}`);
+    console.log(`🔍 User ID: ${userId}`);
+    
+    if (socketsInRoom && socketsInRoom.size > 0) {
         io.to(userRoom).emit('notification:new', notification);
         console.log(`✅ Notification sent to user ${userId}:`, notification.type);
     } else {
-        console.error('❌ Socket.IO not initialized when trying to emit notification');
+        console.warn(`⚠️ No active sockets found for user ${userId} in room ${userRoom}`);
+        // Log all active rooms for debugging
+        const allRooms = Array.from(io.sockets.adapter.rooms.keys());
+        console.log(`🔍 All active rooms: ${allRooms.join(', ')}`);
     }
 };
 
