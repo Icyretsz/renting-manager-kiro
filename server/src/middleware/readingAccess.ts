@@ -9,7 +9,7 @@ export interface AuthenticatedRequest extends Request {
     email: string;
     name: string;
     role: 'ADMIN' | 'USER';
-    roomAssignments?: number[];
+    roomId?: number;
   };
 }
 
@@ -68,66 +68,6 @@ export const canEditReading = async (
     }
 
     await accessControlService.validateReadingModification(
-      readingId,
-      req.user.id,
-      req.user.role
-    );
-
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Middleware to check if user can approve readings
- */
-export const canApproveReading = async (
-  req: AuthenticatedRequest,
-  _res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('User not authenticated', 401);
-    }
-
-    const readingId = req.params['id'];
-    if (!readingId) {
-      throw new AppError('Reading ID is required', 400);
-    }
-
-    await accessControlService.validateReadingApproval(
-      readingId,
-      req.user.id,
-      req.user.role
-    );
-
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Middleware to check if user can reject readings
- */
-export const canRejectReading = async (
-  req: AuthenticatedRequest,
-  _res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('User not authenticated', 401);
-    }
-
-    const readingId = req.params['id'];
-    if (!readingId) {
-      throw new AppError('Reading ID is required', 400);
-    }
-
-    await accessControlService.validateReadingRejection(
       readingId,
       req.user.id,
       req.user.role

@@ -20,6 +20,7 @@ router.post(
   '/',
   validateRequired(['roomId', 'month', 'year', 'waterReading', 'electricityReading']),
   validateMeterReading,
+    readingAccess.canAccessRoom,
   meterReadingController.createReading
 );
 
@@ -51,10 +52,11 @@ router.get(
 /**
  * @route GET /api/readings
  * @desc Get meter readings with filters and pagination
- * @access Private (Authenticated users)
+ * @access Private (Admin)
  */
 router.get(
   '/',
+  readingAccess.requireAdmin,
   meterReadingController.getReadings
 );
 
@@ -77,7 +79,7 @@ router.get(
 router.post(
   '/:id/approve',
   validateReadingId,
-  readingAccess.canApproveReading,
+  readingAccess.requireAdmin,
   meterReadingController.approveReading
 );
 
@@ -136,6 +138,7 @@ router.post(
  */
 router.get(
   '/status',
+  readingAccess.canAccessRoom,
   meterReadingController.getReadingSubmissionStatus
 );
 
