@@ -12,7 +12,6 @@ import { useAllUserRequestsQuery } from '@/hooks/useAllUserRequests';
 import { useState } from 'react';
 import { UploadFile } from 'antd/es/upload';
 import { useGetPresignedURLMutation, useUploadToS3Mutation } from '@/hooks/useFileUpload';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
 type FieldType = {

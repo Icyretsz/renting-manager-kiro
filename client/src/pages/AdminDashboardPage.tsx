@@ -9,7 +9,6 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRoomsQuery } from '@/hooks/useRooms';
 import { useTenantsQuery } from '@/hooks/useTenants';

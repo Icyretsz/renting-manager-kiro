@@ -17,7 +17,6 @@ import {
   FileTextOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import {
   useAllReadingsQuery,

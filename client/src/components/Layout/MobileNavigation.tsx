@@ -9,7 +9,6 @@ import {
   SendOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { NavItem } from '@/types';
 import { useTranslation } from 'react-i18next';

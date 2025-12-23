@@ -10,7 +10,6 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUIStore } from '@/stores/uiStore';
 

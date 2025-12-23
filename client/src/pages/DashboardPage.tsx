@@ -1,6 +1,5 @@
 import { Card, Typography, Row, Col, Statistic } from 'antd';
 import { HomeOutlined, FileTextOutlined } from '@ant-design/icons';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { UserRoomsPage } from './UserRoomsPage';

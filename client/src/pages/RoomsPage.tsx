@@ -6,7 +6,6 @@ import {
   EditOutlined,
   EyeOutlined 
 } from '@ant-design/icons';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRoomsQuery, roomKeys } from '@/hooks/useRooms';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
