@@ -1,6 +1,7 @@
 import { ConfigProvider } from 'antd';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { MainLayout } from '@/components/Layout';
@@ -19,6 +20,7 @@ import FinancialDashboardPage from '@/pages/FinancialDashboardPage';
 import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
+import { useSocketStore } from '@/stores/socketStore';
 import './styles/notifications.css';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
@@ -28,10 +30,23 @@ import UserRequestPage from '@/pages/UserRequestPage.tsx';
 
 // Main app content that requires authentication
 const AppContent = () => {
-  const { isLoading, isAuthenticated, user } = useAuth0();
+  const { isLoading, isAuthenticated, user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate()
   const { t } = useTranslation();
-  // Initialize WebSocket notifications (this handles the connection internally)
+  
+  // Initialize socket connection directly with socketStore
+  const initializeWithAuth = useSocketStore(state => state.initializeWithAuth);
+  const disconnect = useSocketStore(state => state.disconnect);
+  
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      initializeWithAuth(getAccessTokenSilently, isAuthenticated, user);
+    } else {
+      disconnect();
+    }
+  }, [isAuthenticated, user, getAccessTokenSilently, initializeWithAuth, disconnect]);
+  
+  // Initialize WebSocket notifications
   const { contextHolder } = useWebSocketNotifications(navigate);
 
   // Show loading while Auth0 is initializing

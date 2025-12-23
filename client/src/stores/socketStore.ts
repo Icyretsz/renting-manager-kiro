@@ -4,34 +4,48 @@ import { io, Socket } from 'socket.io-client';
 interface SocketStore {
     socket: Socket | null;
     isConnected: boolean;
+    isConnecting: boolean;
     connect: (token: string) => void;
     disconnect: () => void;
+    // Auth0 integration methods
+    initializeWithAuth: (getAccessTokenSilently: () => Promise<string>, isAuthenticated: boolean, user: any) => Promise<void>;
 }
 
 export const useSocketStore = create<SocketStore>((set, get) => ({
     socket: null,
     isConnected: false,
+    isConnecting: false,
 
     connect: (token: string) => {
-        const socketURL = import.meta.env.MODE === 'development' ? import.meta.env.VITE_SOCKET_URL_DEV : import.meta.env.VITE_SOCKET_URL_PROD
-        // Prevent multiple connections
-        const currentSocket = get().socket;
+        const { socket: currentSocket, isConnecting } = get();
+        
+        // Return early if already connected or connecting
         if (currentSocket?.connected) {
-            console.log('Socket already connected, skipping connection attempt');
+            console.log('Socket already connected');
+            return;
+        }
+        
+        if (isConnecting) {
+            console.log('Socket connection already in progress');
             return;
         }
 
-        // Disconnect existing socket if it exists but not connected
-        if (currentSocket) {
+        // Clean up existing socket if disconnected
+        if (currentSocket && !currentSocket.connected) {
+            console.log('Cleaning up disconnected socket');
             currentSocket.disconnect();
             currentSocket.removeAllListeners();
         }
 
+        const socketURL = import.meta.env.MODE === 'development' 
+            ? import.meta.env.VITE_SOCKET_URL_DEV 
+            : import.meta.env.VITE_SOCKET_URL_PROD;
+
         console.log('Creating new socket connection...');
+        set({ isConnecting: true });
+
         const socket = io(socketURL, {
-            auth: {
-                token: token
-            },
+            auth: { token },
             autoConnect: true,
             reconnection: true,
             reconnectionAttempts: Infinity,
@@ -43,10 +57,9 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
         socket.on('connect', () => {
             console.log('Socket connected:', socket.id);
-            console.log('Socket auth token present:', !!token);
-            set({ isConnected: true, socket });
-
-            // Send a ping to verify the connection works
+            set({ isConnected: true, isConnecting: false });
+            
+            // Test connection
             socket.emit('ping', (response: string) => {
                 console.log('Ping response:', response);
             });
@@ -54,12 +67,12 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
         socket.on('disconnect', (reason) => {
             console.log('Socket disconnected:', reason);
-            set({ isConnected: false });
+            set({ isConnected: false, isConnecting: false });
         });
 
         socket.on('connect_error', (error) => {
             console.error('Socket connection error:', error);
-            set({ isConnected: false });
+            set({ isConnected: false, isConnecting: false });
         });
 
         set({ socket });
@@ -68,10 +81,28 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
     disconnect: () => {
         const { socket } = get();
         if (socket) {
+            console.log('Disconnecting socket');
             socket.disconnect();
             socket.removeAllListeners();
-            set({ socket: null, isConnected: false });
         }
+        set({ socket: null, isConnected: false, isConnecting: false });
     },
 
+    // Auth0 integration method
+    initializeWithAuth: async (getAccessTokenSilently, isAuthenticated, user) => {
+        if (!isAuthenticated || !user) {
+            get().disconnect();
+            return;
+        }
+
+        try {
+            const token = await getAccessTokenSilently();
+            if (token) {
+                get().connect(token);
+            }
+        } catch (error) {
+            console.error('Failed to get token for socket connection:', error);
+            get().disconnect();
+        }
+    },
 }));

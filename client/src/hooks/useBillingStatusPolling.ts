@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
 import { ApiResponse } from '@/types';
 import { billingKeys } from './useBilling';
-import { useSocket } from './useSocket';
+import { useSocketStore } from '../stores/socketStore';
 
 interface BillingStatus {
   id: string;
@@ -31,7 +31,7 @@ export const useBillingStatusPolling = ({
   useWebSocket = true, // Enable WebSocket by default for hybrid approach
 }: UseBillingStatusPollingOptions) => {
   const queryClient = useQueryClient();
-  const { socket, isConnected } = useSocket();
+  const { socket, isConnected } = useSocketStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastStatusRef = useRef<string | null>(null);
   const hasReceivedWebSocketUpdate = useRef(false);
