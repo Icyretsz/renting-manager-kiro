@@ -22,7 +22,7 @@ interface AuthenticatedRequest extends Request {
 /**
  * Debug endpoint to test WebSocket notifications
  */
-router.post('/test-notification', async (req: AuthenticatedRequest, res: Response) => {
+router.post('/test-notification', async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });
@@ -78,7 +78,7 @@ router.post('/test-notification', async (req: AuthenticatedRequest, res: Respons
 /**
  * Debug endpoint to check user's auth0Id in database
  */
-router.get('/check-auth0id', async (req: AuthenticatedRequest, res: Response) => {
+router.get('/check-auth0id', async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'User not authenticated' });

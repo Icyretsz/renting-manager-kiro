@@ -18,7 +18,6 @@ import BillingPage from '@/pages/BillingPage';
 import FinancialDashboardPage from '@/pages/FinancialDashboardPage';
 import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuthStore } from './stores';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
 import './styles/notifications.css';
 import { SettingsPage } from './pages/SettingsPage';
@@ -26,11 +25,11 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { useTranslation } from 'react-i18next';
 import CommunicationButtons from '@/components/Common/CommunicationButtons.tsx';
 import UserRequestPage from '@/pages/UserRequestPage.tsx';
+import { useEffect } from 'react';
 
 // Main app content that requires authentication
 const AppContent = () => {
-  const { isLoading, isAuthenticated } = useAuth0();
-  const { user: appUser, isAuthenticated: storeAuthenticated } = useAuthStore()
+  const { isLoading, isAuthenticated, user } = useAuth0();
   const navigate = useNavigate()
   const { t } = useTranslation();
   // Initialize WebSocket notifications (this handles the connection internally)
@@ -44,17 +43,19 @@ const AppContent = () => {
   }
 
   // Check both Auth0 and store authentication state
-  if (!isAuthenticated || !storeAuthenticated) {
+  if (!isAuthenticated) {
     return <LoginPage />;
   }
 
   // Show loading while app user is being set up
-  if (!appUser) {
-    return <LoadingSpinner fullScreen message={`${t('common.settingUpUser')}`} />;
-  }
+  console.log(user)
 
   // Get user role from app user
-  const userRole = appUser.role;
+  const userRole = 'user';
+
+  useEffect(() => {
+    console.log(user)
+  }, [user])
 
   return (
     <>

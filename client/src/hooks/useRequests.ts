@@ -3,8 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import api from '@/services/api';
-import { Request, ApiResponse } from '@/types';
-import { useAuthStore } from '@/stores/authStore';
+import { Request as UserRequest, ApiResponse } from '@/types';
 
 // Query keys
 export const requestKeys = {
@@ -31,7 +30,7 @@ export const useCreateRequestMutation = () => {
       tenantIds?: string[];
       reason?: string;
     }) => {
-      const response = await api.post<ApiResponse<Request>>('/requests', data);
+      const response = await api.post<ApiResponse<UserRequest>>('/requests', data);
       return response.data.data;
     },
     onSuccess: () => {
@@ -46,32 +45,33 @@ export const useCreateRequestMutation = () => {
 
 // Get user's own requests
 export const useMyRequestsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: requestKeys.myRequests(),
-    queryFn: async (): Promise<Request[]> => {
-      const response = await api.get<ApiResponse<Request[]>>('/requests/my-requests');
+    queryFn: async (): Promise<UserRequest[]> => {
+      const response = await api.get<ApiResponse<UserRequest[]>>(
+        '/requests/my-requests'
+      );
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!token && !!user,
+    enabled: isAuthenticated && !!user,
     staleTime: 30000, // 30 seconds
   });
 };
 
 // Get pending requests (Admin only)
 export const usePendingRequestsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: requestKeys.pending(),
-    queryFn: async (): Promise<Request[]> => {
-      const response = await api.get<ApiResponse<Request[]>>('/requests/pending');
+    queryFn: async (): Promise<UserRequest[]> => {
+      const response =
+        await api.get<ApiResponse<UserRequest[]>>('/requests/pending');
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!token && !!user && user.role === 'ADMIN',
+    enabled: isAuthenticated && !!user && user.role === 'ADMIN',
     staleTime: 30000, // 30 seconds
   });
 };
@@ -82,21 +82,23 @@ export const useAllRequestsQuery = (filters?: {
   requestType?: string;
   roomId?: number;
 }) => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: requestKeys.allRequests(filters),
-    queryFn: async (): Promise<Request[]> => {
+    queryFn: async (): Promise<UserRequest[]> => {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
-      if (filters?.requestType) params.append('requestType', filters.requestType);
+      if (filters?.requestType)
+        params.append('requestType', filters.requestType);
       if (filters?.roomId) params.append('roomId', filters.roomId.toString());
-      
-      const response = await api.get<ApiResponse<Request[]>>(`/requests/all?${params.toString()}`);
+
+      const response = await api.get<ApiResponse<UserRequest[]>>(
+        `/requests/all?${params.toString()}`
+      );
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!token && !!user && user.role === 'ADMIN',
+    enabled: isAuthenticated && !!user && user.role === 'ADMIN',
     staleTime: 30000, // 30 seconds
   });
 };
@@ -108,9 +110,12 @@ export const useApproveRequestMutation = () => {
 
   return useMutation({
     mutationFn: async (data: { requestId: string; isPermanent?: boolean }) => {
-      const response = await api.post<ApiResponse<Request>>(`/requests/${data.requestId}/approve`, {
-        isPermanent: data.isPermanent,
-      });
+      const response = await api.post<ApiResponse<UserRequest>>(
+        `/requests/${data.requestId}/approve`,
+        {
+          isPermanent: data.isPermanent,
+        }
+      );
       return response.data.data;
     },
     onSuccess: (data) => {
@@ -134,9 +139,12 @@ export const useRejectRequestMutation = () => {
 
   return useMutation({
     mutationFn: async (data: { requestId: string; reason?: string }) => {
-      const response = await api.post<ApiResponse<Request>>(`/requests/${data.requestId}/reject`, {
-        reason: data.reason,
-      });
+      const response = await api.post<ApiResponse<UserRequest>>(
+        `/requests/${data.requestId}/reject`,
+        {
+          reason: data.reason,
+        }
+      );
       return response.data.data;
     },
     onSuccess: (data) => {
