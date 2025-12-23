@@ -5,28 +5,51 @@ files:
   - source: /
     destination: /home/ec2-user/apps/renting-manager-kiro/server
 
+permissions:
+  - object: /home/ec2-user/apps/renting-manager-kiro/server
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
+    type:
+      - directory
+  
+  - object: /home/ec2-user/apps/renting-manager-kiro/server
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+    mode: 644
+    type:
+      - file
+  
+  - object: /home/ec2-user/apps/renting-manager-kiro/server/scripts
+    pattern: "*.sh"
+    mode: 755
+    type:
+      - file
+
 hooks:
   ApplicationStop:
     - location: scripts/stop_app.sh
       timeout: 300
-      runas: ubuntu
+      runas: ec2-user
 
   BeforeInstall:
     - location: scripts/before_install.sh
       timeout: 300
-      runas: ubuntu
+      runas: ec2-user
 
   AfterInstall:
-    - location: scripts/install_dependencies.sh
+    - location: scripts/after_install.sh
       timeout: 600
-      runas: ubuntu
+      runas: ec2-user
 
   ApplicationStart:
     - location: scripts/start_app.sh
       timeout: 300
-      runas: ubuntu
+      runas: ec2-user
 
   ValidateService:
     - location: scripts/validate.sh
       timeout: 300
-      runas: ubuntu
+      runas: ec2-user
