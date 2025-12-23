@@ -26,6 +26,7 @@ artifacts:
     - 'package*.json'
     - 'scripts/**/*'
     - 'appspec.yml'
+  base-directory: server
   name: BackendBuildArtifact
 
 cache:
