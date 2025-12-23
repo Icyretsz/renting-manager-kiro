@@ -10,7 +10,8 @@ import {
   SafetyOutlined,
   EnvironmentOutlined,
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import dayjs from 'dayjs';
 import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
@@ -18,7 +19,7 @@ import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 const { Title, Text } = Typography;
 
 export const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { data: user } = useUserProfile();
   const { t, getRole } = useTranslationHelpers();
 
   if (!user) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Modal, QRCode, Alert, Typography, Row, Col, Divider, Pagination, Tag } from 'antd';
 import { QrcodeOutlined } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { 
   useBillingRecordsQuery, 
   useBillingRecordQuery, 
@@ -26,7 +26,7 @@ import { useTranslationHelpers } from '@/hooks/useTranslationHelpers';
 const { Title, Text } = Typography;
 
 const BillingPage: React.FC = () => {
-  const { user } = useAuth();
+  const { data: user } = useUserProfile();
   const { t, getMonthName, formatCurrency, getPaymentStatus, getPaymentStatusColor } = useTranslationHelpers();
   const [selectedRecord, setSelectedRecord] = useState<BillingRecord | null>(null);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);

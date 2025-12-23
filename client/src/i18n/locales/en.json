@@ -375,8 +375,10 @@
   },
   "unlinked": {
     "title": "Account Not Linked",
-    "message": "Your account is not linked to a tenant. Please contact the administrator.",
-    "contactAdmin": "Contact Administrator"
+    "message": "Your user account is not linked to a tenant record in the system.",
+    "contactAdmin": "Please contact the administrator to link your account to a tenant before you can access the application.",
+    "contactInfo": "Contact phone numbers: 0972935140 or 0915761687 (Zalo)",
+    "logout": "Logout"
   },
   "months": {
     "january": "January",

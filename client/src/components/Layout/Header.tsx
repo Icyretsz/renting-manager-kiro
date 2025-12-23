@@ -5,7 +5,8 @@ import {
   LogoutOutlined,
 
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -16,9 +17,18 @@ const { Header: AntHeader } = Layout;
 const { Text } = Typography;
 
 export const MobileHeader: React.FC = () => {
-  const { logout, user } = useAuth();
+  const { logout: auth0Logout } = useAuth0();
+  const { data: user } = useUserProfile();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const logout = () => {
+    auth0Logout({
+      logoutParams: {
+        returnTo: window.location.origin,
+      },
+    });
+  };
 
   // Build menu items conditionally based on user role
   const userMenuItems = user?.role === 'USER' 

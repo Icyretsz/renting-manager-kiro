@@ -17,7 +17,8 @@ import {
   FileTextOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import {
   useAllReadingsQuery,
   useApproveReadingMutation,
@@ -60,7 +61,8 @@ const toNumber = (value: string | number): number => {
 };
 
 export const ApprovalsPage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { data: user } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<string>('readings');
   
   // Reading states

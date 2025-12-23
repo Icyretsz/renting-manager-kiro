@@ -6,7 +6,8 @@ import {
   EditOutlined,
   EyeOutlined 
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRoomsQuery, roomKeys } from '@/hooks/useRooms';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
@@ -18,7 +19,8 @@ import { useTranslation } from 'react-i18next';
 const { Title, Text } = Typography;
 
 export const RoomsPage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { data: user } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
   const { data: rooms, isLoading, error } = useRoomsQuery();
   const { t } = useTranslation();
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);

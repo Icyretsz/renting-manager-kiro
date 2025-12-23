@@ -7,7 +7,8 @@ import {
   PlusOutlined,
   ReloadOutlined
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import {
   useSettingsQuery,
   useUpdateSettingMutation,
@@ -23,7 +24,8 @@ import { Setting } from '@/types';
 const { Title, Text } = Typography;
 
 export const SettingsPage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { data: user } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
   const { data: settings, isLoading } = useSettingsQuery();
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState<string>('');

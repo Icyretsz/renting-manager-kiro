@@ -28,24 +28,24 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         }
 
         console.log('Creating new socket connection...');
-        const socket = io(
-            socketURL,
-            {
-                auth: {
-                    token: token
-                },
-                autoConnect: true,
-                reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000,
-            }
-        );
+        const socket = io(socketURL, {
+            auth: {
+                token: token
+            },
+            autoConnect: true,
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000,
+            transports: ['websocket', 'polling'],
+        });
 
         socket.on('connect', () => {
             console.log('Socket connected:', socket.id);
             console.log('Socket auth token present:', !!token);
             set({ isConnected: true, socket });
-            
+
             // Send a ping to verify the connection works
             socket.emit('ping', (response: string) => {
                 console.log('Ping response:', response);

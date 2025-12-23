@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Form, Button, Typography, Alert } from 'antd';
 import { HistoryOutlined } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRoomsQuery, useRoomQuery } from '@/hooks/useRooms';
 import { useMeterReadingsQuery, useSubmitMeterReadingMutation, useUpdateMeterReadingMutation } from '@/hooks/useMeterReadings';
 import { useSettingValue } from '@/hooks/useSettings';
@@ -29,7 +29,8 @@ const toNumber = (value: string | number): number => {
 };
 
 export const MeterReadingsPage: React.FC = () => {
-  const { isAdmin, user } = useAuth();
+  // All hooks must be called at the top, before any conditional returns
+  const { data: user } = useUserProfile();
   const { data: rooms } = useRoomsQuery();
   const [form] = Form.useForm();
   const { t } = useTranslation();
@@ -39,6 +40,7 @@ export const MeterReadingsPage: React.FC = () => {
   const trashFee = useSettingValue('trash_fee', 52000);
 
   const userRoomId = user?.tenant?.roomId;
+  const isAdmin = () => user?.role === 'ADMIN';
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(
     !isAdmin() && userRoomId ? userRoomId : null
   );
@@ -89,12 +91,6 @@ export const MeterReadingsPage: React.FC = () => {
     ? rooms
     : (userRoomId && rooms ? rooms.filter(room => room.id === userRoomId) : []);
 
-  useEffect(() => {
-    if (!isAdmin() && userRoomId && !selectedRoomId) {
-      setSelectedRoomId(userRoomId);
-    }
-  }, [isAdmin, userRoomId, selectedRoomId]);
-
   // Fetch presigned URLs for existing photos using queries (with caching)
   const waterPhotoParams = currentMonthReading?.waterPhotoUrl && selectedRoomId && (canEditCurrentReading || canAdminOverride) ? {
     operation: 'get' as const,
@@ -138,6 +134,12 @@ export const MeterReadingsPage: React.FC = () => {
       waterBill: waterCost
     });
   }, [previousReading, currentRoom, waterRate, electricityRate, trashFee]);
+
+  useEffect(() => {
+    if (!isAdmin() && userRoomId && !selectedRoomId) {
+      setSelectedRoomId(userRoomId);
+    }
+  }, [userRoomId, selectedRoomId]);
 
   useEffect(() => {
     if (currentMonthReading && (canEditCurrentReading || canAdminOverride)) {

@@ -9,7 +9,8 @@ import {
   ClockCircleOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRoomsQuery } from '@/hooks/useRooms';
 import { useTenantsQuery } from '@/hooks/useTenants';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
@@ -18,7 +19,8 @@ import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 const { Title, Text } = Typography;
 
 export const AdminDashboardPage: React.FC = () => {
-  const { user, isAdmin } = useAuth();
+  const { data: user } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
   const { data: rooms, isLoading: roomsLoading } = useRoomsQuery();
   const { data: tenants, isLoading: tenantsLoading } = useTenantsQuery();
 

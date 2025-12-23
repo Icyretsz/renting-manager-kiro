@@ -40,7 +40,7 @@ export const usePendingReadingsQuery = () => {
       );
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!user && user.role === 'ADMIN',
+    enabled: isAuthenticated && !!user && user.roleType[0] === 'ADMIN',
   });
 };
 
@@ -54,7 +54,7 @@ export const useAllReadingsQuery = () => {
       const response = await api.get<ApiResponse<MeterReading[]>>('/readings/');
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!user && user.role === 'ADMIN',
+    enabled: isAuthenticated && !!user && user.roleType[0] === 'ADMIN',
     staleTime: 30000, // 30 seconds
   });
 };

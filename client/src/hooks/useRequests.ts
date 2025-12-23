@@ -71,7 +71,7 @@ export const usePendingRequestsQuery = () => {
         await api.get<ApiResponse<UserRequest[]>>('/requests/pending');
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!user && user.role === 'ADMIN',
+    enabled: isAuthenticated && !!user && user.roleType[0] === 'ADMIN',
     staleTime: 30000, // 30 seconds
   });
 };

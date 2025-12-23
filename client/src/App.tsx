@@ -25,7 +25,6 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { useTranslation } from 'react-i18next';
 import CommunicationButtons from '@/components/Common/CommunicationButtons.tsx';
 import UserRequestPage from '@/pages/UserRequestPage.tsx';
-import { useEffect } from 'react';
 
 // Main app content that requires authentication
 const AppContent = () => {
@@ -34,8 +33,6 @@ const AppContent = () => {
   const { t } = useTranslation();
   // Initialize WebSocket notifications (this handles the connection internally)
   const { contextHolder } = useWebSocketNotifications(navigate);
-
-  // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser, storeAuthenticated, token});
 
   // Show loading while Auth0 is initializing
   if (isLoading) {
@@ -47,15 +44,8 @@ const AppContent = () => {
     return <LoginPage />;
   }
 
-  // Show loading while app user is being set up
-  console.log(user)
-
   // Get user role from app user
-  const userRole = 'user';
-
-  useEffect(() => {
-    console.log(user)
-  }, [user])
+  const userRole = user?.roleType[0];
 
   return (
     <>
