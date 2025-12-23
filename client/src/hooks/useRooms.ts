@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { Room, ApiResponse } from '@/types';
-import { useAuthStore } from '@/stores/authStore';
 
 // Query keys
 export const roomKeys = {
@@ -15,8 +14,7 @@ export const roomKeys = {
 
 // Fetch all rooms
 export const useRoomsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: roomKeys.lists(),
@@ -24,14 +22,13 @@ export const useRoomsQuery = () => {
       const response = await api.get<ApiResponse<Room[]>>('/rooms');
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!token && !!user,
+    enabled: isAuthenticated && !!user,
   });
 };
 
 // Fetch single room
 export const useRoomQuery = (roomId: number) => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: roomKeys.detail(roomId),
@@ -42,7 +39,7 @@ export const useRoomQuery = (roomId: number) => {
       }
       return response.data.data;
     },
-    enabled: !!roomId && isAuthenticated && !!token && !!user,
+    enabled: !!roomId && isAuthenticated && !!user,
   });
 };
 

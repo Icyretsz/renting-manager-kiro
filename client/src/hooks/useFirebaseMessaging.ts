@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useAuthStore } from '@/stores/authStore';
 import { useUpdateFCMTokenMutation } from '@/hooks/useNotifications';
 import {
   initializePushNotifications,
@@ -16,8 +15,7 @@ interface FirebaseMessagingState {
 }
 
 export const useFirebaseMessaging = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
   const fcmTokenMutation = useUpdateFCMTokenMutation();
   
   const [state, setState] = useState<FirebaseMessagingState>({
@@ -29,7 +27,7 @@ export const useFirebaseMessaging = () => {
 
   useEffect(() => {
     // Only initialize if user is authenticated and we have both token and user data
-    if (!isAuthenticated || !token || !user) {
+    if (!isAuthenticated || !user) {
       return;
     }
 
@@ -89,7 +87,7 @@ export const useFirebaseMessaging = () => {
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticated, token, user]); // Removed fcmTokenMutation from deps to avoid re-init
+  }, [isAuthenticated, user]);
 
   const requestPermission = async (): Promise<boolean> => {
     try {

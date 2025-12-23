@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
-import { Request, ApiResponse } from '@/types';
-import { useAuthStore } from '@/stores/authStore';
+import { Request as UserRequest, ApiResponse } from '@/types';
 
 /**
  * Combined hook to fetch all user requests including:
@@ -11,28 +10,31 @@ import { useAuthStore } from '@/stores/authStore';
  * - Other requests (from requests table)
  */
 export const useAllUserRequestsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: ['allUserRequests'],
-    queryFn: async (): Promise<Request[]> => {
+    queryFn: async (): Promise<UserRequest[]> => {
       // Fetch general requests (repair/other)
-      const generalRequestsResponse = await api.get<ApiResponse<Request[]>>('/requests/my-requests');
+      const generalRequestsResponse = await api.get<ApiResponse<UserRequest[]>>(
+        '/requests/my-requests'
+      );
       const generalRequests = generalRequestsResponse.data.data || [];
 
       // Fetch curfew modifications to construct curfew request history
-      const curfewModsResponse = await api.get<ApiResponse<any[]>>('/curfew/my-modifications');
+      const curfewModsResponse = await api.get<ApiResponse<any[]>>(
+        '/curfew/my-modifications'
+      );
       const curfewMods = curfewModsResponse.data.data || [];
 
       // Group curfew modifications by request date to create request objects
       const curfewRequestsMap = new Map<string, any>();
-      
+
       curfewMods.forEach((mod: any) => {
         if (mod.modificationType === 'REQUEST') {
           const dateKey = new Date(mod.modifiedAt).toISOString().split('T')[0];
           const requestKey = `${dateKey}-${mod.tenant.roomId}`;
-          
+
           if (!curfewRequestsMap.has(requestKey)) {
             curfewRequestsMap.set(requestKey, {
               id: `curfew-${requestKey}`,
@@ -62,13 +64,17 @@ export const useAllUserRequestsQuery = () => {
 
       // Update status based on subsequent modifications
       curfewMods.forEach((mod: any) => {
-        if (mod.modificationType === 'APPROVE' || mod.modificationType === 'REJECT') {
+        if (
+          mod.modificationType === 'APPROVE' ||
+          mod.modificationType === 'REJECT'
+        ) {
           const dateKey = new Date(mod.modifiedAt).toISOString().split('T')[0];
           const requestKey = `${dateKey}-${mod.tenant.roomId}`;
           const request = curfewRequestsMap.get(requestKey);
-          
+
           if (request) {
-            request.status = mod.modificationType === 'APPROVE' ? 'APPROVED' : 'REJECTED';
+            request.status =
+              mod.modificationType === 'APPROVE' ? 'APPROVED' : 'REJECTED';
             request.approvedAt = mod.modifiedAt;
             if (mod.modificationType === 'REJECT' && mod.reason) {
               request.rejectionReason = mod.reason;
@@ -81,12 +87,13 @@ export const useAllUserRequestsQuery = () => {
 
       // Combine and sort by creation date (newest first)
       const allRequests = [...generalRequests, ...curfewRequests].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
       return allRequests;
     },
-    enabled: isAuthenticated && !!token && !!user,
-    staleTime: 30000, // 30 seconds
+    enabled: isAuthenticated && !!user,
+    staleTime: 30000,
   });
 };

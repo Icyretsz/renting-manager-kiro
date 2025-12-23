@@ -3,7 +3,6 @@ import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { WebsocketNotification, ApiResponse } from '@/types';
 import { useNotificationStore } from '@/stores/notificationStore';
-import { useAuthStore } from '@/stores/authStore';
 
 // Query keys
 export const notificationKeys = {
@@ -17,8 +16,7 @@ export const notificationKeys = {
 
 // Fetch user notifications (initial load only, no polling)
 export const useNotificationsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
   const { setNotifications } = useNotificationStore();
 
   return useQuery({
@@ -32,7 +30,7 @@ export const useNotificationsQuery = () => {
       
       return notifications;
     },
-    enabled: isAuthenticated && !!token && !!user, // Only fetch when authenticated with token
+    enabled: isAuthenticated && !!user, // Only fetch when authenticated with token
     staleTime: Infinity, // Don't refetch automatically - rely on WebSocket updates
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: false, // Don't refetch on reconnect
@@ -41,8 +39,7 @@ export const useNotificationsQuery = () => {
 
 // Fetch unread notifications count (initial load only)
 export const useUnreadNotificationsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: notificationKeys.unread(),
@@ -50,7 +47,7 @@ export const useUnreadNotificationsQuery = () => {
       const response = await api.get<ApiResponse<{ count: number }>>('/notifications/unread-count');
       return response.data.data?.count || 0;
     },
-    enabled: isAuthenticated && !!token && !!user, // Only fetch when authenticated with token
+    enabled: isAuthenticated && !!user, // Only fetch when authenticated with token
     staleTime: Infinity, // Don't refetch automatically - rely on WebSocket updates
     refetchOnWindowFocus: false, // Don't refetch on window focus
     refetchOnReconnect: false, // Don't refetch on reconnect

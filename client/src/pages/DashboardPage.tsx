@@ -1,6 +1,6 @@
 import { Card, Typography, Row, Col, Statistic } from 'antd';
 import { HomeOutlined, FileTextOutlined } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
 import { UserRoomsPage } from './UserRoomsPage';
 import FinancialDashboardPage from './FinancialDashboardPage';
@@ -10,7 +10,8 @@ import { useTranslation } from 'react-i18next';
 const { Title } = Typography;
 
 export const DashboardPage = () => {
-  const { user, isAdmin } = useAuth();
+  const { data: user } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
   const { t } = useTranslation();
 
   const tenant = user?.tenant;

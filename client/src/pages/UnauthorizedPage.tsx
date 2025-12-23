@@ -1,10 +1,18 @@
 import { Button, Result } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export const UnauthorizedPage = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout: auth0Logout } = useAuth0();
+
+  const logout = () => {
+    auth0Logout({
+      logoutParams: {
+        returnTo: window.location.origin,
+      },
+    });
+  };
 
   const handleGoBack = () => {
     navigate(-1);

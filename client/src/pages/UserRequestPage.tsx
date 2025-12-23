@@ -12,7 +12,7 @@ import { useAllUserRequestsQuery } from '@/hooks/useAllUserRequests';
 import { useState } from 'react';
 import { UploadFile } from 'antd/es/upload';
 import { useGetPresignedURLMutation, useUploadToS3Mutation } from '@/hooks/useFileUpload';
-import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 type FieldType = {
   requestType: string;
@@ -24,14 +24,12 @@ type FieldType = {
 const UserRequestPage = () => {
   const { Title, Text } = Typography;
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { data: user } = useUserProfile();
   const { data: roomTenants, isLoading: isTenantsLoading } = useRoomTenantsQuery();
   const createRequestMutation = useCreateRequestMutation();
   const curfewRequestMutation = useRequestCurfewOverrideMutation();
   const { data: allRequests, isLoading: isRequestsLoading } = useAllUserRequestsQuery();
   const [form] = Form.useForm();
-
-  console.log(allRequests)
 
   // Modal states
   const [showHistoryModal, setShowHistoryModal] = useState(false);

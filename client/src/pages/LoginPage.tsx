@@ -1,16 +1,15 @@
 import { Button, Card, Typography } from 'antd';
 import { LoginOutlined } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const { Title, Paragraph } = Typography;
 
 export const LoginPage = () => {
-  const { login, isAuthenticated } = useAuth();
+  const { loginWithRedirect, isAuthenticated } = useAuth0();
   const { t } = useTranslation();
 
-  // Redirect if already authenticated
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
@@ -31,7 +30,7 @@ export const LoginPage = () => {
           type="primary"
           size="large"
           icon={<LoginOutlined />}
-          onClick={login}
+          onClick={() => loginWithRedirect()}
           className="w-full"
         >
           {t('auth.signInWith')}

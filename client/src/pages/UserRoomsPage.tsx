@@ -1,6 +1,7 @@
 import React from 'react';
 import { Row, Col, Typography, Empty } from 'antd';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useRoomsQuery, useRoomQuery, roomKeys } from '@/hooks/useRooms';
 import { useSettingValue } from '@/hooks/useSettings';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
@@ -13,7 +14,10 @@ const { Title, Text } = Typography;
 
 export const UserRoomsPage: React.FC = () => {
   const { t } = useTranslation()
-  const { isAdmin, user, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: auth0Loading } = useAuth0();
+  const { data: user, isLoading: profileLoading } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
+  const isLoading = auth0Loading || (isAuthenticated && profileLoading);
   const { data: allRooms, isLoading: roomsLoading } = useRoomsQuery();
   
   // For regular users, fetch detailed room data if they have a tenant room
@@ -25,7 +29,7 @@ export const UserRoomsPage: React.FC = () => {
   const electricityRate = useSettingValue('electricity_rate', 3500);
   const trashFee = useSettingValue('trash_fee', 52000);
 
-  if (authLoading || roomsLoading || (!isAdmin() && userRoomId && userRoomLoading)) {
+  if (isLoading || roomsLoading || (!isAdmin() && userRoomId && userRoomLoading)) {
     return <LoadingSpinner message={`${t('rooms.loadingRooms')}`} />;
   }
 
