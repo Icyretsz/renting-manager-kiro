@@ -23,7 +23,6 @@ artifacts:
     - 'dist/**/*'
     - 'node_modules/**/*'
     - 'prisma/**/*'
-    - 'package*.json'
     - 'scripts/**/*'
     - 'appspec.yml'
   base-directory: server
