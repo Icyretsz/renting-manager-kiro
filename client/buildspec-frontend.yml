@@ -9,7 +9,6 @@ phases:
       
   build:
     commands:
-      - cd client
       - echo "Building React application..."
       - npm run build
       
