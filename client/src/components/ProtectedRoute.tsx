@@ -1,46 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { ProtectedRouteProps } from '@/types';
 import { useTenantStatus } from '@/hooks/useTenants';
-import { useAuthStore } from '@/stores/authStore';
 import { LoadingSpinner } from './Loading/LoadingSpinner';
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   requireTenantLink = true 
 }) => {
-  const { isAuthenticated, isLoading: authLoading, getAccessTokenSilently } = useAuth0();
-  const { token, setToken } = useAuthStore();
-  const [tokenReady, setTokenReady] = useState(false);
+  const { isAuthenticated, isLoading: authLoading } = useAuth0();
   const { data: tenantStatus, isLoading: tenantLoading, error } = useTenantStatus();
-
-  // CRITICAL FIX: Ensure we have a valid token before making API calls
-  useEffect(() => {
-    const ensureToken = async () => {
-      if (isAuthenticated && !authLoading) {
-        // If no token in store, fetch it immediately
-        if (!token) {
-          console.log('ProtectedRoute: No token found, fetching...');
-          try {
-            const freshToken = await getAccessTokenSilently({
-              cacheMode: 'off',
-            });
-            setToken(freshToken);
-            console.log('ProtectedRoute: Token fetched and set');
-            setTokenReady(true);
-          } catch (error) {
-            console.error('ProtectedRoute: Failed to get token:', error);
-            setTokenReady(false);
-          }
-        } else {
-          setTokenReady(true);
-        }
-      }
-    };
-
-    ensureToken();
-  }, [isAuthenticated, authLoading, token, getAccessTokenSilently, setToken]);
 
   // Show loading while Auth0 is initializing
   if (authLoading) {
@@ -50,11 +20,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
-  }
-
-  // Wait for token to be ready before making API calls
-  if (!tokenReady || !token) {
-    return <LoadingSpinner fullScreen message="Loading session..." />;
   }
 
   // If tenant link is required, check tenant status

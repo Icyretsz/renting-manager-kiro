@@ -98,7 +98,9 @@ export const canAccessRoom = async (
       return;
     }
 
-    const roomIdParam = req.params['roomId'];
+    console.log(req.params)
+
+    const roomIdParam = req.params['roomId'] || req.body.roomId;
     if (!roomIdParam) {
       throw new AppError('Room ID is required', 400);
     }

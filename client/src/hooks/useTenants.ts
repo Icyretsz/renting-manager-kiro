@@ -3,7 +3,6 @@ import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { Tenant, ApiResponse } from '@/types';
 import { authService, TenantStatus } from '@/services/authService';
-import { useAuthStore } from '@/stores/authStore';
 
 // Query keys
 export const tenantKeys = {
@@ -17,8 +16,7 @@ export const tenantKeys = {
 
 // Fetch all tenants
 export const useTenantsQuery = (roomId?: number) => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: roomId ? tenantKeys.byRoom(roomId) : tenantKeys.lists(),
@@ -27,25 +25,26 @@ export const useTenantsQuery = (roomId?: number) => {
       const response = await api.get<ApiResponse<Tenant[]>>(url);
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!token && !!user,
+    enabled: isAuthenticated && !!user,
   });
 };
 
 // Fetch single tenant
 export const useTenantQuery = (tenantId: string) => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: tenantKeys.detail(tenantId),
     queryFn: async (): Promise<Tenant> => {
-      const response = await api.get<ApiResponse<Tenant>>(`/tenants/${tenantId}`);
+      const response = await api.get<ApiResponse<Tenant>>(
+        `/tenants/${tenantId}`
+      );
       if (!response.data.data) {
         throw new Error('Tenant not found');
       }
       return response.data.data;
     },
-    enabled: !!tenantId && isAuthenticated && !!token && !!user,
+    enabled: !!tenantId && isAuthenticated && !!user,
   });
 };
 
@@ -107,13 +106,12 @@ export const useDeleteTenantMutation = () => {
 
 // Check if user have linked to a tenant
 export const useTenantStatus = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery<TenantStatus>({
     queryKey: ['tenant-status'],
     queryFn: authService.checkTenantStatus,
-    enabled: isAuthenticated && !!token,
+    enabled: isAuthenticated && !!user,
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

@@ -376,8 +376,10 @@
     },
     "unlinked": {
         "title": "Tài khoản chưa liên kết",
-        "message": "Tài khoản của bạn chưa được liên kết với người thuê. Vui lòng liên hệ quản trị viên.",
-        "contactAdmin": "Liên hệ quản trị viên"
+        "message": "Tài khoản người dùng của bạn chưa được liên kết với hồ sơ người thuê trong hệ thống.",
+        "contactAdmin": "Vui lòng liên hệ quản trị viên để liên kết tài khoản của bạn với người thuê trước khi có thể truy cập ứng dụng.",
+        "contactInfo": "Liên hệ số điện thoại: 0972935140 hoặc 0915761687 (Zalo)",
+        "logout": "Đăng xuất"
     },
     "months": {
         "january": "Tháng Một",

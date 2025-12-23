@@ -9,14 +9,15 @@ import {
   SendOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { NavItem } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 export const MobileNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAdmin } = useAuth();
+  const { data: user } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
   const { t } = useTranslation();
 
   const navItems: NavItem[] = [

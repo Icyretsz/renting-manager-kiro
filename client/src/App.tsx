@@ -1,6 +1,7 @@
 import { ConfigProvider } from 'antd';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary/ErrorBoundary';
 import { LoadingSpinner } from '@/components/Loading/LoadingSpinner';
 import { MainLayout } from '@/components/Layout';
@@ -18,8 +19,8 @@ import BillingPage from '@/pages/BillingPage';
 import FinancialDashboardPage from '@/pages/FinancialDashboardPage';
 import UserManagementPage from '@/pages/UserManagementPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuthStore } from './stores';
 import { useWebSocketNotifications } from './hooks/useWebSocketNotifications';
+import { useSocketStore } from '@/stores/socketStore';
 import './styles/notifications.css';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
@@ -29,14 +30,24 @@ import UserRequestPage from '@/pages/UserRequestPage.tsx';
 
 // Main app content that requires authentication
 const AppContent = () => {
-  const { isLoading, isAuthenticated } = useAuth0();
-  const { user: appUser, isAuthenticated: storeAuthenticated } = useAuthStore()
+  const { isLoading, isAuthenticated, user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate()
   const { t } = useTranslation();
-  // Initialize WebSocket notifications (this handles the connection internally)
+  
+  // Initialize socket connection directly with socketStore
+  const initializeWithAuth = useSocketStore(state => state.initializeWithAuth);
+  const disconnect = useSocketStore(state => state.disconnect);
+  
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      initializeWithAuth(getAccessTokenSilently, isAuthenticated, user);
+    } else {
+      disconnect();
+    }
+  }, [isAuthenticated, user, getAccessTokenSilently, initializeWithAuth, disconnect]);
+  
+  // Initialize WebSocket notifications
   const { contextHolder } = useWebSocketNotifications(navigate);
-
-  // console.log('AppContent - Auth0 state:', { isLoading, isAuthenticated, hasAppUser: !!appUser, storeAuthenticated, token});
 
   // Show loading while Auth0 is initializing
   if (isLoading) {
@@ -44,17 +55,12 @@ const AppContent = () => {
   }
 
   // Check both Auth0 and store authentication state
-  if (!isAuthenticated || !storeAuthenticated) {
+  if (!isAuthenticated) {
     return <LoginPage />;
   }
 
-  // Show loading while app user is being set up
-  if (!appUser) {
-    return <LoadingSpinner fullScreen message={`${t('common.settingUpUser')}`} />;
-  }
-
   // Get user role from app user
-  const userRole = appUser.role;
+  const userRole = user?.roleType[0];
 
   return (
     <>

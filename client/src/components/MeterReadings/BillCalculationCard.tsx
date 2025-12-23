@@ -11,6 +11,7 @@ export const BillCalculationCard: React.FC<BillCalculationCardProps> = ({
   trashFee,
   baseRent
 }) => {
+  console.log(calculatedBill)
   const { t } = useTranslation();
   return (
     <Card className="bg-blue-50 border-blue-200" size="small">

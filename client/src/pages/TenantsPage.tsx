@@ -22,7 +22,7 @@ import {
   MailOutlined,
   HomeOutlined
 } from '@ant-design/icons';
-import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useTenantsQuery } from '@/hooks/useTenants';
 import { useRoomsQuery } from '@/hooks/useRooms';
 import { PageErrorBoundary } from '@/components/ErrorBoundary/PageErrorBoundary';
@@ -33,7 +33,8 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 export const TenantsPage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { data: user } = useUserProfile();
+  const isAdmin = () => user?.role === 'ADMIN';
   const { data: tenants, isLoading: tenantsLoading } = useTenantsQuery();
   const { data: rooms } = useRoomsQuery();
   const [modalVisible, setModalVisible] = useState(false);

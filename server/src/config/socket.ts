@@ -13,6 +13,11 @@ export const initializeSocket = (httpServer: HTTPServer) => {
             methods: ["GET", "POST"],
             credentials: true,
         },
+        // Add these configuration options
+        pingTimeout: 60000,      // Wait 60s for pong response before disconnect
+        pingInterval: 25000,     // Send ping every 25s
+        upgradeTimeout: 30000,   // Time to wait for transport upgrade
+        transports: ['websocket', 'polling'], // Allow fallback to polling
     });
 
     // Authentication middleware for Socket.IO
@@ -52,7 +57,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
         console.log(`🔍 Socket ${socket.id} is in rooms: ${roomsAfterJoin.join(', ')}`);
 
         socket.on('disconnect', (reason) => {
-            console.log(`User disconnected: ${socket.id} (reason: ${reason})`);
+            console.log(`❌ User disconnected: ${socket.id} (userId: ${socket.userId}, reason: ${reason})`);
         });
 
         // Handle notification acknowledgment
@@ -64,6 +69,18 @@ export const initializeSocket = (httpServer: HTTPServer) => {
         socket.on('ping', (callback) => {
             console.log(`🏓 Ping received from user ${socket.userId}`);
             if (callback) callback('pong');
+        });
+
+        // Handle client errors
+        socket.on('error', (error) => {
+            console.error(`⚠️ Socket error for user ${socket.userId}:`, error);
+        });
+
+        // Optional: Send initial connection confirmation
+        socket.emit('connection:confirmed', {
+            socketId: socket.id,
+            userId: socket.userId,
+            timestamp: new Date().toISOString()
         });
     });
 
@@ -106,8 +123,10 @@ export const emitNotificationToUser = (userId: string, notification: any) => {
 
 export const emitNotificationToAdmins = (notification: any) => {
     if (io) {
+        const socketsInAdminRoom = io.sockets.adapter.rooms.get('admins');
+        console.log(`📤 Emitting notification to admins (${socketsInAdminRoom?.size || 0} connected)`);
         io.to('admins').emit('notification:new', notification);
-        console.log('Notification sent to admins:', notification.type);
+        console.log('✅ Notification sent to admins:', notification.type);
     }
 };
 

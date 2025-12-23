@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth0 } from '@auth0/auth0-react';
 import api from '@/services/api';
 import { MeterReading, ApiResponse } from '@/types';
-import { useAuthStore } from '@/stores/authStore';
 
 // Query keys
 export const meterReadingKeys = {
@@ -17,8 +16,7 @@ export const meterReadingKeys = {
 
 // Fetch meter readings for a room
 export const useMeterReadingsQuery = (roomId: number) => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: meterReadingKeys.byRoom(roomId),
@@ -26,29 +24,29 @@ export const useMeterReadingsQuery = (roomId: number) => {
       const response = await api.get<ApiResponse<MeterReading[]>>(`/readings/room/${roomId}/history`);
       return response.data.data || [];
     },
-    enabled: !!roomId && isAuthenticated && !!token && !!user,
+    enabled: !!roomId && isAuthenticated && !!user,
   });
 };
 
 // Fetch pending readings (admin only) - DEPRECATED: Use useAllReadingsQuery instead
 export const usePendingReadingsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: meterReadingKeys.pending(),
     queryFn: async (): Promise<MeterReading[]> => {
-      const response = await api.get<ApiResponse<MeterReading[]>>('/readings/pending/all');
+      const response = await api.get<ApiResponse<MeterReading[]>>(
+        '/readings/pending/all'
+      );
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!token && !!user && user.role === 'ADMIN',
+    enabled: isAuthenticated && !!user && user.roleType[0] === 'ADMIN',
   });
 };
 
 // Fetch all readings for admin approval (admin only)
 export const useAllReadingsQuery = () => {
-  const { isAuthenticated } = useAuth0();
-  const { token, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth0();
 
   return useQuery({
     queryKey: [...meterReadingKeys.all, 'admin-all'],
@@ -56,7 +54,7 @@ export const useAllReadingsQuery = () => {
       const response = await api.get<ApiResponse<MeterReading[]>>('/readings/');
       return response.data.data || [];
     },
-    enabled: isAuthenticated && !!token && !!user && user.role === 'ADMIN',
+    enabled: isAuthenticated && !!user && user.roleType[0] === 'ADMIN',
     staleTime: 30000, // 30 seconds
   });
 };
